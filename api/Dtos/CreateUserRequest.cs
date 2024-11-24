@@ -2,7 +2,7 @@
 using api.Repositories;
 
 
-namespace api.Dto
+namespace api.Dtos
 {
     public class CreateUserRequest
     {

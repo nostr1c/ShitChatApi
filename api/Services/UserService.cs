@@ -1,5 +1,6 @@
 ﻿using api.Repositories;
 using api.Models;
+using api.Dtos;
 
 namespace api.Services
 {
@@ -21,6 +22,12 @@ namespace api.Services
         public async Task<User?> GetUserByIdAsync(int userId)
         {
             var user = await userRepository.GetUserByIdAsync(userId);
+            return user;
+        }
+
+        public async Task<User> CreateUserAsync(CreateUserRequest createUserRequest)
+        {
+            var user = await userRepository.CreateUserAsync(createUserRequest);
             return user;
         }
     }

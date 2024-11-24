@@ -1,7 +1,9 @@
 ﻿using Dapper;
 using System.Data;
 using api.Models;
+using api.Dtos;
 using api.Repositories.Exceptions;
+using Azure.Core;
 
 namespace api.Repositories
 {
@@ -39,6 +41,22 @@ namespace api.Repositories
             catch (Exception ex)
             {
                 throw new RepositoryException($"Error fetching user with ID: {userId}", ex);
+            }
+        }
+
+        public async Task<User> CreateUserAsync(CreateUserRequest createUserRequest)
+        {
+            try
+            {
+                string query = @"INSERT INTO Users (Firstname, Lastname, Username)
+                            OUTPUT INSERTED.*
+                            VALUES (@Firstname, @Lastname, @Username)
+                            ";
+                return await _connection.QuerySingleAsync<User>(query, createUserRequest);
+            }
+            catch (Exception ex)
+            {
+                throw new RepositoryException("Error creating user.", ex);
             }
         }
 

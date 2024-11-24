@@ -3,6 +3,8 @@ using Microsoft.OpenApi.Models;
 using System.Data;
 using api.Repositories;
 using api.Services;
+using api.Dtos;
+using FluentValidation;
 
 namespace api
 {
@@ -27,7 +29,7 @@ namespace api
 
         public void AddValidators()
         {
-            //_services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
+            _services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
             //_services.AddScoped<IValidator<UpdateUserRequest>, UpdateUserRequestValidator>();
         }
 
