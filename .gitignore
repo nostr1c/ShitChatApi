@@ -1,0 +1,17 @@
+# Visual Studio
+.vs
+bin/
+obj/
+*.csproj.user
+
+#VS Code
+.vscode
+
+# macOS
+.DS_Store
+
+# Windows
+.Thumbs.db
+
+# Secrets
+.env

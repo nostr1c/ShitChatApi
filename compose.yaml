@@ -1,0 +1,35 @@
+services:
+  api:
+    build:
+      context: .
+      target: final
+    restart: always
+    environment:
+      - DB_SERVER=${DB_SERVER}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - 8081:80
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: always
+    volumes:
+      - mssql-data:/var/opt/mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD}
+      - MSSQL_PID=Express
+      - TZ=Europe/Stockholm
+    ports:
+      - 14331:1433
+  mssql.init:
+      image: mcr.microsoft.com/mssql-tools:latest
+      volumes:
+        - ./resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      depends_on:
+        - mssql
+      command: "/opt/mssql-tools/bin/sqlcmd -C -S mssql -U sa -P '${DB_PASSWORD}' -d master -i /docker-entrypoint-initdb.d/schema.sql"
+volumes:
+  mssql-data:

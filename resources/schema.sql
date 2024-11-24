@@ -1,0 +1,19 @@
+USE master;
+
+IF DB_ID('ShitShat') IS NULL
+BEGIN
+	CREATE DATABASE ShitShat
+END
+
+go
+USE ShitShat;
+
+CREATE TABLE Users (
+	UserId INT IDENTITY PRIMARY KEY,
+	Firstname NVARCHAR(50),
+	Lastname NVARCHAR(50),
+	Username NVARCHAR(50) UNIQUE,
+	Avatar NVARCHAR(255),
+	Created_At DATETIME DEFAULT GetDate(),
+	IsDeleted BIT NOT NULL DEFAULT 0
+);
