@@ -37,22 +37,11 @@ namespace api.Controllers
         [HttpGet]
         public async Task<ActionResult<GenericResponse<IEnumerable<User>>>> GetUsers()
         {
-            try
-            {
-                var users = await _userService.GetUsersAsync();
+            var response = new GenericResponse<IEnumerable<User>>();
+            var users = await _userService.GetUsersAsync();
 
-                return Ok(new GenericResponse<IEnumerable<User>>()
-                {
-                    Data = users
-                });
-            }
-            catch (RepositoryException repoEx)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new GenericResponse<IEnumerable<User>>
-                {
-                    Message = repoEx.Message,
-                });
-            }
+            response.Data = users;
+            return Ok(response);
         }
 
         /// <summary>
@@ -61,20 +50,19 @@ namespace api.Controllers
         [HttpGet("{userId:int}")]
         public async Task<ActionResult<GenericResponse<User>>> GetUserById(int userId)
         {
+            var response = new GenericResponse<User>();
             var user = await _userService.GetUserByIdAsync(userId);
 
             if (user == null)
             {
-                return NotFound(new GenericResponse<IEnumerable<User>>()
-                {
-                    Message = "User not found."
-                });
+                response.Message = "User not found.";
+
+                return NotFound(response);
             }
 
-            return Ok(new GenericResponse<User>()
-            {
-                Data = user
-            });
+            response.Data = user;
+
+            return Ok(response);
         }
 
         /// <summary>
@@ -100,20 +88,44 @@ namespace api.Controllers
                 return BadRequest(response);
             }
 
-            try
-            {
-                var createdUser = await _userService.CreateUserAsync(createUserRequest);
+            var createdUser = await _userService.CreateUserAsync(createUserRequest);
 
-                response.Data = createdUser;
-                response.Message = "User created successfully.";
-                return Ok(response);
-            }
-            catch (RepositoryException repoEx)
+            response.Data = createdUser;
+            response.Message = "User created successfully.";
+
+            return Ok(response);
+        }
+
+
+        /// <summary>
+        /// Update user.
+        /// </summary>
+        [HttpPut]
+        public async Task<ActionResult<GenericResponse<User>>> UpdateUser([FromBody] UpdateUserRequest updateUserRequest)
+        {
+            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateUserRequest>>();
+            ValidationResult validationResult = await validator.ValidateAsync(updateUserRequest);
+            var response = new GenericResponse<User>();
+
+            if (!validationResult.IsValid)
             {
-                response.Errors.Add("Exception", new List<string> { repoEx.Message });
-                response.Message = repoEx.Message;
-                return StatusCode(500, response);
+                response.Errors = validationResult.Errors
+                    .GroupBy(x => x.PropertyName)
+                    .ToDictionary(
+                        x => x.Key,
+                        x => x.Select(x => x.ErrorMessage).ToList()
+                    );
+
+                response.Message = "Validation failed.";
+                return BadRequest(response);
             }
+
+            var createdUser = await _userService.UpdateUserAsync(updateUserRequest);
+
+            response.Data = createdUser;
+            response.Message = "User updated successfully.";
+
+            return Ok(response);
         }
     }
 }

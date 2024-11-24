@@ -73,5 +73,24 @@ namespace api.Repositories
                 throw new RepositoryException("Error checking username", ex);
             }
         }
+
+        public async Task<User> UpdateUserAsync(UpdateUserRequest updateUserRequest)
+        {
+            try
+            {
+                string query = @"UPDATE Users SET Firstname = @Firstname,
+                                            Lastname = @Lastname
+                                OUTPUT INSERTED.*
+                                WHERE UserId = @UserId";
+
+                var result = await _connection.QuerySingleAsync<User>(query, updateUserRequest);
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new RepositoryException("Error updating user.", ex);
+            }
+        }
     }
 }

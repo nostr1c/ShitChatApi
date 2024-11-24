@@ -30,5 +30,11 @@ namespace api.Services
             var user = await userRepository.CreateUserAsync(createUserRequest);
             return user;
         }
+
+        public async Task<User> UpdateUserAsync(UpdateUserRequest updateUserRequest)
+        {
+            var user = await userRepository.UpdateUserAsync(updateUserRequest);
+            return user;
+        }
     }
 }
