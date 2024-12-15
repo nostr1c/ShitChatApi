@@ -35,7 +35,7 @@ namespace api
 
         public void AddDbConnection(IConfiguration configuration, IWebHostEnvironment environment)
         {
-            string connectionString = DatabaseConfigurator.BuildConnectionString(configuration, environment);
+            var connectionString = DatabaseConfigurator.BuildConnectionString(configuration, environment);
             _services.AddTransient<IDbConnection>(sc => new SqlConnection(connectionString));
         }
 

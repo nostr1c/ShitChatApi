@@ -37,7 +37,7 @@ namespace api.Dtos
                 .Length(3, 50).WithMessage("ErrorUsernameLength")
                 .MustAsync(async (username, cancellation) =>
                 {
-                    bool exists = await _userRepository.UsernameAlreadyExists(username);
+                    var exists = await _userRepository.UsernameAlreadyExists(username);
 
                     _logger.LogInformation($"Username check: {username} exists: {exists}");
 

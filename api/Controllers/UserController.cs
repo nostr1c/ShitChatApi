@@ -1,13 +1,9 @@
 ﻿using api.Models;
 using api.Models.Reponses;
 using api.Services;
-using api.Repositories.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using api.Dtos;
-using api.Repositories;
 using FluentValidation;
-using FluentValidation.Results;
-using api.Helpers;
 
 namespace api.Controllers
 {
@@ -72,7 +68,7 @@ namespace api.Controllers
         public async Task<ActionResult<GenericResponse<User>>> CreateUser([FromBody] CreateUserRequest createUserRequest)
         {
             var validator = _serviceProvider.GetRequiredService<IValidator<CreateUserRequest>>();
-            ValidationResult validationResult = await validator.ValidateAsync(createUserRequest);
+            var validationResult = await validator.ValidateAsync(createUserRequest);
             var response = new GenericResponse<User>();
 
             if (!validationResult.IsValid)
@@ -81,7 +77,7 @@ namespace api.Controllers
                     .GroupBy(x => x.PropertyName)
                     .ToDictionary(
                         x => x.Key,
-                        x => x.Select(x => x.ErrorMessage).ToList()
+                        x => x.Select(y => y.ErrorMessage).ToList()
                     );
 
                 response.Message = "Validation failed.";
@@ -104,7 +100,7 @@ namespace api.Controllers
         public async Task<ActionResult<GenericResponse<User>>> UpdateUser([FromBody] UpdateUserRequest updateUserRequest)
         {
             var validator = _serviceProvider.GetRequiredService<IValidator<UpdateUserRequest>>();
-            ValidationResult validationResult = await validator.ValidateAsync(updateUserRequest);
+            var validationResult = await validator.ValidateAsync(updateUserRequest);
             var response = new GenericResponse<User>();
 
             if (!validationResult.IsValid)
@@ -113,7 +109,7 @@ namespace api.Controllers
                     .GroupBy(x => x.PropertyName)
                     .ToDictionary(
                         x => x.Key,
-                        x => x.Select(x => x.ErrorMessage).ToList()
+                        x => x.Select(y => y.ErrorMessage).ToList()
                     );
 
                 response.Message = "Validation failed.";
