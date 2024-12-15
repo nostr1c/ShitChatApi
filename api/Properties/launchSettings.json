@@ -5,6 +5,34 @@
       "executablePath": "docker-compose",
       "commandLineArgs": "up --build -d",
       "workingDirectory": "../"
+    },
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://localhost:5005",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DB_SERVER": "FILIP\\SQLEXPRESS",
+        "DB_DATABASE": "ShitShatDev",
+        "DB_USER": "sadev",
+        "DB_PASSWORD": "sadev"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:7015",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DB_SERVER": "FILIP\\SQLEXPRESS",
+        "DB_DATABASE": "ShitShatDev",
+        "DB_USER": "sadev",
+        "DB_PASSWORD": "sadev"
+      }
     }
   }
 }
