@@ -1,8 +1,0 @@
-next/.git
-next/node_modules
-next/npm-debug.log
-next/README.md
-next/.next
-!next/.next/static
-!next/.next/standalone
-.dockerignore
