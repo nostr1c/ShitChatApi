@@ -1,9 +1,8 @@
 ﻿using api.Data.Models;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.DataAnnotations;
 
-namespace api.Models
+namespace api.Models.Requests
 {
     public class CreateUserRequest
     {
@@ -12,11 +11,11 @@ namespace api.Models
         public string Password { get; set; }
     }
 
-    public class RequestRegisterValidator : AbstractValidator<CreateUserRequest>
+    public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
     {
         private readonly UserManager<User> _userManager;
 
-        public RequestRegisterValidator(UserManager<User> userManager)
+        public CreateUserRequestValidator(UserManager<User> userManager)
         {
             _userManager = userManager;
 

@@ -1,7 +1,8 @@
 using api.Data;
 using api.Data.Models;
-using api.Models;
+using api.Models.Requests;
 using api.Services;
+using api.Services.Interfaces;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -41,7 +42,6 @@ namespace api
                 };
             });
 
-
             // Entity framework
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -63,8 +63,11 @@ namespace api
             });
 
             // Services
-            builder.Services.AddScoped<IAccountService, AccountService>();
-            builder.Services.AddScoped<IValidator<CreateUserRequest>, RequestRegisterValidator>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+
+            // Validators
+            builder.Services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
+            builder.Services.AddScoped<IValidator<LoginUserRequest>, RequestLoginValidator>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

@@ -2,28 +2,29 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using api.Models;
-using api.Helpers;
-using api.Services;
 using FluentValidation;
+using api.Models.Dtos;
+using api.Models.Requests;
+using api.Services.Interfaces;
 
 namespace api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AccountController : ControllerBase
+    public class AuthController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _config;
-        private readonly IAccountService _accountService;
+        private readonly IAuthService _accountService;
         private readonly IServiceProvider _serviceProvider;
 
-        public AccountController
+        public AuthController
         (
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             IConfiguration config,
-            IAccountService accountService,
+            IAuthService accountService,
             IServiceProvider serviceProvider
         )
         {
@@ -33,14 +34,6 @@ namespace api.Controllers
             _accountService = accountService;
             _serviceProvider = serviceProvider;
         }
-
-        [HttpGet("All")]
-        public async Task<ActionResult<ICollection<User>>> GetAll()
-        {
-            var response = _accountService.GetAll();
-            return Ok(response);
-        }
-
 
         [HttpPost("Register")]
         public async Task<ActionResult<GenericResponse<CreateUserDto>>> Register([FromBody] CreateUserRequest request)
@@ -68,44 +61,50 @@ namespace api.Controllers
                 return BadRequest("Internal server error");
             }
 
-            CreateUserDto userDto = new CreateUserDto
+            CreateUserDto dto = new CreateUserDto
             {
                 Id = user.Id,
                 Username = user.UserName,
                 Email = user.Email
             };
 
-            response.Data = userDto;
+            response.Data = dto;
             response.Message = "User created successfully.";
 
             return Ok(response);
         }
 
         [HttpPost("Login")]
-        public async Task<IActionResult> Login([FromBody] RequestLogin request)
+        public async Task<ActionResult<GenericResponse<LoginUserDto>>> Login([FromBody] LoginUserRequest request)
         {
-            if (!ModelState.IsValid)
+            var validator = _serviceProvider.GetRequiredService<IValidator<LoginUserRequest>>();
+            var validationResult = await validator.ValidateAsync(request);
+            var response = new GenericResponse<LoginUserDto>();
+
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                response.Errors = validationResult.Errors
+                    .GroupBy(x => x.PropertyName)
+                    .ToDictionary(
+                        x => x.Key,
+                        x => x.Select(y => y.ErrorMessage).ToList()
+                    );
+
+                response.Message = "Validation failed.";
+                return BadRequest(response);
             }
 
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null)
+            var (success, message, userDto) = await _accountService.LoginUserAsync(request);
+
+            if (!success)
             {
-                return Unauthorized("Invalid Email or Password");
+                response.Errors.Add("Authentication", new List<string> { message });
+                return BadRequest(response);
             }
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
-            if (!result.Succeeded)
-            {
-                return Unauthorized("Invalid Email or Password");
-            }
+            response.Data = userDto;
 
-            var jwtKey = _config["Jwt:Key"];
-            var jwtIssuer = _config["Jwt:Issuer"];
-            var token = JwtHelper.GenerateJwtToken(user.Id, user.UserName, jwtKey, jwtIssuer);
-
-            return Ok(new { token });
+            return Ok(response);
         }
     }
 }

@@ -18,18 +18,17 @@ namespace api.Data
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
-            // Configure the Connection entity
             builder.Entity<Connection>()
                 .HasOne(c => c.user)
-                .WithMany(u => u.Connections)  // One user can have many connections
+                .WithMany(u => u.Connections)
                 .HasForeignKey(c => c.UserId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent cascading delete
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Connection>()
                 .HasOne(c => c.friend)
-                .WithMany()  // A friend may not have any connections back (optional)
+                .WithMany()
                 .HasForeignKey(c => c.FriendId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent cascading delete
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

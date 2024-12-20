@@ -21,7 +21,7 @@ namespace api.Controllers
         [HttpGet]
         public IActionResult GetValues()
         {
-            return Ok(new { Value = "OMG!!! IT WORKS!" });
+            return Ok(new { Value = "I am authorized." });
         }
     }
 }
