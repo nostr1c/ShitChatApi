@@ -1,5 +1,7 @@
 ﻿using api.Data;
 using api.Data.Models;
+using api.Models;
+using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,45 +16,38 @@ namespace api.Controllers
         private readonly ILogger<ConnectionController> _logger;
         private readonly UserManager<User> _userManager;
         private readonly AppDbContext _appDbContext;
+        private readonly IConnectionService _connectionService; 
 
         public ConnectionController
         (
             ILogger<ConnectionController> logger,
             UserManager<User> userManager,
-            AppDbContext appDbContext
+            AppDbContext appDbContext,
+            IConnectionService connectionService
         )
         {
             _logger = logger;
             _userManager = userManager;
             _appDbContext = appDbContext;
+            _connectionService = connectionService;
         }
 
         [HttpPost("Add")]
-        public async Task<IActionResult> CreateConnection([FromBody] string friendId)
+        public async Task<ActionResult<GenericResponse<string>>> CreateConnection([FromBody] string friendId)
         {
+            var response = new GenericResponse<string>();
 
-            var user = await _userManager.FindByNameAsync(User.Identity.Name);
-            if (user == null)
+            var (success, message) = await _connectionService.CreateConnectionAsync(User.Identity.Name, friendId);
+
+            if (!success)
             {
-                return BadRequest();
+                response.Errors.Add("User", new List<string> { message });
+                return BadRequest(response);
             }
 
-            var friend = await _userManager.FindByIdAsync(friendId);
-            if (friend == null)
-            {
-                return BadRequest();
-            }
+            response.Message = message;
 
-            Connection connection = new Connection
-            {
-                UserId = user.Id,
-                FriendId = friendId
-            };
-
-            await _appDbContext.Connections.AddAsync(connection);
-            await _appDbContext.SaveChangesAsync();
-
-            return Ok("Connection added");
+            return Ok(response);
         }
     }
 }

@@ -64,6 +64,7 @@ namespace api
 
             // Services
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IConnectionService, ConnectionService>();
 
             // Validators
             builder.Services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
