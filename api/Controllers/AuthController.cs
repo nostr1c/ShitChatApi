@@ -13,23 +13,17 @@ namespace api.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _config;
         private readonly IAuthService _accountService;
         private readonly IServiceProvider _serviceProvider;
 
         public AuthController
         (
-            UserManager<User> userManager,
-            SignInManager<User> signInManager,
             IConfiguration config,
             IAuthService accountService,
             IServiceProvider serviceProvider
         )
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
             _config = config;
             _accountService = accountService;
             _serviceProvider = serviceProvider;

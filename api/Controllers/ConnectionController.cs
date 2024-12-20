@@ -14,21 +14,15 @@ namespace api.Controllers
     public class ConnectionController : ControllerBase
     {
         private readonly ILogger<ConnectionController> _logger;
-        private readonly UserManager<User> _userManager;
-        private readonly AppDbContext _appDbContext;
         private readonly IConnectionService _connectionService; 
 
         public ConnectionController
         (
             ILogger<ConnectionController> logger,
-            UserManager<User> userManager,
-            AppDbContext appDbContext,
             IConnectionService connectionService
         )
         {
             _logger = logger;
-            _userManager = userManager;
-            _appDbContext = appDbContext;
             _connectionService = connectionService;
         }
 
