@@ -14,16 +14,19 @@ namespace api.Controllers
     public class ConnectionController : ControllerBase
     {
         private readonly ILogger<ConnectionController> _logger;
-        private readonly IConnectionService _connectionService; 
+        private readonly IConnectionService _connectionService;
+        private readonly UserManager<User> _userManager;
 
         public ConnectionController
         (
             ILogger<ConnectionController> logger,
-            IConnectionService connectionService
+            IConnectionService connectionService,
+            UserManager<User> userManager
         )
         {
             _logger = logger;
             _connectionService = connectionService;
+            _userManager = userManager;
         }
 
         [HttpPost("Add")]
@@ -36,6 +39,50 @@ namespace api.Controllers
             if (!success)
             {
                 response.Errors.Add("User", new List<string> { message });
+                return BadRequest(response);
+            }
+
+            response.Message = message;
+
+            return Ok(response);
+        }
+
+        [HttpPost("Accept")]
+        public async Task<ActionResult<GenericResponse<string>>> AcceptConnection([FromBody] string friendId)
+        {
+            var response = new GenericResponse<string>();
+
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user == null)
+                return BadRequest("error");
+
+            var (success, message) = await _connectionService.AcceptConnectionAsync(user.Id, friendId);
+
+            if (!success)
+            {
+                response.Errors.Add("Error occured", new List<string> { message });
+                return BadRequest(response);
+            }
+
+            response.Message = message;
+
+            return Ok(response);
+        }
+
+        [HttpDelete("Delete")]
+        public async Task<ActionResult<GenericResponse<string>>> DeleteConnection([FromBody] string friendId)
+        {
+            var response = new GenericResponse<string>();
+
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user == null)
+                return BadRequest("error");
+
+            var (success, message) = await _connectionService.DeleteConnectionAsync(user.Id, friendId);
+
+            if (!success)
+            {
+                response.Errors.Add("Error occured", new List<string> { message });
                 return BadRequest(response);
             }
 

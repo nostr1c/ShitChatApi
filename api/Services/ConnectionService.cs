@@ -52,5 +52,58 @@ namespace api.Services
 
             return (true, "Connection successfully added.");
         }
+
+        public async Task<(bool Success, string Message)> AcceptConnectionAsync(string userId, string friendId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return (false, "Logged-in user not found.");
+
+            var friend = await _userManager.FindByIdAsync(friendId);
+            if (friend == null)
+                return (false, "Friend could not be found.");
+
+            var connection = await _appDbContext.Connections
+                .FirstOrDefaultAsync(c => c.UserId == friendId && c.FriendId == user.Id);
+
+            if (connection == null)
+                return (false, "Friend request not found.");
+
+            if (connection.Accepted)
+                return (false, "Friend request is already accepted.");
+
+            connection.Accepted = true;
+
+            _appDbContext.Connections.Update(connection);
+
+            await _appDbContext.SaveChangesAsync();
+
+            return (true, "Friend request accepted successfully.");
+        }
+
+        public async Task<(bool Success, string Message)> DeleteConnectionAsync(string userId, string friendId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return (false, "Logged-in user not found.");
+
+            var friend = await _userManager.FindByIdAsync(friendId);
+            if (friend == null)
+                return (false, "Friend could not be found.");
+
+            var connection = await _appDbContext.Connections
+                   .FirstOrDefaultAsync(c =>
+                        (c.UserId == userId && c.FriendId == friendId) ||
+                        (c.UserId == friendId && c.FriendId == userId));
+
+            if (connection == null)
+                return (false, "Friend request not found.");
+
+            _appDbContext.Connections.Remove(connection);
+
+            await _appDbContext.SaveChangesAsync();
+
+            return (true, "Friend request removed successfully.");
+        }
     }
 }
