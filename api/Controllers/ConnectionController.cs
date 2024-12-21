@@ -47,7 +47,7 @@ namespace api.Controllers
             return Ok(response);
         }
 
-        [HttpPost("Accept")]
+        [HttpPut("Accept")]
         public async Task<ActionResult<GenericResponse<string>>> AcceptConnection([FromBody] string friendId)
         {
             var response = new GenericResponse<string>();

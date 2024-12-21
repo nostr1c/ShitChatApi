@@ -22,7 +22,7 @@ namespace api.Services
             _appDbContext = appDbContext;
         }
 
-        public async Task<(bool Success, string Message)> CreateConnectionAsync(string userName, string friendId)
+        public async Task<(bool, string)> CreateConnectionAsync(string userName, string friendId)
         {
             var user = await _userManager.FindByNameAsync(userName);
             if (user == null)
@@ -53,7 +53,7 @@ namespace api.Services
             return (true, "Connection successfully added.");
         }
 
-        public async Task<(bool Success, string Message)> AcceptConnectionAsync(string userId, string friendId)
+        public async Task<(bool, string)> AcceptConnectionAsync(string userId, string friendId)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
@@ -81,7 +81,7 @@ namespace api.Services
             return (true, "Friend request accepted successfully.");
         }
 
-        public async Task<(bool Success, string Message)> DeleteConnectionAsync(string userId, string friendId)
+        public async Task<(bool, string)> DeleteConnectionAsync(string userId, string friendId)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
