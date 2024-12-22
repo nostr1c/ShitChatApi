@@ -15,7 +15,6 @@ namespace api.Data
         public DbSet<Message> Messages { get; set; }
         public DbSet<UserGroup> UserGroups { get; set; }
 
-
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
