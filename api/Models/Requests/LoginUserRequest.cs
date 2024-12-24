@@ -15,11 +15,11 @@ namespace api.Models.Requests
         {
             RuleFor(x => x.Email)
                 .NotEmpty()
-                    .WithMessage("Email cannot be empty");
+                    .WithMessage("ErrorEmailCannotBeEmpty");
 
             RuleFor(x => x.Password)
-                .MinimumLength(6)
-                    .WithMessage("Password must atleast be 6 characters");
+                .NotEmpty()
+                    .WithMessage("ErrorPasswordCannotBeEmpty");
         }
     }
 }

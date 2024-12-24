@@ -21,25 +21,29 @@ namespace api.Models.Requests
 
             RuleFor(x => x.Username)
                 .NotEmpty()
+                    .WithMessage("ErrorUsernameCannotBeEmpty")
                 .MustAsync(async (username, cancellation) =>
                 {
                     var user = await _userManager.FindByNameAsync(username);
                     return user == null;
-                }).WithMessage("User with username already exists");
+                }).WithMessage("ErrorUsernameAlreadyExists");
 
             RuleFor(x => x.Email)
+                .NotEmpty()
+                    .WithMessage("ErrorEmailCannotBeEmpty")
                 .EmailAddress()
-                    .NotEmpty()
-                    .WithMessage("Email is not a valid email")
-                    .MustAsync(async (email, cancellation) =>
-                    {
-                        var user = await _userManager.FindByEmailAsync(email);
-                        return user == null;
-                    }).WithMessage("User with email already exists");
+                    .WithMessage("ErrorEmailNotValid")
+                .MustAsync(async (email, cancellation) =>
+                {
+                    var user = await _userManager.FindByEmailAsync(email);
+                    return user == null;
+                }).WithMessage("ErrorEmailAlreadyExists");
 
             RuleFor(x => x.Password)
+                .NotEmpty()
+                    .WithMessage("ErrorPasswordCannotBeEmpty")
                 .MinimumLength(6)
-                    .WithMessage("Password must atleast be 6 characters.");
+                    .WithMessage("ErrorPasswordMinLength");
         }
     }
 }

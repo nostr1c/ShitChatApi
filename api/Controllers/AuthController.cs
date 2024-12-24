@@ -47,14 +47,14 @@ namespace api.Controllers
                         x => x.Select(y => y.ErrorMessage).ToList()
                     );
 
-                response.Message = "Validation failed.";
+                response.Message = "ErrorValidationFailed";
                 return BadRequest(response);
             }
 
             var user = await _accountService.RegisterUserAsync(request);
             if (user == null)
             {
-                return BadRequest("Internal server error");
+                return BadRequest("ErrorCreatingUser");
             }
 
             CreateUserDto dto = new CreateUserDto
@@ -65,7 +65,7 @@ namespace api.Controllers
             };
 
             response.Data = dto;
-            response.Message = "User created successfully.";
+            response.Message = "SuccessCreatingUser";
 
             return Ok(response);
         }
@@ -89,7 +89,7 @@ namespace api.Controllers
                         x => x.Select(y => y.ErrorMessage).ToList()
                     );
 
-                response.Message = "Validation failed.";
+                response.Message = "ErrorValidationFailed";
                 return BadRequest(response);
             }
 
@@ -97,7 +97,7 @@ namespace api.Controllers
 
             if (!success)
             {
-                response.Errors.Add("Authentication", new List<string> { message });
+                response.Errors.Add("ErrorAuthenticatingUser", new List<string> { message });
                 return BadRequest(response);
             }
 

@@ -47,7 +47,7 @@ namespace api.Controllers
 
             if (!success || user == null)
             {
-                response.Errors.Add("Not found", new List<string> { "User not found." });
+                response.Errors.Add("Error", new List<string> { "ErrorUserNotFound" });
                 return NotFound(response);
             }
 
@@ -84,7 +84,7 @@ namespace api.Controllers
                         x => x.Select(y => y.ErrorMessage).ToList()
                     );
 
-                response.Message = "Validation failed.";
+                response.Message = "ErrorValidationFailed";
                 return BadRequest(response);
             }
 
@@ -92,7 +92,7 @@ namespace api.Controllers
 
             if (!success || avatarUri == null)
             {
-                response.Errors.Add("Error", new List<string> { "Error updating Avatar." });
+                response.Errors.Add("Error", new List<string> { "ErrorUpdatingAvatar" });
                 return BadRequest(response);
             }
 

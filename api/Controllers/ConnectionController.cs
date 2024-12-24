@@ -41,7 +41,7 @@ namespace api.Controllers
 
             if (!success)
             {
-                response.Errors.Add("User", new List<string> { message });
+                response.Errors.Add("ErrorCreatingConnection", new List<string> { message });
                 return BadRequest(response);
             }
 
@@ -66,7 +66,7 @@ namespace api.Controllers
 
             if (!success)
             {
-                response.Errors.Add("Error occured", new List<string> { message });
+                response.Errors.Add("Error", new List<string> { message });
                 return BadRequest(response);
             }
 
@@ -92,7 +92,7 @@ namespace api.Controllers
 
             if (!success)
             {
-                response.Errors.Add("Error occured", new List<string> { message });
+                response.Errors.Add("Error", new List<string> { message });
                 return BadRequest(response);
             }
 
