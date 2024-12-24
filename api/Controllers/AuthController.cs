@@ -28,7 +28,9 @@ namespace api.Controllers
             _accountService = accountService;
             _serviceProvider = serviceProvider;
         }
-
+        /// <summary>
+        /// Register a new user
+        /// </summary>
         [HttpPost("Register")]
         public async Task<ActionResult<GenericResponse<CreateUserDto>>> Register([FromBody] CreateUserRequest request)
         {
@@ -68,6 +70,9 @@ namespace api.Controllers
             return Ok(response);
         }
 
+        /// <summary>
+        /// Login a user
+        /// </summary>
         [HttpPost("Login")]
         public async Task<ActionResult<GenericResponse<LoginUserDto>>> Login([FromBody] LoginUserRequest request)
         {

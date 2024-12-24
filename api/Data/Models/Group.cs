@@ -14,7 +14,7 @@ namespace api.Data.Models
         [ForeignKey(nameof(OwnerId))]
         public User Owner { get; set; }
 
-        public ICollection<UserGroup> UserGroups { get; set; }
+        public ICollection<User> Users { get; set; }
 
         public ICollection<Message> Messages { get; set; }
     }

@@ -13,7 +13,6 @@ namespace api.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Group> Groups { get; set; }
         public DbSet<Message> Messages { get; set; }
-        public DbSet<UserGroup> UserGroups { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -35,38 +34,23 @@ namespace api.Data
                 .HasForeignKey(c => c.FriendId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
-            // Many-to-Many relationship between User and Group
-            builder.Entity<UserGroup>()
-                .HasKey(ug => new { ug.UserId, ug.GroupId });
-
-            builder.Entity<UserGroup>()
-                .HasOne(ug => ug.User)
-                .WithMany(u => u.UserGroups)
-                .HasForeignKey(ug => ug.UserId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            builder.Entity<UserGroup>()
-                .HasOne(ug => ug.Group)
-                .WithMany(g => g.UserGroups)
-                .HasForeignKey(ug => ug.GroupId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            // One-to-Many relationship between User and Group (Owner)
             builder.Entity<Group>()
                 .HasOne(g => g.Owner)
                 .WithMany(u => u.OwnedGroups)
                 .HasForeignKey(g => g.OwnerId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // One-to-Many relationship between Group and Message
+            builder.Entity<User>()
+                .HasMany(u => u.Groups)
+                .WithMany(g => g.Users)
+                .UsingEntity(j => j.ToTable("UserGroups"));
+
             builder.Entity<Message>()
                 .HasOne(m => m.Group)
                 .WithMany(g => g.Messages)
                 .HasForeignKey(m => m.GroupId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // One-to-Many relationship between User and Message
             builder.Entity<Message>()
                 .HasOne(m => m.User)
                 .WithMany()

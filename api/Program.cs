@@ -7,9 +7,11 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System;
+using System.Reflection;
 using System.Text;
 
 namespace api
@@ -71,8 +73,12 @@ namespace api
             // Validators
             builder.Services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
             builder.Services.AddScoped<IValidator<LoginUserRequest>, RequestLoginValidator>();
+            builder.Services.AddScoped<IValidator<UpdateAvatarRequest>, UpdateAvatarRequestValidator>();
 
             builder.Services.AddControllers();
+
+            builder.Services.AddHttpContextAccessor();
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
 
@@ -108,6 +114,10 @@ namespace api
                         new string[] {}
                     }
                 });
+
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
 
             var app = builder.Build();

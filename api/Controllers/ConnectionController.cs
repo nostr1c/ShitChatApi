@@ -29,6 +29,9 @@ namespace api.Controllers
             _userManager = userManager;
         }
 
+        /// <summary>
+        /// Create a new connection request
+        /// </summary>
         [HttpPost("Add")]
         public async Task<ActionResult<GenericResponse<string>>> CreateConnection([FromBody] string friendId)
         {
@@ -47,6 +50,9 @@ namespace api.Controllers
             return Ok(response);
         }
 
+        /// <summary>
+        /// Accept a friend request.
+        /// </summary>
         [HttpPut("Accept")]
         public async Task<ActionResult<GenericResponse<string>>> AcceptConnection([FromBody] string friendId)
         {
@@ -69,6 +75,10 @@ namespace api.Controllers
             return Ok(response);
         }
 
+
+        /// <summary>
+        /// Delete a friend
+        /// </summary>
         [HttpDelete("Delete")]
         public async Task<ActionResult<GenericResponse<string>>> DeleteConnection([FromBody] string friendId)
         {

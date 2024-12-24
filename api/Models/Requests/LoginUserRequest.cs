@@ -14,8 +14,6 @@ namespace api.Models.Requests
         public RequestLoginValidator()
         {
             RuleFor(x => x.Email)
-                .EmailAddress()
-                    .WithMessage("Email address is not valid")
                 .NotEmpty()
                     .WithMessage("Email cannot be empty");
 

@@ -5,10 +5,13 @@ using api.Models.Dtos;
 using api.Models.Requests;
 using api.Services.Interfaces;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers
 {
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [ApiController]
     [Route("api/[controller]")]
     public class UserController : ControllerBase
@@ -16,19 +19,25 @@ namespace api.Controllers
         private readonly AppDbContext _dbContext;
         private readonly IUserService _userService;
         private readonly IServiceProvider _serviceProvider;
+        private readonly UserManager<User> _userManager;
 
         public UserController
         (
             AppDbContext dbContext,
             IUserService userService,
-            IServiceProvider serviceProvider
+            IServiceProvider serviceProvider,
+            UserManager<User> userManager
         )
         {
             _dbContext = dbContext;
             _userService = userService;
             _serviceProvider = serviceProvider;
+            _userManager = userManager;
         }
 
+        /// <summary>
+        /// Get specific user by Guid
+        /// </summary>
         [HttpGet("{guid}")]
         public async Task<ActionResult<GenericResponse<UserDto>>> GetUserByGuid(string guid)
         {
@@ -56,12 +65,15 @@ namespace api.Controllers
             return Ok(response);
         }
 
-        [HttpPut("{guid}")]
-        public async Task<ActionResult<GenericResponse<UpdateUserDto>>> UpdateUserByGuid([FromBody] UpdateUserRequest request)
+        /// <summary>
+        /// Update avatar
+        /// </summary>
+        [HttpPut("ChangeAvatar")]
+        public async Task<ActionResult<GenericResponse<string?>>> UpdateAvatar([FromBody] UpdateAvatarRequest request)
         {
-            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateUserRequest>>();
+            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateAvatarRequest>>();
             var validationResult = await validator.ValidateAsync(request);
-            var response = new GenericResponse<UpdateUserDto>();
+            var response = new GenericResponse<string?>();
 
             if (!validationResult.IsValid)
             {
@@ -76,23 +88,15 @@ namespace api.Controllers
                 return BadRequest(response);
             }
 
+            var (success, avatarUri) = await _userService.UpdateAvatarAsync(request);
 
-            var (success, user) = await _userService.UpdateUserByGuidAsync(request);
-
-            if (!success || user == null)
+            if (!success || avatarUri == null)
             {
-                response.Errors.Add("Error", new List<string> { "Error updating user." });
+                response.Errors.Add("Error", new List<string> { "Error updating Avatar." });
                 return BadRequest(response);
             }
 
-            var dto = new UpdateUserDto
-            {
-                Id = user.Id,
-                Username = user.UserName,
-                Avatar = user.AvatarUri,
-            };
-
-            response.Data = dto;
+            response.Data = avatarUri;
 
             return Ok(response);
         }

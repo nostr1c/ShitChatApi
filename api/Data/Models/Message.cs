@@ -5,9 +5,7 @@ namespace api.Data.Models
     public class Message
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-
         public string Content { get; set; }
-
         public Guid GroupId { get; set; }
 
         [ForeignKey(nameof(GroupId))]

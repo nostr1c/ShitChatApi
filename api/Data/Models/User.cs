@@ -9,12 +9,11 @@ namespace api.Data.Models
 
         public DateOnly CreatedAt { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
 
-
         // Navigation
         public ICollection<Connection> Connections { get; set; }
 
         public ICollection<Group> OwnedGroups { get; set; }
 
-        public ICollection<UserGroup> UserGroups { get; set; }
+        public ICollection<Group> Groups { get; set; }
     }
 }
