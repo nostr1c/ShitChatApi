@@ -69,11 +69,13 @@ namespace api
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IConnectionService, ConnectionService>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IGroupService, GroupService>();
 
             // Validators
             builder.Services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
             builder.Services.AddScoped<IValidator<LoginUserRequest>, RequestLoginValidator>();
             builder.Services.AddScoped<IValidator<UpdateAvatarRequest>, UpdateAvatarRequestValidator>();
+            builder.Services.AddScoped<IValidator<CreateGroupRequest>, CreateGroupRequestValidator>();
 
             builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
