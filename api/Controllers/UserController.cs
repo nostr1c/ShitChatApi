@@ -20,19 +20,22 @@ namespace api.Controllers
         private readonly IUserService _userService;
         private readonly IServiceProvider _serviceProvider;
         private readonly UserManager<User> _userManager;
+        private readonly IGroupService _groupService;
 
         public UserController
         (
             AppDbContext dbContext,
             IUserService userService,
             IServiceProvider serviceProvider,
-            UserManager<User> userManager
+            UserManager<User> userManager,
+            IGroupService groupService
         )
         {
             _dbContext = dbContext;
             _userService = userService;
             _serviceProvider = serviceProvider;
             _userManager = userManager;
+            _groupService = groupService;
         }
 
         /// <summary>
@@ -108,9 +111,24 @@ namespace api.Controllers
         public async Task<ActionResult<GenericResponse<List<ConnectionDto>>>> GetConnections()
         {
             var response = new GenericResponse<List<ConnectionDto>>();
+            // TODO: Change to groupservice
             var connections = await _userService.GetConnectionsAsync();
 
             response.Data = connections;
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Get user groups
+        /// </summary>
+        [HttpGet("Groups")]
+        public async Task<ActionResult<GenericResponse<List<GroupDto>>>> GetGroups()
+        {
+            var response = new GenericResponse<List<GroupDto>>();
+            var groups = await _groupService.GetUserGroupsAsync();
+
+            response.Data = groups;
 
             return Ok(response);
         }

@@ -47,7 +47,10 @@ namespace api.Controllers
             }
 
             var group = await _groupService.CreateGroupAsync(request);
-            return Ok(group);
+
+            response.Data = group;
+
+            return Ok(response);
         }
     }
 }

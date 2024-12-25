@@ -6,5 +6,6 @@ namespace api.Services.Interfaces
     public interface IGroupService
     {
         Task<GroupDto> CreateGroupAsync(CreateGroupRequest request);
+        Task<List<GroupDto>> GetUserGroupsAsync();
     }
 }
