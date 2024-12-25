@@ -10,7 +10,7 @@ namespace api.Controllers
 {
     [Authorize(AuthenticationSchemes = "Bearer")]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     public class ConnectionController : ControllerBase
     {
         private readonly ILogger<ConnectionController> _logger;

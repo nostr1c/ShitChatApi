@@ -13,7 +13,7 @@ namespace api.Controllers
 {
     [Authorize(AuthenticationSchemes = "Bearer")]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _dbContext;
@@ -97,6 +97,20 @@ namespace api.Controllers
             }
 
             response.Data = avatarUri;
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Get user connections
+        /// </summary>
+        [HttpGet("Connections")]
+        public async Task<ActionResult<GenericResponse<List<ConnectionDto>>>> GetConnections()
+        {
+            var response = new GenericResponse<List<ConnectionDto>>();
+            var connections = await _userService.GetConnectionsAsync();
+
+            response.Data = connections;
 
             return Ok(response);
         }

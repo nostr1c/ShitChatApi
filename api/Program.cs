@@ -75,6 +75,8 @@ namespace api
             builder.Services.AddScoped<IValidator<LoginUserRequest>, RequestLoginValidator>();
             builder.Services.AddScoped<IValidator<UpdateAvatarRequest>, UpdateAvatarRequestValidator>();
 
+            builder.Services.AddRouting(options => options.LowercaseUrls = true);
+
             builder.Services.AddControllers();
 
             builder.Services.AddHttpContextAccessor();
