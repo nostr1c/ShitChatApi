@@ -2,6 +2,7 @@
 using api.Models.Dtos;
 using api.Models.Requests;
 using api.Services.Interfaces;
+using Azure.Core;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,17 +16,23 @@ namespace api.Controllers
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly IGroupService _groupService;
+        private readonly ILogger<GroupController> _logger;
 
         public GroupController
         (
             IServiceProvider serviceProvider,
-            IGroupService groupService
+            IGroupService groupService,
+            ILogger<GroupController> logger
         )
         {
             _serviceProvider = serviceProvider;
             _groupService = groupService;
+            _logger = logger;
         }
 
+        /// <summary>
+        /// Create group
+        /// </summary>
         [HttpPost("Create")]
         public async Task<ActionResult<GenericResponse<GroupDto>>> CreateGroup([FromBody] CreateGroupRequest request)
         {
@@ -49,6 +56,31 @@ namespace api.Controllers
             var group = await _groupService.CreateGroupAsync(request);
 
             response.Data = group;
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Add member to group
+        /// </summary>
+        [HttpPost("{groupGuid}/members/add")]
+        public async Task<ActionResult<GenericResponse<UserDto>>> AddUserToGroup(Guid groupGuid, [FromBody] string userId)
+        {
+            var response = new GenericResponse<UserDto>();
+
+            _logger.LogInformation("group {groupGuid}", groupGuid);
+            _logger.LogInformation("user {userId}", userId);
+
+            var (success, message, userDto) = await _groupService.AddUserToGroupAsync(groupGuid, userId);
+
+            if (!success || userDto == null)
+            {
+                response.Errors.Add("Error", new List<string> { message });
+                return BadRequest(response);
+            }
+
+            response.Message = message;
+            response.Data = userDto;
 
             return Ok(response);
         }

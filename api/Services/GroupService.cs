@@ -12,14 +12,49 @@ namespace api.Services
     {
         private readonly AppDbContext _dbContext;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<GroupService> _logger;
 
         public GroupService
         (
             AppDbContext dbContext,
-            IHttpContextAccessor httpContextAccessor
-        ) { 
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<GroupService> logger
+        )
+        { 
             _dbContext = dbContext;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
+        }
+
+        public async Task<(bool, string, UserDto?)> AddUserToGroupAsync(Guid groupId, string userId)
+        {
+            var group = await _dbContext.Groups
+                .Include(x => x.Users)
+                .SingleOrDefaultAsync(x => x.Id == groupId);
+            if (group == null)
+                return (false, "ErrorGroupNotFound", null);
+
+            var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
+            if (user == null)
+                return (false, "ErrorUserNotFound", null);
+
+            if (group.Users.Any(x => x.Id == user.Id))
+                return (false, "ErrorUserAlreadyInGroup", null);
+
+            group.Users.Add(user);
+
+            await _dbContext.SaveChangesAsync();
+
+            var dto = new UserDto
+            {
+                Id = user.Id,
+                Email = user.Email,
+                Username = user.UserName,
+                Avatar = user.AvatarUri,
+                CreatedAt = user.CreatedAt
+            };
+
+            return (true, "SuccessAddedUserToGroup", dto);
         }
 
         public async Task<GroupDto> CreateGroupAsync(CreateGroupRequest request)
