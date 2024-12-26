@@ -1,10 +1,12 @@
 using api.Data;
 using api.Data.Models;
+using api.Extensions.Authorization;
 using api.Models.Requests;
 using api.Services;
 using api.Services.Interfaces;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -65,6 +67,15 @@ namespace api
                 options.Password.RequiredLength = 6;
             });
 
+            // Authorization
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("GroupMember", policy =>
+                    policy.Requirements.Add(new GroupMembershipRequirement()));
+            });
+
+            builder.Services.AddScoped<IAuthorizationHandler, GroupMembershipHandler>();
+
             // Services
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IConnectionService, ConnectionService>();
@@ -76,6 +87,7 @@ namespace api
             builder.Services.AddScoped<IValidator<LoginUserRequest>, RequestLoginValidator>();
             builder.Services.AddScoped<IValidator<UpdateAvatarRequest>, UpdateAvatarRequestValidator>();
             builder.Services.AddScoped<IValidator<CreateGroupRequest>, CreateGroupRequestValidator>();
+            builder.Services.AddScoped<IValidator<SendMessageRequest>, SendMessageRequestValidator>();
 
             builder.Services.AddRouting(options => options.LowercaseUrls = true);
 

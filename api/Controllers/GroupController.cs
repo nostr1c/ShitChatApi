@@ -33,7 +33,7 @@ namespace api.Controllers
         /// <summary>
         /// Create group
         /// </summary>
-        [HttpPost("Create")]
+        [HttpPost]
         public async Task<ActionResult<GenericResponse<GroupDto>>> CreateGroup([FromBody] CreateGroupRequest request)
         {
             var validator = _serviceProvider.GetRequiredService<IValidator<CreateGroupRequest>>();
@@ -61,9 +61,31 @@ namespace api.Controllers
         }
 
         /// <summary>
+        /// Get specific group
+        /// </summary>
+        [Authorize(Policy = "GroupMember")]
+        [HttpGet("{groupGuid}")]
+        public async Task<ActionResult<GenericResponse<GroupDto>>> GetGroupByGuid(Guid groupGuid)
+        {
+            var response = new GenericResponse<GroupDto>();
+
+            var group = await _groupService.GetGroupByGuidAsync(groupGuid);
+
+            if (group == null)
+            {
+                response.Message = "ErrorGroupNotFound";
+                return NotFound(response);
+            }
+
+            response.Data = group;
+
+            return Ok(response);
+        }
+
+        /// <summary>
         /// Add member to group
         /// </summary>
-        [HttpPost("{groupGuid}/members/add")]
+        [HttpPost("{groupGuid}/members")]
         public async Task<ActionResult<GenericResponse<UserDto>>> AddUserToGroup(Guid groupGuid, [FromBody] string userId)
         {
             var response = new GenericResponse<UserDto>();
@@ -85,6 +107,7 @@ namespace api.Controllers
         /// <summary>
         /// List group members
         /// </summary>
+        [Authorize(Policy = "GroupMember")]
         [HttpGet("{groupGuid}/members")]
         public async Task<ActionResult<GenericResponse<IEnumerable<UserDto>>>> GetGroupMembers(Guid groupGuid)
         {
@@ -100,6 +123,66 @@ namespace api.Controllers
 
             response.Message = message;
             response.Data = users;
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// List group messages
+        /// </summary>
+        [Authorize(Policy = "GroupMember")]
+        [HttpGet("{groupGuid}/messages")]
+        public async Task<ActionResult<GenericResponse<IEnumerable<MessageDto>>>> GetGroupMessages(Guid groupGuid)
+        {
+            var response = new GenericResponse<IEnumerable<MessageDto>>();
+
+            var (success, message, messages) = await _groupService.GetGroupMessagesAsync(groupGuid);
+
+            if (!success)
+            {
+                response.Errors.Add("Error", new List<string> { message });
+                return BadRequest(response);
+            }
+
+            response.Message = message;
+            response.Data = messages;
+
+            return Ok(response);
+        }
+        /// <summary>
+        /// Send group message
+        /// </summary>
+        [Authorize(Policy = "GroupMember")]
+        [HttpPost("{groupGuid}/messages")]
+        public async Task<ActionResult<GenericResponse<IEnumerable<MessageDto>>>> SendMessage(Guid groupGuid, [FromBody] SendMessageRequest request)
+        {
+            var validator = _serviceProvider.GetRequiredService<IValidator<SendMessageRequest>>();
+            var validationResult = await validator.ValidateAsync(request);
+            var response = new GenericResponse<MessageDto>();
+
+            if (!validationResult.IsValid)
+            {
+                response.Errors = validationResult.Errors
+                    .GroupBy(x => x.PropertyName)
+                    .ToDictionary(
+                        x => x.Key,
+                        x => x.Select(y => y.ErrorMessage).ToList()
+                    );
+
+                response.Message = "ErrorValidationFailed";
+                return BadRequest(response);
+            }
+
+            var (success, message, messages) = await _groupService.SendMessageAsync(groupGuid, request);
+
+            if (!success)
+            {
+                response.Errors.Add("Error", new List<string> { message });
+                return BadRequest(response);
+            }
+
+            response.Message = message;
+            response.Data = messages;
 
             return Ok(response);
         }

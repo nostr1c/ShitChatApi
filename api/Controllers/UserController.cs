@@ -71,7 +71,7 @@ namespace api.Controllers
         /// <summary>
         /// Update avatar
         /// </summary>
-        [HttpPut("ChangeAvatar")]
+        [HttpPut("Avatar")]
         public async Task<ActionResult<GenericResponse<string?>>> UpdateAvatar([FromBody] UpdateAvatarRequest request)
         {
             var validator = _serviceProvider.GetRequiredService<IValidator<UpdateAvatarRequest>>();
