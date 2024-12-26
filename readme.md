@@ -10,6 +10,18 @@ ShitShat is a messaging platform that allows users to create groups, send messag
 - **Connections:** Send, accept, and delete connection requests between users.
 - **Messages:** Send and receive messages in groups with rich user information (username, avatar).
 
+## Technologies Used
+
+- **ASP.NET Core Web API**
+- **Entity Framework Core**
+- **JWT Authentication**
+- **SQL Server** (Database)
+
+## TODO
+
+- Refactor all validation logic for better maintainability and consistency.
+- Refactor all generic responses to standardize the format and improve error handling.
+
 ## Endpoints
 
 - **Auth**
@@ -34,10 +46,3 @@ ShitShat is a messaging platform that allows users to create groups, send messag
   - `PUT /api/v1/user/avatar` - Update user avatar
   - `GET /api/v1/user/connections` - Get user's connections
   - `GET /api/v1/user/groups` - Get groups the user is a part of
-
-## Technologies Used
-
-- **ASP.NET Core Web API**
-- **Entity Framework Core**
-- **JWT Authentication**
-- **SQL Server** (Database)
