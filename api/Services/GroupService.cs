@@ -80,6 +80,27 @@ namespace api.Services
             return groupDto;
         }
 
+        public async Task<(bool, string, IEnumerable<UserDto>?)> GetGroupMembersAsync(Guid groupId)
+        {
+            var group = await _dbContext.Groups
+                .Include(x => x.Users)
+                .SingleOrDefaultAsync(x => x.Id == groupId);
+
+            if (group == null)
+                return (false, "ErrorGroupNotFound", null);
+
+            var members = group.Users.Select(x => new UserDto
+            {
+                Id = x.Id,
+                Email = x.Email,
+                Username = x.UserName,
+                Avatar = x.AvatarUri,
+                CreatedAt = x.CreatedAt
+            });
+
+            return (true, "SuccessGotGroupMembers", members);
+        }
+
         public async Task<List<GroupDto>> GetUserGroupsAsync()
         {
             var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();

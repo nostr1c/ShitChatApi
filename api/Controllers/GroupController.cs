@@ -68,9 +68,6 @@ namespace api.Controllers
         {
             var response = new GenericResponse<UserDto>();
 
-            _logger.LogInformation("group {groupGuid}", groupGuid);
-            _logger.LogInformation("user {userId}", userId);
-
             var (success, message, userDto) = await _groupService.AddUserToGroupAsync(groupGuid, userId);
 
             if (!success || userDto == null)
@@ -81,6 +78,28 @@ namespace api.Controllers
 
             response.Message = message;
             response.Data = userDto;
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// List group members
+        /// </summary>
+        [HttpGet("{groupGuid}/members")]
+        public async Task<ActionResult<GenericResponse<IEnumerable<UserDto>>>> GetGroupMembers(Guid groupGuid)
+        {
+            var response = new GenericResponse<IEnumerable<UserDto>>();
+
+            var (success, message, users) = await _groupService.GetGroupMembersAsync(groupGuid);
+
+            if (!success)
+            {
+                response.Errors.Add("Error", new List<string> { message });
+                return BadRequest(response);
+            }
+
+            response.Message = message;
+            response.Data = users;
 
             return Ok(response);
         }

@@ -8,5 +8,6 @@ namespace api.Services.Interfaces
         Task<GroupDto> CreateGroupAsync(CreateGroupRequest request);
         Task<List<GroupDto>> GetUserGroupsAsync();
         Task<(bool, string, UserDto?)> AddUserToGroupAsync(Guid groupId, string userId);
+        Task<(bool, string, IEnumerable<UserDto>?)> GetGroupMembersAsync(Guid groupId);
     }
 }
