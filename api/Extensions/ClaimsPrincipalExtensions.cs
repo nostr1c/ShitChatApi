@@ -1,17 +1,16 @@
 ﻿using System.Security.Claims;
 
-namespace api.Extensions
+namespace api.Extensions;
+
+public static class ClaimsPrincipalExtensions
 {
-    public static class ClaimsPrincipalExtensions
+    public static string? GetUserGuid(this ClaimsPrincipal user)
     {
-        public static string? GetUserGuid(this ClaimsPrincipal user)
-        {
-            if (user == null)
-                throw new ArgumentNullException(nameof(user));
+        if (user == null)
+            throw new ArgumentNullException(nameof(user));
 
-            var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
 
-            return idClaim?.Value;
-        }
+        return idClaim?.Value;
     }
 }

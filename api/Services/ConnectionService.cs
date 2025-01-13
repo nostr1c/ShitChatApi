@@ -4,106 +4,105 @@ using Microsoft.AspNetCore.Identity;
 using api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Services
+namespace api.Services;
+
+public class ConnectionService : IConnectionService
 {
-    public class ConnectionService : IConnectionService
+    private UserManager<User> _userManager;
+    private AppDbContext _appDbContext;
+
+    public ConnectionService
+    (
+        UserManager<User> userManager,
+        AppDbContext appDbContext
+
+    )
     {
-        private UserManager<User> _userManager;
-        private AppDbContext _appDbContext;
+        _userManager = userManager;
+        _appDbContext = appDbContext;
+    }
 
-        public ConnectionService
-        (
-            UserManager<User> userManager,
-            AppDbContext appDbContext
+    public async Task<(bool, string)> CreateConnectionAsync(string userName, string friendId)
+    {
+        var user = await _userManager.FindByNameAsync(userName);
+        if (user == null)
+            return (false, "ErrorLoggedInUser"); //mhm
 
-        )
+        var friend = await _userManager.FindByIdAsync(friendId);
+        if (friend == null)
+            return (false, "ErrorFriendNotFound");
+
+        if (user.Id == friend.Id)
+            return (false, "ErrorCantAddYouself");
+
+        var connectionExists = await _appDbContext.Connections
+            .AnyAsync(c => c.UserId == user.Id && c.FriendId == friend.Id);
+
+        if (connectionExists)
+            return (false, "ErrorConnectionAlreadyExists");
+
+        Connection connection = new Connection
         {
-            _userManager = userManager;
-            _appDbContext = appDbContext;
-        }
+            UserId = user.Id,
+            FriendId = friendId
+        };
 
-        public async Task<(bool, string)> CreateConnectionAsync(string userName, string friendId)
-        {
-            var user = await _userManager.FindByNameAsync(userName);
-            if (user == null)
-                return (false, "ErrorLoggedInUser"); //mhm
+        await _appDbContext.Connections.AddAsync(connection);
+        await _appDbContext.SaveChangesAsync();
 
-            var friend = await _userManager.FindByIdAsync(friendId);
-            if (friend == null)
-                return (false, "ErrorFriendNotFound");
+        return (true, "SuccessCreatingConnection");
+    }
 
-            if (user.Id == friend.Id)
-                return (false, "ErrorCantAddYouself");
+    public async Task<(bool, string)> AcceptConnectionAsync(string userId, string friendId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return (false, "ErrorLoggedInUser");
 
-            var connectionExists = await _appDbContext.Connections
-                .AnyAsync(c => c.UserId == user.Id && c.FriendId == friend.Id);
+        var friend = await _userManager.FindByIdAsync(friendId);
+        if (friend == null)
+            return (false, "ErrorFriendNotFound");
 
-            if (connectionExists)
-                return (false, "ErrorConnectionAlreadyExists");
+        var connection = await _appDbContext.Connections
+            .FirstOrDefaultAsync(c => c.UserId == friendId && c.FriendId == user.Id);
 
-            Connection connection = new Connection
-            {
-                UserId = user.Id,
-                FriendId = friendId
-            };
+        if (connection == null)
+            return (false, "ErrorFriendRequestNotFound");
 
-            await _appDbContext.Connections.AddAsync(connection);
-            await _appDbContext.SaveChangesAsync();
+        if (connection.Accepted)
+            return (false, "ErrorFriendRequestAlreadyAccepted");
 
-            return (true, "SuccessCreatingConnection");
-        }
+        connection.Accepted = true;
 
-        public async Task<(bool, string)> AcceptConnectionAsync(string userId, string friendId)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                return (false, "ErrorLoggedInUser");
+        _appDbContext.Connections.Update(connection);
 
-            var friend = await _userManager.FindByIdAsync(friendId);
-            if (friend == null)
-                return (false, "ErrorFriendNotFound");
+        await _appDbContext.SaveChangesAsync();
 
-            var connection = await _appDbContext.Connections
-                .FirstOrDefaultAsync(c => c.UserId == friendId && c.FriendId == user.Id);
+        return (true, "SuccessAcceptingConnection");
+    }
 
-            if (connection == null)
-                return (false, "ErrorFriendRequestNotFound");
+    public async Task<(bool, string)> DeleteConnectionAsync(string userId, string friendId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            return (false, "ErrorLoggedInUser");
 
-            if (connection.Accepted)
-                return (false, "ErrorFriendRequestAlreadyAccepted");
+        var friend = await _userManager.FindByIdAsync(friendId);
+        if (friend == null)
+            return (false, "ErrorFriendNotFound");
 
-            connection.Accepted = true;
+        var connection = await _appDbContext.Connections
+               .FirstOrDefaultAsync(c =>
+                    (c.UserId == userId && c.FriendId == friendId) ||
+                    (c.UserId == friendId && c.FriendId == userId));
 
-            _appDbContext.Connections.Update(connection);
+        if (connection == null)
+            return (false, "ErrorFriendRequestNotFound");
 
-            await _appDbContext.SaveChangesAsync();
+        _appDbContext.Connections.Remove(connection);
 
-            return (true, "SuccessAcceptingConnection");
-        }
+        await _appDbContext.SaveChangesAsync();
 
-        public async Task<(bool, string)> DeleteConnectionAsync(string userId, string friendId)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                return (false, "ErrorLoggedInUser");
-
-            var friend = await _userManager.FindByIdAsync(friendId);
-            if (friend == null)
-                return (false, "ErrorFriendNotFound");
-
-            var connection = await _appDbContext.Connections
-                   .FirstOrDefaultAsync(c =>
-                        (c.UserId == userId && c.FriendId == friendId) ||
-                        (c.UserId == friendId && c.FriendId == userId));
-
-            if (connection == null)
-                return (false, "ErrorFriendRequestNotFound");
-
-            _appDbContext.Connections.Remove(connection);
-
-            await _appDbContext.SaveChangesAsync();
-
-            return (true, "SuccessRemovingConnection");
-        }
+        return (true, "SuccessRemovingConnection");
     }
 }

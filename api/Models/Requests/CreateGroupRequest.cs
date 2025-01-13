@@ -1,22 +1,21 @@
 ﻿using FluentValidation;
 
-namespace api.Models.Requests
-{
-    public class CreateGroupRequest
-    {
-        public string Name { get; set; }
-    }
+namespace api.Models.Requests;
 
-    public class CreateGroupRequestValidator : AbstractValidator<CreateGroupRequest>
+public class CreateGroupRequest
+{
+    public string Name { get; set; }
+}
+
+public class CreateGroupRequestValidator : AbstractValidator<CreateGroupRequest>
+{
+    public CreateGroupRequestValidator()
     {
-        public CreateGroupRequestValidator()
-        {
-            RuleFor(x => x.Name)
-                .Cascade(CascadeMode.Stop)
-                .NotEmpty()
-                    .WithMessage("ErrorGroupNameCannotBeEmpty")
-                .MinimumLength(2)
-                    .WithMessage("ErrorGroupNameMinLength");
-        }
+        RuleFor(x => x.Name)
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty()
+                .WithMessage("ErrorGroupNameCannotBeEmpty")
+            .MinimumLength(2)
+                .WithMessage("ErrorGroupNameMinLength");
     }
 }

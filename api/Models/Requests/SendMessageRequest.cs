@@ -1,18 +1,17 @@
 ﻿using FluentValidation;
 
-namespace api.Models.Requests
-{
-    public class SendMessageRequest
-    {
-        public string Content { get; set; }
-    }
+namespace api.Models.Requests;
 
-    public class SendMessageRequestValidator : AbstractValidator<SendMessageRequest>
+public class SendMessageRequest
+{
+    public string Content { get; set; }
+}
+
+public class SendMessageRequestValidator : AbstractValidator<SendMessageRequest>
+{
+    public SendMessageRequestValidator()
     {
-        public SendMessageRequestValidator()
-        {
-            RuleFor(x => x.Content)
-                .NotEmpty().WithMessage("ErrorMessageCannotBeEmpty");
-        }
+        RuleFor(x => x.Content)
+            .NotEmpty().WithMessage("ErrorMessageCannotBeEmpty");
     }
 }

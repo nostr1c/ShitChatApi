@@ -9,128 +9,127 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-namespace api.Controllers
+namespace api.Controllers;
+
+[Authorize(AuthenticationSchemes = "Bearer")]
+[ApiController]
+[Route("api/v1/[controller]")]
+public class UserController : ControllerBase
 {
-    [Authorize(AuthenticationSchemes = "Bearer")]
-    [ApiController]
-    [Route("api/v1/[controller]")]
-    public class UserController : ControllerBase
+    private readonly AppDbContext _dbContext;
+    private readonly IUserService _userService;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly UserManager<User> _userManager;
+    private readonly IGroupService _groupService;
+
+    public UserController
+    (
+        AppDbContext dbContext,
+        IUserService userService,
+        IServiceProvider serviceProvider,
+        UserManager<User> userManager,
+        IGroupService groupService
+    )
     {
-        private readonly AppDbContext _dbContext;
-        private readonly IUserService _userService;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly UserManager<User> _userManager;
-        private readonly IGroupService _groupService;
+        _dbContext = dbContext;
+        _userService = userService;
+        _serviceProvider = serviceProvider;
+        _userManager = userManager;
+        _groupService = groupService;
+    }
 
-        public UserController
-        (
-            AppDbContext dbContext,
-            IUserService userService,
-            IServiceProvider serviceProvider,
-            UserManager<User> userManager,
-            IGroupService groupService
-        )
+    /// <summary>
+    /// Get specific user by Guid
+    /// </summary>
+    [HttpGet("{guid}")]
+    public async Task<ActionResult<GenericResponse<UserDto>>> GetUserByGuid(string guid)
+    {
+        var response = new GenericResponse<UserDto>();
+
+        var (success, user) = await _userService.GetUserByGuidAsync(guid);
+
+        if (!success || user == null)
         {
-            _dbContext = dbContext;
-            _userService = userService;
-            _serviceProvider = serviceProvider;
-            _userManager = userManager;
-            _groupService = groupService;
+            response.Errors.Add("Error", new List<string> { "ErrorUserNotFound" });
+            return NotFound(response);
         }
 
-        /// <summary>
-        /// Get specific user by Guid
-        /// </summary>
-        [HttpGet("{guid}")]
-        public async Task<ActionResult<GenericResponse<UserDto>>> GetUserByGuid(string guid)
+        var dto = new UserDto
         {
-            var response = new GenericResponse<UserDto>();
+            Id = user.Id,
+            Username = user.UserName,
+            Email = user.Email,
+            Avatar = user.AvatarUri,
+            CreatedAt = user.CreatedAt
+        };
+       
+        response.Data = dto;
 
-            var (success, user) = await _userService.GetUserByGuidAsync(guid);
+        return Ok(response);
+    }
 
-            if (!success || user == null)
-            {
-                response.Errors.Add("Error", new List<string> { "ErrorUserNotFound" });
-                return NotFound(response);
-            }
+    /// <summary>
+    /// Update avatar
+    /// </summary>
+    [HttpPut("Avatar")]
+    public async Task<ActionResult<GenericResponse<string?>>> UpdateAvatar([FromBody] UpdateAvatarRequest request)
+    {
+        var validator = _serviceProvider.GetRequiredService<IValidator<UpdateAvatarRequest>>();
+        var validationResult = await validator.ValidateAsync(request);
+        var response = new GenericResponse<string?>();
 
-            var dto = new UserDto
-            {
-                Id = user.Id,
-                Username = user.UserName,
-                Email = user.Email,
-                Avatar = user.AvatarUri,
-                CreatedAt = user.CreatedAt
-            };
-           
-            response.Data = dto;
+        if (!validationResult.IsValid)
+        {
+            response.Errors = validationResult.Errors
+                .GroupBy(x => x.PropertyName)
+                .ToDictionary(
+                    x => x.Key,
+                    x => x.Select(y => y.ErrorMessage).ToList()
+                );
 
-            return Ok(response);
+            response.Message = "ErrorValidationFailed";
+            return BadRequest(response);
         }
 
-        /// <summary>
-        /// Update avatar
-        /// </summary>
-        [HttpPut("Avatar")]
-        public async Task<ActionResult<GenericResponse<string?>>> UpdateAvatar([FromBody] UpdateAvatarRequest request)
+        var (success, avatarUri) = await _userService.UpdateAvatarAsync(request);
+
+        if (!success || avatarUri == null)
         {
-            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateAvatarRequest>>();
-            var validationResult = await validator.ValidateAsync(request);
-            var response = new GenericResponse<string?>();
-
-            if (!validationResult.IsValid)
-            {
-                response.Errors = validationResult.Errors
-                    .GroupBy(x => x.PropertyName)
-                    .ToDictionary(
-                        x => x.Key,
-                        x => x.Select(y => y.ErrorMessage).ToList()
-                    );
-
-                response.Message = "ErrorValidationFailed";
-                return BadRequest(response);
-            }
-
-            var (success, avatarUri) = await _userService.UpdateAvatarAsync(request);
-
-            if (!success || avatarUri == null)
-            {
-                response.Errors.Add("Error", new List<string> { "ErrorUpdatingAvatar" });
-                return BadRequest(response);
-            }
-
-            response.Data = avatarUri;
-
-            return Ok(response);
+            response.Errors.Add("Error", new List<string> { "ErrorUpdatingAvatar" });
+            return BadRequest(response);
         }
 
-        /// <summary>
-        /// Get user connections
-        /// </summary>
-        [HttpGet("Connections")]
-        public async Task<ActionResult<GenericResponse<List<ConnectionDto>>>> GetConnections()
-        {
-            var response = new GenericResponse<List<ConnectionDto>>();
-            // TODO: Change to groupservice
-            var connections = await _userService.GetConnectionsAsync();
+        response.Data = avatarUri;
 
-            response.Data = connections;
+        return Ok(response);
+    }
 
-            return Ok(response);
-        }
+    /// <summary>
+    /// Get user connections
+    /// </summary>
+    [HttpGet("Connections")]
+    public async Task<ActionResult<GenericResponse<List<ConnectionDto>>>> GetConnections()
+    {
+        var response = new GenericResponse<List<ConnectionDto>>();
+        // TODO: Change to groupservice
+        var connections = await _userService.GetConnectionsAsync();
 
-        /// <summary>
-        /// Get user groups
-        /// </summary>
-        [HttpGet("Groups")]
-        public async Task<ActionResult<GenericResponse<List<GroupDto>>>> GetGroups()
-        {
-            var response = new GenericResponse<List<GroupDto>>();
-            var groups = await _groupService.GetUserGroupsAsync();
+        response.Data = connections;
 
-            response.Data = groups;
+        return Ok(response);
+    }
 
-            return Ok(response);
-        }
+    /// <summary>
+    /// Get user groups
+    /// </summary>
+    [HttpGet("Groups")]
+    public async Task<ActionResult<GenericResponse<List<GroupDto>>>> GetGroups()
+    {
+        var response = new GenericResponse<List<GroupDto>>();
+        var groups = await _groupService.GetUserGroupsAsync();
+
+        response.Data = groups;
+
+        return Ok(response);
     }
 }

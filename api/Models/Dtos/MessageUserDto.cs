@@ -1,8 +1,7 @@
-﻿namespace api.Models.Dtos
+﻿namespace api.Models.Dtos;
+
+public class MessageUserDto
 {
-    public class MessageUserDto
-    {
-        public string Username { get; set; }
-        public string Avatar { get; set; }
-    }
+    public string Username { get; set; }
+    public string Avatar { get; set; }
 }

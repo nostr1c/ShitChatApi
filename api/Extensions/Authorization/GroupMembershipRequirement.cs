@@ -1,14 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 
-namespace api.Extensions.Authorization
-{
-    public class GroupMembershipRequirement : IAuthorizationRequirement
-    {
-        public string GroupIdParameter { get; }
+namespace api.Extensions.Authorization;
 
-        public GroupMembershipRequirement(string groupIdParameter = "groupGuid")
-        {
-            GroupIdParameter = groupIdParameter;
-        }
+public class GroupMembershipRequirement : IAuthorizationRequirement
+{
+    public string GroupIdParameter { get; }
+
+    public GroupMembershipRequirement(string groupIdParameter = "groupGuid")
+    {
+        GroupIdParameter = groupIdParameter;
     }
 }

@@ -1,25 +1,24 @@
 ﻿using FluentValidation;
 
-namespace api.Models.Requests
+namespace api.Models.Requests;
+
+public class LoginUserRequest
 {
-    public class LoginUserRequest
+    public string Email { get; set; }
+
+    public string Password { get; set; }
+}
+
+public class RequestLoginValidator : AbstractValidator<LoginUserRequest>
+{
+    public RequestLoginValidator()
     {
-        public string Email { get; set; }
+        RuleFor(x => x.Email)
+            .NotEmpty()
+                .WithMessage("ErrorEmailCannotBeEmpty");
 
-        public string Password { get; set; }
-    }
-
-    public class RequestLoginValidator : AbstractValidator<LoginUserRequest>
-    {
-        public RequestLoginValidator()
-        {
-            RuleFor(x => x.Email)
-                .NotEmpty()
-                    .WithMessage("ErrorEmailCannotBeEmpty");
-
-            RuleFor(x => x.Password)
-                .NotEmpty()
-                    .WithMessage("ErrorPasswordCannotBeEmpty");
-        }
+        RuleFor(x => x.Password)
+            .NotEmpty()
+                .WithMessage("ErrorPasswordCannotBeEmpty");
     }
 }
