@@ -6,6 +6,9 @@ namespace api.Data.Models;
 public class User : IdentityUser
 {
     public string? AvatarUri { get; set; }
+    
+    public string? RefreshToken { get; set; }
+    public DateTime RefreshTokenExpiryTime { get; set; }
 
     public DateOnly CreatedAt { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
 
