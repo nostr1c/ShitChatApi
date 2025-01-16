@@ -43,6 +43,18 @@ public class Program
                 ValidAudience = jwtIssuer,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
             };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = ctx =>
+                {
+                    ctx.Request.Cookies.TryGetValue("accessToken", out var accessToken);
+                    if (!string.IsNullOrEmpty(accessToken))
+                        ctx.Token = accessToken;
+
+                    return Task.CompletedTask;
+                }
+            };
         });
 
         // Entity framework
@@ -134,6 +146,20 @@ public class Program
             c.IncludeXmlComments(xmlPath);
         });
 
+        // CORS
+        // Register CORS service
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend",
+                policy =>
+                {
+                    policy.WithOrigins("http://localhost:5174") // React frontend URL
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials(); // If you need credentials like cookies
+                });
+        });
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -147,6 +173,7 @@ public class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseCors("AllowFrontend");
 
         app.MapControllers();
 

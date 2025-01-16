@@ -4,6 +4,7 @@ using FluentValidation;
 using api.Models.Dtos;
 using api.Models.Requests;
 using api.Services.Interfaces;
+using api.Data.Models;
 
 namespace api.Controllers;
 
@@ -72,11 +73,11 @@ public class AuthController : ControllerBase
     /// Login a user
     /// </summary>
     [HttpPost("Login")]
-    public async Task<ActionResult<GenericResponse<LoginUserDto>>> Login([FromBody] LoginUserRequest request)
+    public async Task<ActionResult<GenericResponse<string>>> Login([FromBody] LoginUserRequest request)
     {
         var validator = _serviceProvider.GetRequiredService<IValidator<LoginUserRequest>>();
         var validationResult = await validator.ValidateAsync(request);
-        var response = new GenericResponse<LoginUserDto>();
+        var response = new GenericResponse<string>();
 
         if (!validationResult.IsValid)
         {
@@ -96,10 +97,47 @@ public class AuthController : ControllerBase
         if (!success)
         {
             response.Errors.Add("ErrorAuthenticatingUser", new List<string> { message });
+            return Unauthorized(response);
+        }
+
+        _accountService.SetTokensInsideCookie(userDto.Token, HttpContext);
+
+        //response.Data = userDto;
+        response.Data = "Success";
+
+        return Ok(response);
+    }
+
+
+    /// <summary>
+    /// Refresh user token
+    /// </summary>
+    [HttpPost("Refresh")]
+    public async Task<ActionResult<GenericResponse<string>>> Refresh()
+    {
+        var response = new GenericResponse<string>();
+
+        if (!HttpContext.Request.Cookies.TryGetValue("accessToken", out var accessToken) ||
+            !HttpContext.Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+        {
+            response.Errors.Add("TokenError", new List<string> { "Access token or refresh token is missing" });
+            return BadRequest(response);
+
+        }
+
+        var tokenDto = new TokenDto(accessToken, refreshToken);
+
+        var (success, tokenDtoToReturn) = await _accountService.RefreshToken(tokenDto);
+
+        if (!success)
+        {
+            response.Errors.Add("ErrorRefreshingSignIn", new List<string> { "Token bad request" });
             return BadRequest(response);
         }
 
-        response.Data = userDto;
+        _accountService.SetTokensInsideCookie(tokenDtoToReturn, HttpContext);
+
+        response.Data = "Success";
 
         return Ok(response);
     }
