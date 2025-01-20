@@ -12,9 +12,9 @@ public interface IAuthService
 
     Task<TokenDto> CreateToken(string userId, bool populateExpiry);
 
-    Task<(bool, TokenDto)> RefreshToken(TokenDto tokenDto);
+    Task<(bool, TokenDto?)> RefreshToken(TokenDto tokenDto);
 
     void SetTokensInsideCookie(TokenDto tokenDto, HttpContext context);
 
-
+    Task<UserDto?> GetCurrentUserAsync();
 }

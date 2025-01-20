@@ -5,6 +5,9 @@ using api.Models.Dtos;
 using api.Models.Requests;
 using api.Services.Interfaces;
 using api.Data.Models;
+using Azure;
+using api.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace api.Controllers;
 
@@ -13,18 +16,18 @@ namespace api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IConfiguration _config;
-    private readonly IAuthService _accountService;
+    private readonly IAuthService _authService;
     private readonly IServiceProvider _serviceProvider;
 
     public AuthController
     (
         IConfiguration config,
-        IAuthService accountService,
+        IAuthService authService,
         IServiceProvider serviceProvider
     )
     {
         _config = config;
-        _accountService = accountService;
+        _authService = authService;
         _serviceProvider = serviceProvider;
     }
     /// <summary>
@@ -50,7 +53,7 @@ public class AuthController : ControllerBase
             return BadRequest(response);
         }
 
-        var user = await _accountService.RegisterUserAsync(request);
+        var user = await _authService.RegisterUserAsync(request);
         if (user == null)
         {
             return BadRequest("ErrorCreatingUser");
@@ -92,7 +95,7 @@ public class AuthController : ControllerBase
             return BadRequest(response);
         }
 
-        var (success, message, userDto) = await _accountService.LoginUserAsync(request);
+        var (success, message, userDto) = await _authService.LoginUserAsync(request);
 
         if (!success)
         {
@@ -100,7 +103,7 @@ public class AuthController : ControllerBase
             return Unauthorized(response);
         }
 
-        _accountService.SetTokensInsideCookie(userDto.Token, HttpContext);
+        _authService.SetTokensInsideCookie(userDto.Token, HttpContext);
 
         //response.Data = userDto;
         response.Data = "Success";
@@ -108,6 +111,34 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Logout a user
+    /// </summary>
+    [HttpPost("Logout")]
+    public ActionResult<GenericResponse<string>> Logout()
+    {
+        // Ensure that cookies are deleted with the same settings as they were set
+        Response.Cookies.Delete("accessToken", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None
+        });
+
+        Response.Cookies.Delete("refreshToken", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None
+        });
+
+        var response = new GenericResponse<string>
+        {
+            Message = "Logged out successfully"
+        };
+
+        return Ok(response);
+    }
 
     /// <summary>
     /// Refresh user token
@@ -117,27 +148,49 @@ public class AuthController : ControllerBase
     {
         var response = new GenericResponse<string>();
 
-        if (!HttpContext.Request.Cookies.TryGetValue("accessToken", out var accessToken) ||
-            !HttpContext.Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+        if (!HttpContext.Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
         {
-            response.Errors.Add("TokenError", new List<string> { "Access token or refresh token is missing" });
-            return BadRequest(response);
+            response.Errors.Add("TokenError", new List<string> { "Refresh token is missing" });
+            return Ok(response);
 
         }
 
-        var tokenDto = new TokenDto(accessToken, refreshToken);
+        var tokenDto = new TokenDto(null, refreshToken);
 
-        var (success, tokenDtoToReturn) = await _accountService.RefreshToken(tokenDto);
+        var (success, tokenDtoToReturn) = await _authService.RefreshToken(tokenDto);
 
-        if (!success)
+        if (!success || tokenDtoToReturn is null)
         {
             response.Errors.Add("ErrorRefreshingSignIn", new List<string> { "Token bad request" });
-            return BadRequest(response);
+            return Ok(response);
         }
 
-        _accountService.SetTokensInsideCookie(tokenDtoToReturn, HttpContext);
+        _authService.SetTokensInsideCookie(tokenDtoToReturn, HttpContext);
 
-        response.Data = "Success";
+        response.Message = "Refreshed token";
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Get currently logged in  user
+    /// </summary>
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [HttpGet("Me")]
+    public async Task<ActionResult<GenericResponse<UserDto>>> GetCurrentUser()
+    {
+        var response = new GenericResponse<UserDto>();
+
+        if (HttpContext.User.GetUserGuid() is null)
+        {
+            return Unauthorized();
+        }
+
+        var userDto = await _authService.GetCurrentUserAsync();
+        if (userDto is null)
+            return NotFound();
+
+        response.Data = userDto;
 
         return Ok(response);
     }

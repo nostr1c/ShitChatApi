@@ -87,6 +87,8 @@ public class Program
         builder.Services.AddScoped<IAuthorizationHandler, GroupMembershipHandler>();
 
         // Services
+        builder.Services.AddHttpContextAccessor();
+
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IConnectionService, ConnectionService>();
         builder.Services.AddScoped<IUserService, UserService>();
@@ -103,7 +105,6 @@ public class Program
 
         builder.Services.AddControllers();
 
-        builder.Services.AddHttpContextAccessor();
 
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
@@ -153,7 +154,7 @@ public class Program
             options.AddPolicy("AllowFrontend",
                 policy =>
                 {
-                    policy.WithOrigins("http://localhost:5174") // React frontend URL
+                    policy.WithOrigins("http://localhost:5173", "http://localhost:4173") // React frontend URL
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials(); // If you need credentials like cookies
@@ -171,9 +172,9 @@ public class Program
 
         app.UseHttpsRedirection();
 
+        app.UseCors("AllowFrontend");
         app.UseAuthentication();
         app.UseAuthorization();
-        app.UseCors("AllowFrontend");
 
         app.MapControllers();
 

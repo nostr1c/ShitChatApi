@@ -1,9 +1,11 @@
 ﻿using api.Data;
 using api.Data.Models;
+using api.Extensions;
 using api.Models.Dtos;
 using api.Models.Requests;
 using api.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -18,19 +20,22 @@ public class AuthService : IAuthService
     private readonly SignInManager<User> _signInManager;
     private readonly IConfiguration _config;
     private readonly AppDbContext _dbContext;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public AuthService
     (
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         IConfiguration config,
-        AppDbContext dbContext
+        AppDbContext dbContext,
+        IHttpContextAccessor httpContextAccessor
     )
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _config = config;
         _dbContext = dbContext;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<User?> RegisterUserAsync(CreateUserRequest request)
@@ -86,7 +91,6 @@ public class AuthService : IAuthService
 
         return (success, message, userDto);
     }
-
     public async Task<TokenDto> CreateToken(string userId, bool populateExpiry)
     {
         var user = await _userManager.FindByIdAsync(userId);
@@ -111,18 +115,18 @@ public class AuthService : IAuthService
             signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256)
         );
 
+        // Generate a new refresh token
         var refreshToken = CreateRefreshToken();
 
+        // Update the refresh token for the user in the database if needed
         if (user != null)
         {
             user.RefreshToken = refreshToken;
-            _dbContext.Users.Update(user);
 
             if (populateExpiry)
             {
                 user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
             }
-
             await _userManager.UpdateAsync(user);
         }
 
@@ -143,50 +147,58 @@ public class AuthService : IAuthService
         }
     }
 
-    private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+    //private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+    //{
+    //    var jwtKey = _config["Jwt:Key"];
+    //    var jwtIssuer = _config["Jwt:Issuer"];
+
+    //    var tokenValidationParameters = new TokenValidationParameters
+    //    {
+    //        ValidateAudience = true,
+    //        ValidateIssuer = true,
+    //        ValidateIssuerSigningKey = true,
+    //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+    //        ValidateLifetime = false,
+    //        ValidIssuer = jwtIssuer,
+    //        ValidAudience = jwtIssuer,
+    //    };
+
+    //    var tokenHandler = new JwtSecurityTokenHandler();
+    //    SecurityToken securityToken;
+    //    var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
+    //    var jwtSecurityToken = securityToken as JwtSecurityToken;
+
+    //    if (jwtSecurityToken is null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+    //    {
+    //        throw new SecurityTokenException("Invalid token");
+    //    }
+
+    //    return principal;
+    //}
+
+    public async Task<(bool, TokenDto?)> RefreshToken(TokenDto tokenDto)
     {
-        var jwtKey = _config["Jwt:Key"];
-        var jwtIssuer = _config["Jwt:Issuer"];
-
-        var tokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateAudience = true,
-            ValidateIssuer = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ValidateLifetime = false,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtIssuer,
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        SecurityToken securityToken;
-        var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
-        var jwtSecurityToken = securityToken as JwtSecurityToken;
-
-        if (jwtSecurityToken is null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-        {
-            throw new SecurityTokenException("Invalid token");
-        }
-
-        return principal;
-    }
-
-    public async Task<(bool, TokenDto)> RefreshToken(TokenDto tokenDto)
-    {
-        if (string.IsNullOrEmpty(tokenDto.AccessToken) || string.IsNullOrEmpty(tokenDto.RefreshTokenn))
+        if (string.IsNullOrEmpty(tokenDto.RefreshTokenn))
         {
             return (false, null);
         }
 
-        var principal = GetPrincipalFromExpiredToken(tokenDto.AccessToken);
-        var user = await _userManager.FindByNameAsync(principal.Identity.Name);
+        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.RefreshToken == tokenDto.RefreshTokenn);
+
         if (user is null || user.RefreshToken != tokenDto.RefreshTokenn || user.RefreshTokenExpiryTime <= DateTime.Now)
         {
-            return (false, tokenDto);
+            return (false, null);
         }
 
-        return (true, await CreateToken(user.Id, false));
+        var newTokenDto = await CreateToken(user.Id, true);
+
+        user.RefreshToken = newTokenDto.RefreshTokenn;
+        user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
+
+        await _dbContext.SaveChangesAsync();
+
+
+        return (true, newTokenDto);
     }
 
     public void SetTokensInsideCookie(TokenDto tokenDto, HttpContext context)
@@ -210,5 +222,23 @@ public class AuthService : IAuthService
                 Secure = true,
                 SameSite = SameSiteMode.None
             });
+    }
+
+    public async Task<UserDto?> GetCurrentUserAsync()
+    {
+        var user = await _userManager.FindByIdAsync(_httpContextAccessor.HttpContext.User.GetUserGuid());
+        if (user is null)
+            return null;
+
+        var userDto = new UserDto
+        {
+            Id = user.Id,
+            Username = user.UserName,
+            Email = user.Email,
+            Avatar = user.AvatarUri,
+            CreatedAt = user.CreatedAt
+        };
+
+        return userDto;
     }
 }

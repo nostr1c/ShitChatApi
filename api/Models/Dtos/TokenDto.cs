@@ -1,3 +1,3 @@
 ﻿namespace api.Models.Dtos;
 
-public record TokenDto(string AccessToken, string RefreshTokenn);
+public record TokenDto(string? AccessToken, string RefreshTokenn);
