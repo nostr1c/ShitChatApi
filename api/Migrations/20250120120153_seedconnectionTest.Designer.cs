@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using api.Data;
 
@@ -11,9 +12,11 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250120120153_seedconnectionTest")]
+    partial class seedconnectionTest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -206,38 +209,6 @@ namespace api.Migrations
                             Accepted = true,
                             CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             FriendId = "a1f2d713-1234-43fa-9c8e-65fa6ee39244",
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            id = new Guid("60f01455-f4f7-4986-9489-75ffd3d699e0"),
-                            Accepted = true,
-                            CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FriendId = "c1f3d713-5678-43fa-9c8e-65fa6ee39245",
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            id = new Guid("a875b4fb-f2b1-4a68-8684-4ab4915c002d"),
-                            Accepted = true,
-                            CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FriendId = "d1f4d713-9101-43fa-9c8e-65fa6ee39246",
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            id = new Guid("bbb967e5-a6b5-41c0-9d69-6a72cc05a12f"),
-                            Accepted = true,
-                            CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FriendId = "e1f5d713-1122-43fa-9c8e-65fa6ee39247",
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            id = new Guid("cfa42098-b22a-4272-b9d9-52f4b57de616"),
-                            Accepted = true,
-                            CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FriendId = "f1f6d713-3344-43fa-9c8e-65fa6ee39248",
                             UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
                         });
                 });
