@@ -2,9 +2,11 @@
 using api.Data.Models;
 using api.Extensions;
 using api.Models.Dtos;
-using api.Models.Requests;
 using api.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace api.Services;
 
@@ -12,15 +14,24 @@ public class UserService : IUserService
 {
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly UserManager<User> _userManager;
+    private readonly string _imageStoragePath = Path.Combine(Directory.GetCurrentDirectory(), "UploadedImages");
 
     public UserService
     (
         AppDbContext dbContext,
-        IHttpContextAccessor httpContextAccessor
+        IHttpContextAccessor httpContextAccessor,
+        UserManager<User> userManager
     )
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
+        _userManager = userManager;
+
+        if (!Directory.Exists(_imageStoragePath))
+        {
+            Directory.CreateDirectory(_imageStoragePath);
+        }
     }
 
     public async Task<(bool, User?)> GetUserByGuidAsync(string userGuid)
@@ -33,19 +44,42 @@ public class UserService : IUserService
         return (true, user);
     }
 
-    public async Task<(bool, string?)> UpdateAvatarAsync(UpdateAvatarRequest request)
+    public async Task<(bool, string)> UpdateAvatarAsync(IFormFile avatar)
     {
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == _httpContextAccessor.HttpContext.User.GetUserGuid());
+        if (avatar == null || avatar.Length == 0)
+            return (false, "ErrorInvalidFile");
 
+        var user = await _userManager.FindByIdAsync(_httpContextAccessor.HttpContext.User.GetUserGuid());
         if (user == null)
-            return (false, null);
+            return (false, "ErrorUserNotFound");
 
-        user.AvatarUri = request.AvatarUri;
+        string[] allowedExtensions = [".jpg", ".jpeg", ".png"];
 
-        _dbContext.Users.Update(user);
-        await _dbContext.SaveChangesAsync();
+        var fileExtension = Path.GetExtension(avatar.FileName).ToLower();
+        if (!allowedExtensions.Contains(fileExtension))
+            return (false, "ErrorNotValidFileFormat");
 
-        return (true, request.AvatarUri);
+        string imageId = Guid.NewGuid().ToString();
+        string imageName = $"{imageId}{fileExtension}";
+        string ImagePath = Path.Combine(_imageStoragePath, imageName);
+
+        using var image = await Image.LoadAsync(avatar.OpenReadStream());
+
+        image.Mutate(x => x.Resize(new ResizeOptions
+        {
+            Size = new Size(400, 400),
+            Mode = ResizeMode.Crop
+        }));
+
+        using (var fileStream = new FileStream(ImagePath, FileMode.Create))
+        {
+            await image.SaveAsWebpAsync(fileStream);
+        }
+
+        user.AvatarUri = imageName;
+        await _userManager.UpdateAsync(user);
+
+        return (true, "SuccessUpdatedAvatar");
     }
 
     public async Task<List<ConnectionDto>> GetConnectionsAsync()
