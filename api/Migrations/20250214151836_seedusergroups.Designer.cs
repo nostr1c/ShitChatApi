@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using api.Data;
 
@@ -11,9 +12,11 @@ using api.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250214151836_seedusergroups")]
+    partial class seedusergroups
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -182,17 +185,17 @@ namespace api.Migrations
                         },
                         new
                         {
-                            GroupsId = new Guid("f50053c8-7fd8-498b-8c0b-30277bc378b0"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
                             GroupsId = new Guid("707e730d-0d72-4109-b9d9-5dc47b637268"),
                             UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
                         },
                         new
                         {
                             GroupsId = new Guid("c7fcbe94-0f5f-47e6-9b71-5cc04ce32538"),
+                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                        },
+                        new
+                        {
+                            GroupsId = new Guid("f50053c8-7fd8-498b-8c0b-30277bc378b0"),
                             UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
                         });
                 });
@@ -349,24 +352,6 @@ namespace api.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Messages");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("7acbca3e-d27a-403c-af5b-37b31e4bf53a"),
-                            Content = "Hej",
-                            CreatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            Id = new Guid("1baf7663-c7da-4954-bd1c-2865de582301"),
-                            Content = "Nämen tjena",
-                            CreatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            UserId = "a1f2d713-1234-43fa-9c8e-65fa6ee39244"
-                        });
                 });
 
             modelBuilder.Entity("api.Data.Models.User", b =>
@@ -455,7 +440,7 @@ namespace api.Migrations
                             Id = "bb29d713-9414-43fa-9c8e-65fa6ee39243",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 2, 14),
                             Email = "alice.smith@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -474,7 +459,7 @@ namespace api.Migrations
                             Id = "a1f2d713-1234-43fa-9c8e-65fa6ee39244",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 2, 14),
                             Email = "bob.jones@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -493,7 +478,7 @@ namespace api.Migrations
                             Id = "c1f3d713-5678-43fa-9c8e-65fa6ee39245",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 2, 14),
                             Email = "carla.davis@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -512,7 +497,7 @@ namespace api.Migrations
                             Id = "d1f4d713-9101-43fa-9c8e-65fa6ee39246",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 2, 14),
                             Email = "david.lee@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -531,7 +516,7 @@ namespace api.Migrations
                             Id = "e1f5d713-1122-43fa-9c8e-65fa6ee39247",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 2, 14),
                             Email = "emily.white@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -550,7 +535,7 @@ namespace api.Migrations
                             Id = "f1f6d713-3344-43fa-9c8e-65fa6ee39248",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 2, 14),
                             Email = "frank.hall@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,

@@ -4,8 +4,6 @@ using FluentValidation;
 using api.Models.Dtos;
 using api.Models.Requests;
 using api.Services.Interfaces;
-using api.Data.Models;
-using Azure;
 using api.Extensions;
 using Microsoft.AspNetCore.Authorization;
 
@@ -76,11 +74,11 @@ public class AuthController : ControllerBase
     /// Login a user
     /// </summary>
     [HttpPost("Login")]
-    public async Task<ActionResult<GenericResponse<string>>> Login([FromBody] LoginUserRequest request)
+    public async Task<ActionResult<GenericResponse<bool>>> Login([FromBody] LoginUserRequest request)
     {
         var validator = _serviceProvider.GetRequiredService<IValidator<LoginUserRequest>>();
         var validationResult = await validator.ValidateAsync(request);
-        var response = new GenericResponse<string>();
+        var response = new GenericResponse<bool>();
 
         if (!validationResult.IsValid)
         {
@@ -106,7 +104,8 @@ public class AuthController : ControllerBase
         _authService.SetTokensInsideCookie(userDto.Token, HttpContext);
 
         //response.Data = userDto;
-        response.Data = "Success";
+        response.Data = true;
+        response.Message = "SuccessLoggedIn";
 
         return Ok(response);
     }

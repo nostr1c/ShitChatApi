@@ -42,7 +42,15 @@ public class AppDbContext : IdentityDbContext<User>
         builder.Entity<User>()
             .HasMany(u => u.Groups)
             .WithMany(g => g.Users)
-            .UsingEntity(j => j.ToTable("UserGroups"));
+            .UsingEntity<Dictionary<string, object>>(
+                "UserGroups",
+                j => j.HasOne<Group>().WithMany().HasForeignKey("GroupsId"),
+                j => j.HasOne<User>().WithMany().HasForeignKey("UsersId"),
+                j =>
+                {
+                    j.HasKey("GroupsId", "UsersId");
+                }
+            );
 
         builder.Entity<Message>()
             .HasOne(m => m.Group)
@@ -247,6 +255,92 @@ public class AppDbContext : IdentityDbContext<User>
                 FriendId = user6.Id,
                 Accepted = true,
                 CreatedAt = new DateTime(2024, 12, 23),
+            }
+        );
+
+        var group1 = Guid.Parse("be081304-63c6-4cae-bf25-b7e33cc6e495");
+        var group2 = Guid.Parse("25d5ec2b-ebe4-4462-ada9-17c246fb5273");
+        var group3 = Guid.Parse("f50053c8-7fd8-498b-8c0b-30277bc378b0");
+        var group4 = Guid.Parse("707e730d-0d72-4109-b9d9-5dc47b637268");
+        var group5 = Guid.Parse("c7fcbe94-0f5f-47e6-9b71-5cc04ce32538");
+
+        builder.Entity<Group>().HasData(
+            new Group
+            {
+                Id = group1,
+                Name = "Group 1",
+                OwnerId = user1.Id
+            },
+            new Group
+            {
+                Id = group2,
+                Name = "Group 2",
+                OwnerId = user1.Id
+            },
+            new Group
+            {
+                Id = group3,
+                Name = "Group 3",
+                OwnerId = user3.Id
+            },
+            new Group
+            {
+                Id = group4,
+                Name = "Group 4",
+                OwnerId = user4.Id
+            },
+            new Group
+            {
+                Id = group5,
+                Name = "Group 5",
+                OwnerId = user5.Id
+            }
+        );
+
+        builder.Entity("UserGroups").HasData(
+            new
+            {
+                GroupsId = group1,
+                UsersId = user1.Id
+            },
+            new
+            {
+                GroupsId = group2,
+                UsersId = user1.Id
+            },
+            new
+            {
+                GroupsId = group3,
+                UsersId = user1.Id
+            },
+            new
+            {
+                GroupsId = group4,
+                UsersId = user1.Id
+            },
+            new
+            {
+                GroupsId = group5,
+                UsersId = user1.Id
+            }
+        );
+
+        builder.Entity<Message>().HasData(
+            new Message
+            {
+                Id = Guid.Parse("7acbca3e-d27a-403c-af5b-37b31e4bf53a"),
+                Content = "Hej",
+                CreatedAt = new DateTime(2025, 01, 15),
+                GroupId = group1,
+                UserId = user1.Id
+            },
+            new Message
+            {
+                Id = Guid.Parse("1baf7663-c7da-4954-bd1c-2865de582301"),
+                Content = "Nämen tjena",
+                CreatedAt = new DateTime(2025, 01, 15),
+                GroupId = group1,
+                UserId = user2.Id
             }
         );
     }

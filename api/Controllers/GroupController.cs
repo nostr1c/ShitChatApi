@@ -2,7 +2,6 @@
 using api.Models.Dtos;
 using api.Models.Requests;
 using api.Services.Interfaces;
-using Azure.Core;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

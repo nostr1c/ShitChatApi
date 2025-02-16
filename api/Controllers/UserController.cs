@@ -15,7 +15,6 @@ public class UserController : ControllerBase
     private readonly IGroupService _groupService;
     private readonly string _imageStoragePath = Path.Combine(Directory.GetCurrentDirectory(), "UploadedImages");
 
-
     public UserController
     (
         IUserService userService,
