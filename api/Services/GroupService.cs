@@ -133,6 +133,7 @@ public class GroupService : IGroupService
             CreatedAt = x.CreatedAt,
             User = new MessageUserDto
             {
+                Id = x.User.Id,
                 Username = x.User.UserName,
                 Avatar = x.User.AvatarUri
             }
