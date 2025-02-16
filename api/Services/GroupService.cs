@@ -126,7 +126,9 @@ public class GroupService : IGroupService
         if (group == null)
             return (false, "ErrorGroupNotFound", null);
 
-        var messages = group.Messages.Select(x => new MessageDto
+        var messages = group.Messages
+            .OrderByDescending(x=> x.CreatedAt)
+            .Select(x => new MessageDto
         {
             Id = x.Id,
             Content = x.Content,

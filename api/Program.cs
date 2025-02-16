@@ -148,16 +148,15 @@ public class Program
         });
 
         // CORS
-        // Register CORS service
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowFrontend",
                 policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173", "http://localhost:4173") // React frontend URL
+                    policy.WithOrigins("http://localhost:5173", "http://localhost:4173")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
-                        .AllowCredentials(); // If you need credentials like cookies
+                        .AllowCredentials();
                 });
         });
 
