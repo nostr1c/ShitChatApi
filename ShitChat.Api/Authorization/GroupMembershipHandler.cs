@@ -1,9 +1,9 @@
-﻿using Infrastructure.Data;
+﻿using ShitChat.Infrastructure.Data;
+using ShitChat.Shared.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Shared.Extensions;
 
-namespace Api.Authorization;
+namespace ShitChat.Api.Authorization;
 
 public class GroupMembershipHandler : AuthorizationHandler<GroupMembershipRequirement>
 {

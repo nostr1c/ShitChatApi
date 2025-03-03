@@ -1,7 +1,7 @@
-﻿using Application.DTOs;
-using Application.Requests;
+﻿using ShitChat.Application.DTOs;
+using ShitChat.Application.Requests;
 
-namespace Application.Interfaces;
+namespace ShitChat.Application.Interfaces;
 
 public interface IGroupService
 {

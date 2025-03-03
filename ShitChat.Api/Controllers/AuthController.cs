@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ShitChat.Application.DTOs;
+using ShitChat.Application.Requests;
+using ShitChat.Application.Interfaces;
+using ShitChat.Shared.Extensions;
+using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
-using Application.DTOs;
-using Application.Requests;
-using Application.Interfaces;
-using Shared.Extensions;
 using Microsoft.AspNetCore.Authorization;
 
-namespace Api.Controllers;
+namespace ShitChat.ShitChat.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]

@@ -1,8 +1,8 @@
-﻿using Domain.Entities;
+﻿using ShitChat.Domain.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Data;
+namespace ShitChat.Infrastructure.Data;
 
 public class AppDbContext : IdentityDbContext<User>
 {

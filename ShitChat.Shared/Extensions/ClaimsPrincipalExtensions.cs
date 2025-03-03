@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace Shared.Extensions;
+namespace ShitChat.Shared.Extensions;
 
 public static class ClaimsPrincipalExtensions
 {

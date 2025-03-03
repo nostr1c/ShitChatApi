@@ -1,4 +1,4 @@
-﻿namespace Application.Interfaces;
+﻿namespace ShitChat.Application.Interfaces;
 
 public interface IConnectionService
 {

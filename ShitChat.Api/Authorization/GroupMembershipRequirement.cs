@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 
-namespace Api.Authorization;
+namespace ShitChat.Api.Authorization;
 
 public class GroupMembershipRequirement : IAuthorizationRequirement
 {

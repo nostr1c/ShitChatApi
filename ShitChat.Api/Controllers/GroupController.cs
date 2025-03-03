@@ -1,13 +1,13 @@
-﻿using Application.DTOs;
-using Application.Requests;
-using Application.Interfaces;
+﻿using ShitChat.Application.DTOs;
+using ShitChat.Application.Requests;
+using ShitChat.Application.Interfaces;
+using ShitChat.Api.Hubs;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Api.Hubs;
 
-namespace Api.Controllers;
+namespace ShitChat.Api.Controllers;
 
 [Authorize(AuthenticationSchemes = "Bearer")]
 [ApiController]

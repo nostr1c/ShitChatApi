@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 
-namespace Application.Requests;
+namespace ShitChat.Application.Requests;
 
 public class CreateGroupRequest
 {

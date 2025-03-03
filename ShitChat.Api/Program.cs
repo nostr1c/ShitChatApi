@@ -1,9 +1,10 @@
-using Domain.Entities;
-using Infrastructure.Data;
-using Api.Hubs;
-using Application.Requests;
-using api.Services;
-using Application.Interfaces;
+using ShitChat.Api.Hubs;
+using ShitChat.Api.Authorization;
+using ShitChat.Application.Services;
+using ShitChat.Domain.Entities;
+using ShitChat.Infrastructure.Data;
+using ShitChat.Application.Requests;
+using ShitChat.Application.Interfaces;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -13,9 +14,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
-using Api.Authorization;
 
-namespace api;
+namespace ShitChat.Api;
 
 public class Program
 {

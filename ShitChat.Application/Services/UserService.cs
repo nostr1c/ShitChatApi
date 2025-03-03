@@ -1,15 +1,15 @@
-﻿using Infrastructure.Data;
-using Domain.Entities;
-using Shared.Extensions;
-using Application.DTOs;
-using Application.Interfaces;
+﻿using ShitChat.Infrastructure.Data;
+using ShitChat.Domain.Entities;
+using ShitChat.Shared.Extensions;
+using ShitChat.Application.DTOs;
+using ShitChat.Application.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using Microsoft.AspNetCore.Http;
 
-namespace api.Services;
+namespace ShitChat.Application.Services;
 
 public class UserService : IUserService
 {

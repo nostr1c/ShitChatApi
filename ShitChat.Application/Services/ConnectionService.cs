@@ -1,10 +1,10 @@
-﻿using Infrastructure.Data;
-using Domain.Entities;
+﻿using ShitChat.Infrastructure.Data;
+using ShitChat.Domain.Entities;
+using ShitChat.Application.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Services;
+namespace ShitChat.Application.Services;
 
 public class ConnectionService : IConnectionService
 {

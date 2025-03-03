@@ -1,11 +1,11 @@
-﻿using Application.DTOs;
-using Application.Interfaces;
-using Domain.Entities;
+﻿using ShitChat.Application.DTOs;
+using ShitChat.Application.Interfaces;
+using ShitChat.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers;
+namespace ShitChat.Api.Controllers;
 
 [Authorize(AuthenticationSchemes = "Bearer")]
 [ApiController]

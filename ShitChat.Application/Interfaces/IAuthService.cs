@@ -1,9 +1,9 @@
-﻿using Domain.Entities;
-using Application.DTOs;
-using Application.Requests;
+﻿using ShitChat.Application.DTOs;
+using ShitChat.Domain.Entities;
+using ShitChat.Application.Requests;
 using Microsoft.AspNetCore.Http;
 
-namespace Application.Interfaces;
+namespace ShitChat.Application.Interfaces;
 
 public interface IAuthService
 {

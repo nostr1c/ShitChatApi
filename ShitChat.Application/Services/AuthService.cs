@@ -1,9 +1,9 @@
-﻿using Infrastructure.Data;
-using Domain.Entities;
-using Shared.Extensions;
-using Application.DTOs;
-using Application.Requests;
-using Application.Interfaces;
+﻿using ShitChat.Infrastructure.Data;
+using ShitChat.Domain.Entities;
+using ShitChat.Shared.Extensions;
+using ShitChat.Application.DTOs;
+using ShitChat.Application.Requests;
+using ShitChat.Application.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,7 +14,7 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 
-namespace api.Services;
+namespace ShitChat.Application.Services;
 
 public class AuthService : IAuthService
 {

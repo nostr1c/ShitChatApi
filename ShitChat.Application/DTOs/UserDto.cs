@@ -1,4 +1,4 @@
-﻿namespace Application.DTOs;
+﻿namespace ShitChat.Application.DTOs;
 
 public class UserDto
 {

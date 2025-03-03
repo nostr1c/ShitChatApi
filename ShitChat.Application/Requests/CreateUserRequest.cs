@@ -1,8 +1,8 @@
-﻿using Domain.Entities;
+﻿using ShitChat.Domain.Entities;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 
-namespace Application.Requests;
+namespace ShitChat.Application.Requests;
 
 public class CreateUserRequest
 {

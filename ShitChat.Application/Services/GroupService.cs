@@ -1,15 +1,15 @@
-﻿using Infrastructure.Data;
-using Domain.Entities;
-using Shared.Extensions;
-using Application.DTOs;
-using Application.Requests;
-using Application.Interfaces;
+﻿using ShitChat.Application.DTOs;
+using ShitChat.Application.Requests;
+using ShitChat.Application.Interfaces;
+using ShitChat.Infrastructure.Data;
+using ShitChat.Domain.Entities;
+using ShitChat.Shared.Extensions;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 
-namespace api.Services;
+namespace ShitChat.Application.Services;
 
 public class GroupService : IGroupService
 {
