@@ -26,7 +26,7 @@ public class ConnectionService : IConnectionService
     {
         var user = await _userManager.FindByNameAsync(userName);
         if (user == null)
-            return (false, "ErrorLoggedInUser"); //mhm
+            return (false, "ErrorLoggedInUser");
 
         var friend = await _userManager.FindByIdAsync(friendId);
         if (friend == null)

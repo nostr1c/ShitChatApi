@@ -11,7 +11,8 @@ public class User : IdentityUser
 
     public DateOnly CreatedAt { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
 
-    // Navigation
+
+    // Navigation props
     public ICollection<Connection> Connections { get; set; }
 
     public ICollection<Group> OwnedGroups { get; set; }

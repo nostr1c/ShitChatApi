@@ -4,7 +4,6 @@ using ShitChat.Application.Interfaces;
 using ShitChat.Infrastructure.Data;
 using ShitChat.Domain.Entities;
 using ShitChat.Shared.Extensions;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;

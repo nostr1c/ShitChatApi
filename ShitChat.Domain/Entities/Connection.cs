@@ -16,8 +16,7 @@ public class Connection
     [JsonPropertyName("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation
-
+    // Navigation props
     [ForeignKey(nameof(UserId))]
     public User user { get; set; }
 

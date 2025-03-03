@@ -115,7 +115,6 @@ public class AuthController : ControllerBase
     [HttpPost("Logout")]
     public ActionResult<GenericResponse<string>> Logout()
     {
-        // Ensure that cookies are deleted with the same settings as they were set
         Response.Cookies.Delete("accessToken", new CookieOptions
         {
             HttpOnly = true,

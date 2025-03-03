@@ -10,7 +10,7 @@ public class Group
 
     public string OwnerId { get; set; }
 
-    // Navigation
+    // Navigation props
     [ForeignKey(nameof(OwnerId))]
     public User Owner { get; set; }
 

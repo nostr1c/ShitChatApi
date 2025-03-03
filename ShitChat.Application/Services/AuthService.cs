@@ -117,10 +117,8 @@ public class AuthService : IAuthService
             signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256)
         );
 
-        // Generate a new refresh token
         var refreshToken = CreateRefreshToken();
 
-        // Update the refresh token for the user in the database if needed
         if (user != null)
         {
             user.RefreshToken = refreshToken;
@@ -148,35 +146,6 @@ public class AuthService : IAuthService
             return Convert.ToBase64String(randomNumber);
         }
     }
-
-    //private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
-    //{
-    //    var jwtKey = _config["Jwt:Key"];
-    //    var jwtIssuer = _config["Jwt:Issuer"];
-
-    //    var tokenValidationParameters = new TokenValidationParameters
-    //    {
-    //        ValidateAudience = true,
-    //        ValidateIssuer = true,
-    //        ValidateIssuerSigningKey = true,
-    //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-    //        ValidateLifetime = false,
-    //        ValidIssuer = jwtIssuer,
-    //        ValidAudience = jwtIssuer,
-    //    };
-
-    //    var tokenHandler = new JwtSecurityTokenHandler();
-    //    SecurityToken securityToken;
-    //    var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
-    //    var jwtSecurityToken = securityToken as JwtSecurityToken;
-
-    //    if (jwtSecurityToken is null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-    //    {
-    //        throw new SecurityTokenException("Invalid token");
-    //    }
-
-    //    return principal;
-    //}
 
     public async Task<(bool, TokenDto?)> RefreshToken(TokenDto tokenDto)
     {
