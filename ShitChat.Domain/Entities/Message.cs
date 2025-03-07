@@ -20,5 +20,4 @@ public class Message
 
     [ForeignKey(nameof(UserId))]
     public User User { get; set; }
-
 }

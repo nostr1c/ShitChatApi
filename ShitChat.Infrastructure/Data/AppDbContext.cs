@@ -305,6 +305,11 @@ public class AppDbContext : IdentityDbContext<User>
             },
             new
             {
+                GroupsId = group1,
+                UsersId = user2.Id
+            },
+            new
+            {
                 GroupsId = group2,
                 UsersId = user1.Id
             },

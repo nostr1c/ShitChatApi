@@ -184,7 +184,7 @@ public class GroupController : ControllerBase
             return BadRequest(response);
         }
 
-        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveMessage", message);
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveMessage", messages, groupGuid);
 
         response.Message = message;
         response.Data = messages;

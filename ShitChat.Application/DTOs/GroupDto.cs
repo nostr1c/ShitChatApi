@@ -6,5 +6,7 @@ public class GroupDto
 
     public string Name { get; set; }
 
+    public string? Latest { get; set; }
+
     public string OwnerId { get; set; }
 }

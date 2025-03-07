@@ -129,7 +129,7 @@ public class GroupService : IGroupService
             return (false, "ErrorGroupNotFound", null);
 
         var messages = group.Messages
-            .OrderByDescending(x=> x.CreatedAt)
+            .OrderBy(x=> x.CreatedAt)
             .Select(x => new MessageDto
         {
             Id = x.Id,
@@ -156,6 +156,10 @@ public class GroupService : IGroupService
             {
                 Id = x.Id,
                 Name = x.Name,
+                Latest = x.Messages
+                    .OrderByDescending(y => y.CreatedAt)
+                    .Select(z => z.Content)
+                    .FirstOrDefault(),
                 OwnerId = x.OwnerId,
             }).ToListAsync();
 
@@ -197,6 +201,7 @@ public class GroupService : IGroupService
             CreatedAt = message.CreatedAt,
             User = new MessageUserDto
             {
+                Id = user.Id,
                 Username = user.UserName,
                 Avatar = user.AvatarUri
             }
