@@ -7,6 +7,7 @@ using ShitChat.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
+using SixLabors.ImageSharp.ColorSpaces;
 
 namespace ShitChat.Application.Services;
 
@@ -84,7 +85,9 @@ public class GroupService : IGroupService
 
     public async Task<GroupDto?> GetGroupByGuidAsync(Guid groupId)
     {
-        var group = await _dbContext.Groups.FirstOrDefaultAsync(x => x.Id == groupId);
+        var group = await _dbContext.Groups
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == groupId);
         if (group == null) return null;
 
         var groupDto = new GroupDto
@@ -97,22 +100,33 @@ public class GroupService : IGroupService
         return groupDto;
     }
 
-    public async Task<(bool, string, IEnumerable<UserDto>?)> GetGroupMembersAsync(Guid groupId)
+    public async Task<(bool, string, IEnumerable<GroupMemberDto>?)> GetGroupMembersAsync(Guid groupId)
     {
         var group = await _dbContext.Groups
+            .AsNoTracking()
             .Include(x => x.Users)
+            .ThenInclude(y => y.GroupRoles)
+            .ThenInclude(z =>  z.GroupRole)
             .SingleOrDefaultAsync(x => x.Id == groupId);
 
         if (group == null)
             return (false, "ErrorGroupNotFound", null);
 
-        var members = group.Users.Select(x => new UserDto
+        var members = group.Users.Select(x => new GroupMemberDto
         {
-            Id = x.Id,
-            Email = x.Email,
-            Username = x.UserName,
-            Avatar = x.AvatarUri,
-            CreatedAt = x.CreatedAt
+            User = new UserDto
+            {
+                Id = x.Id,
+                Email = x.Email,
+                Username = x.UserName,
+                Avatar = x.AvatarUri,
+                CreatedAt = x.CreatedAt
+            },
+            Roles = x.GroupRoles.Where(y => y.GroupRole.GroupId == groupId).Select(x => new GroupRoleDto
+            {
+                Id = x.GroupRoleId,
+                Name = x.GroupRole.Name
+            })
         });
 
         return (true, "SuccessGotGroupMembers", members);
@@ -121,6 +135,7 @@ public class GroupService : IGroupService
     public async Task<(bool, string, IEnumerable<MessageDto>?)> GetGroupMessagesAsync(Guid groupId)
     {
         var group = await _dbContext.Groups
+            .AsNoTracking()
             .Include(x => x.Messages)
                 .ThenInclude(x => x.User)
             .SingleOrDefaultAsync(x => x.Id == groupId);
@@ -149,6 +164,7 @@ public class GroupService : IGroupService
     public async Task<(bool, string, IEnumerable<GroupRoleDto>?)> GetGroupRolesAsync(Guid groupId)
     {
         var group = await _dbContext.Groups
+            .AsNoTracking()
             .Include (x => x.Roles)
             .SingleOrDefaultAsync (x => x.Id == groupId);
 
@@ -170,6 +186,7 @@ public class GroupService : IGroupService
         var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
 
         var groups = await _dbContext.Groups
+            .AsNoTracking()
             .Where(x => x.Users.Any(x => x.Id == userId))
             .Select(x => new GroupDto
             {

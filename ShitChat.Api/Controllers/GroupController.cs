@@ -113,9 +113,9 @@ public class GroupController : ControllerBase
     /// </summary>
     [Authorize(Policy = "GroupMember")]
     [HttpGet("{groupGuid}/members")]
-    public async Task<ActionResult<GenericResponse<IEnumerable<UserDto>>>> GetGroupMembers(Guid groupGuid)
+    public async Task<ActionResult<GenericResponse<IEnumerable<GroupMemberDto>>>> GetGroupMembers(Guid groupGuid)
     {
-        var response = new GenericResponse<IEnumerable<UserDto>>();
+        var response = new GenericResponse<IEnumerable<GroupMemberDto>>();
 
         var (success, message, users) = await _groupService.GetGroupMembersAsync(groupGuid);
 
@@ -192,7 +192,6 @@ public class GroupController : ControllerBase
 
         return Ok(response);
     }
-
 
     /// <summary>
     /// Get group roles
