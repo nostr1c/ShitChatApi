@@ -18,4 +18,6 @@ public class User : IdentityUser
     public ICollection<Group> OwnedGroups { get; set; }
 
     public ICollection<Group> Groups { get; set; }
+
+    public ICollection<UserGroupRole> GroupRoles { get; set; }
 }

@@ -17,4 +17,5 @@ public class Group
     public List<User> Users { get; set; } = new List<User>();
 
     public ICollection<Message> Messages { get; set; }
+    public ICollection<GroupRole> Roles { get; set; }
 }
