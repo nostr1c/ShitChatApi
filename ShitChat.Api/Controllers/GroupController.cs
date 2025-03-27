@@ -6,6 +6,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using ShitChat.Domain.Entities;
 
 namespace ShitChat.Api.Controllers;
 
@@ -188,6 +189,30 @@ public class GroupController : ControllerBase
 
         response.Message = message;
         response.Data = messages;
+
+        return Ok(response);
+    }
+
+
+    /// <summary>
+    /// Get group roles
+    /// </summary>
+    [Authorize(Policy = "GroupMember")]
+    [HttpGet("{groupGuid}/roles")]
+    public async Task<ActionResult<GenericResponse<IEnumerable<GroupRoleDto>>>> GetGroupRoles(Guid groupGuid)
+    {
+        var response = new GenericResponse<IEnumerable<GroupRoleDto>>();
+
+        var (success, message, roles) = await _groupService.GetGroupRolesAsync(groupGuid);
+
+        if (!success)
+        {
+            response.Errors.Add("Error", new List<string> { message });
+            return BadRequest(response);
+        }
+
+        response.Message = message;
+        response.Data = roles;
 
         return Ok(response);
     }

@@ -131,19 +131,38 @@ public class GroupService : IGroupService
         var messages = group.Messages
             .OrderBy(x=> x.CreatedAt)
             .Select(x => new MessageDto
-        {
-            Id = x.Id,
-            Content = x.Content,
-            CreatedAt = x.CreatedAt,
-            User = new MessageUserDto
             {
-                Id = x.User.Id,
-                Username = x.User.UserName,
-                Avatar = x.User.AvatarUri
-            }
-        });
+                Id = x.Id,
+                Content = x.Content,
+                CreatedAt = x.CreatedAt,
+                User = new MessageUserDto
+                {
+                    Id = x.User.Id,
+                    Username = x.User.UserName,
+                    Avatar = x.User.AvatarUri
+                }
+            });
 
         return (true, "SuccessGotGroupMessages", messages);
+    }
+
+    public async Task<(bool, string, IEnumerable<GroupRoleDto>?)> GetGroupRolesAsync(Guid groupId)
+    {
+        var group = await _dbContext.Groups
+            .Include (x => x.Roles)
+            .SingleOrDefaultAsync (x => x.Id == groupId);
+
+        if (group == null)
+            return (false, "ErrorGroupRolesNotFound", null);
+
+        var roles = group.Roles
+            .Select(x => new GroupRoleDto
+            {
+                Id = x.Id,
+                Name = x.Name
+            });
+
+        return (true, "SuccessGotGroupRoles", roles);
     }
 
     public async Task<List<GroupDto>> GetUserGroupsAsync()

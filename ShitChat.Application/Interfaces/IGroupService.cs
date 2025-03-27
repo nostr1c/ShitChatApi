@@ -12,4 +12,5 @@ public interface IGroupService
     Task<(bool, string, IEnumerable<UserDto>?)> GetGroupMembersAsync(Guid groupId);
     Task<(bool, string, IEnumerable<MessageDto>?)> GetGroupMessagesAsync(Guid groupId);
     Task<(bool, string, MessageDto?)> SendMessageAsync(Guid groupId, SendMessageRequest request);
+    Task<(bool, string, IEnumerable<GroupRoleDto>?)> GetGroupRolesAsync(Guid groupId);
 }
