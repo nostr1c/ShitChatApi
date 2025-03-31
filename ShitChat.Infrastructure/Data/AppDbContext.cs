@@ -369,5 +369,64 @@ public class AppDbContext : IdentityDbContext<User>
                 UserId = user2.Id
             }
         );
+
+        var groupRole1 = "f3dc9330-dce9-4bfc-9844-dd8232fce023";
+        var groupRole2 = "62a70d41-0339-46f1-81c3-6d27d9cda762";
+        var groupRole3 = "927af184-f6bc-4d8a-b36e-ff5f8aa3d14b";
+        var groupRole4 = "eec0a883-0fb8-4f7a-bea7-04892684b1bd";
+
+        builder.Entity<GroupRole>().HasData(
+            new GroupRole
+            {
+                Id = Guid.Parse(groupRole1),
+                Name = "Administrator",
+                GroupId = group1
+            },
+            new GroupRole
+            {
+                Id = Guid.Parse(groupRole2),
+                Name = "Moderator",
+                GroupId = group1
+            },
+            new GroupRole
+            {
+                Id = Guid.Parse(groupRole3),
+                Name = "Kung för en dag",
+                GroupId = group1
+            },
+            new GroupRole
+            {
+                Id = Guid.Parse(groupRole4),
+                Name = "Boss",
+                GroupId = group1
+            }
+        );
+
+        builder.Entity<UserGroupRole>().HasData(
+            new UserGroupRole
+            {
+                Id = Guid.Parse("4fef1968-54e7-4352-b7dc-52c9e9d223a4"),
+                GroupRoleId = Guid.Parse(groupRole1),
+                UserId = user1.Id
+            },
+            new UserGroupRole
+            {
+                Id = Guid.Parse("fc1a0e5c-e610-4929-b18e-b25324121a5d"),
+                GroupRoleId = Guid.Parse(groupRole2),
+                UserId = user1.Id
+            },
+            new UserGroupRole
+            {
+                Id = Guid.Parse("3c69703b-48e1-44e0-8bab-6f8d7cf8d41c"),
+                GroupRoleId = Guid.Parse(groupRole3),
+                UserId = user1.Id
+            },
+            new UserGroupRole
+            {
+                Id = Guid.Parse("27c9c624-d28d-47f8-b875-9502b5522cc7"),
+                GroupRoleId = Guid.Parse(groupRole4),
+                UserId = user1.Id
+            }
+        );
     }
 }
