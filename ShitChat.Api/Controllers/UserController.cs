@@ -77,6 +77,7 @@ public class UserController : ControllerBase
     /// <summary>
     /// Get user avatar
     /// </summary>
+    [AllowAnonymous]
     [HttpGet("Avatar/{imageId}")]
     public IActionResult GetAvatar(string imageId)
     {
