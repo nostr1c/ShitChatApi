@@ -163,12 +163,6 @@ public class AuthService : IAuthService
 
         var newTokenDto = await CreateToken(user.Id, true);
 
-        user.RefreshToken = newTokenDto.RefreshTokenn;
-        user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
-
-        await _dbContext.SaveChangesAsync();
-
-
         return (true, newTokenDto);
     }
 
