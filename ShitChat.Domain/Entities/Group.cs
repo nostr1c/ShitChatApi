@@ -18,4 +18,5 @@ public class Group
 
     public ICollection<Message> Messages { get; set; }
     public ICollection<GroupRole> Roles { get; set; }
+    public ICollection<Invite> Invites { get; set; }
 }

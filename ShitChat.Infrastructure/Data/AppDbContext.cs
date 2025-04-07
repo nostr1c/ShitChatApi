@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<Message> Messages { get; set; }
     public DbSet<GroupRole> GroupRoles { get; set; }
     public DbSet<UserGroupRole> UserGroupRoles { get; set; }
+    public DbSet<Invite> Invites { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -92,6 +93,16 @@ public class AppDbContext : IdentityDbContext<User>
             .WithMany()
             .HasForeignKey(gr => gr.GroupRoleId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        builder.Entity<Invite>()
+            .HasOne(i => i.Creator)
+            .WithMany()
+            .HasForeignKey(i => i.UserId);
+
+        builder.Entity<Invite>()
+            .HasOne(i => i.Group)
+            .WithMany(g => g.Invites)
+            .HasForeignKey(i =>i.GroupId);
 
         string user1Email = "alice.smith@example.com";
         string user1UserName = "alice123";
