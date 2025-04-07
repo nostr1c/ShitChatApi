@@ -11,7 +11,7 @@ public interface IAuthService
 
     Task<(bool, string, LoginUserDto)> LoginUserAsync(LoginUserRequest request);
 
-    Task<TokenDto> CreateToken(string userId, bool populateExpiry);
+    Task<TokenDto> CreateToken(User user);
 
     Task<(bool, TokenDto?)> RefreshToken(TokenDto tokenDto);
 
