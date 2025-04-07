@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace ShitChat.Application.Services;
 
@@ -23,6 +24,7 @@ public class AuthService : IAuthService
     private readonly IConfiguration _config;
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<AuthService> _logger;
 
     public AuthService
     (
@@ -30,7 +32,8 @@ public class AuthService : IAuthService
         SignInManager<User> signInManager,
         IConfiguration config,
         AppDbContext dbContext,
-        IHttpContextAccessor httpContextAccessor
+        IHttpContextAccessor httpContextAccessor,
+        ILogger<AuthService> logger
     )
     {
         _userManager = userManager;
@@ -38,6 +41,7 @@ public class AuthService : IAuthService
         _config = config;
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
+        _logger = logger;
     }
 
     public async Task<User?> RegisterUserAsync(CreateUserRequest request)
@@ -80,7 +84,7 @@ public class AuthService : IAuthService
             return (success, message, null);
         }
 
-        var token = await CreateToken(user.Id, true);
+        var token = await CreateToken(user);
 
         var userDto = new LoginUserDto
         {
@@ -93,15 +97,14 @@ public class AuthService : IAuthService
 
         return (success, message, userDto);
     }
-    public async Task<TokenDto> CreateToken(string userId, bool populateExpiry)
+    public async Task<TokenDto> CreateToken(User user)
     {
-        var user = await _userManager.FindByIdAsync(userId);
         var jwtKey = _config["Jwt:Key"];
         var jwtIssuer = _config["Jwt:Issuer"];
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, userId),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
@@ -113,7 +116,7 @@ public class AuthService : IAuthService
             issuer: jwtIssuer,
             audience: jwtIssuer,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(5),
+            expires: DateTime.UtcNow.AddMinutes(10),
             signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256)
         );
 
@@ -122,30 +125,16 @@ public class AuthService : IAuthService
         if (user != null)
         {
             user.RefreshToken = refreshToken;
-
-            if (populateExpiry)
-            {
-                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
-            }
+            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
             await _userManager.UpdateAsync(user);
         }
-
 
         var tokenDto = new TokenDto(new JwtSecurityTokenHandler().WriteToken(token), refreshToken);
 
         return tokenDto;
     }
 
-    private string CreateRefreshToken()
-    {
-        var randomNumber = new byte[32];
-        using (var rng = RandomNumberGenerator.Create())
-        {
-            rng.GetBytes(randomNumber);
 
-            return Convert.ToBase64String(randomNumber);
-        }
-    }
 
     public async Task<(bool, TokenDto?)> RefreshToken(TokenDto tokenDto)
     {
@@ -156,12 +145,12 @@ public class AuthService : IAuthService
 
         var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.RefreshToken == tokenDto.RefreshTokenn);
 
-        if (user is null || user.RefreshToken != tokenDto.RefreshTokenn || user.RefreshTokenExpiryTime <= DateTime.Now)
+        if (user is null || user.RefreshTokenExpiryTime <= DateTime.Now)
         {
             return (false, null);
         }
 
-        var newTokenDto = await CreateToken(user.Id, true);
+        var newTokenDto = await CreateToken(user);
 
         return (true, newTokenDto);
     }
@@ -171,7 +160,7 @@ public class AuthService : IAuthService
         context.Response.Cookies.Append("accessToken", tokenDto.AccessToken,
             new CookieOptions
             {
-                Expires = DateTimeOffset.UtcNow.AddMinutes(5),
+                Expires = DateTimeOffset.UtcNow.AddMinutes(10),
                 HttpOnly = true,
                 IsEssential = true,
                 Secure = true,
@@ -205,5 +194,16 @@ public class AuthService : IAuthService
         };
 
         return userDto;
+    }
+
+    private string CreateRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(randomNumber);
+
+            return Convert.ToBase64String(randomNumber);
+        }
     }
 }
