@@ -6,6 +6,7 @@ public class GroupRole
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; }
+    public string Color { get; set; }
     public Guid GroupId { get; set; }
 
     // Navigation

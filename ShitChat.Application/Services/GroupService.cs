@@ -128,7 +128,8 @@ public class GroupService : IGroupService
             Roles = x.GroupRoles.Where(y => y.GroupRole.GroupId == groupId).Select(x => new GroupRoleDto
             {
                 Id = x.GroupRoleId,
-                Name = x.GroupRole.Name
+                Name = x.GroupRole.Name,
+                Color = x.GroupRole.Color
             })
         });
 
@@ -215,7 +216,8 @@ public class GroupService : IGroupService
             .Select(x => new GroupRoleDto
             {
                 Id = x.Id,
-                Name = x.Name
+                Name = x.Name,
+                Color = x.Color
             });
 
         return (true, "SuccessGotGroupRoles", roles);

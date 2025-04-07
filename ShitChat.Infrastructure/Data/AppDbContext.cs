@@ -388,25 +388,29 @@ public class AppDbContext : IdentityDbContext<User>
             {
                 Id = Guid.Parse(groupRole1),
                 Name = "Administrator",
-                GroupId = group1
+                GroupId = group1,
+                Color = "64bcff"
             },
             new GroupRole
             {
                 Id = Guid.Parse(groupRole2),
                 Name = "Moderator",
-                GroupId = group1
+                GroupId = group1,
+                Color = "64bcff"
             },
             new GroupRole
             {
                 Id = Guid.Parse(groupRole3),
                 Name = "Kung för en dag",
-                GroupId = group1
+                GroupId = group1,
+                Color = "64bcff"
             },
             new GroupRole
             {
                 Id = Guid.Parse(groupRole4),
                 Name = "Boss",
-                GroupId = group1
+                GroupId = group1,
+                Color = "64bcff"
             }
         );
 

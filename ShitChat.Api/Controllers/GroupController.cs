@@ -60,6 +60,7 @@ public class GroupController : ControllerBase
         var group = await _groupService.CreateGroupAsync(request);
 
         response.Data = group;
+        response.Message = "SuccessCreatedGroup";
 
         return Ok(response);
     }
