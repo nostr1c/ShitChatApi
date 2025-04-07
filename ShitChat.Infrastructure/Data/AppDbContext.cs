@@ -47,8 +47,16 @@ public class AppDbContext : IdentityDbContext<User>
             .WithMany(g => g.Users)
             .UsingEntity<Dictionary<string, object>>(
                 "UserGroups",
-                j => j.HasOne<Group>().WithMany().HasForeignKey("GroupsId"),
-                j => j.HasOne<User>().WithMany().HasForeignKey("UsersId"),
+                j => j
+                    .HasOne<Group>()
+                    .WithMany()
+                    .HasForeignKey("GroupsId")
+                    .OnDelete(DeleteBehavior.Cascade),
+                j => j
+                    .HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey("UsersId")
+                    .OnDelete(DeleteBehavior.Cascade),
                 j =>
                 {
                     j.HasKey("GroupsId", "UsersId");
@@ -59,7 +67,7 @@ public class AppDbContext : IdentityDbContext<User>
             .HasOne(m => m.Group)
             .WithMany(g => g.Messages)
             .HasForeignKey(m => m.GroupId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<Message>()
             .HasOne(m => m.User)
