@@ -63,12 +63,15 @@ public class GroupService : IGroupService
     public async Task<GroupDto> CreateGroupAsync(CreateGroupRequest request)
     {
         var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
+        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
 
         var group = new Group
         {
             Name = request.Name,
             OwnerId = userId
         };
+
+        group.Users.Add(user);
 
         await _dbContext.Groups.AddAsync(group);
         await _dbContext.SaveChangesAsync();
