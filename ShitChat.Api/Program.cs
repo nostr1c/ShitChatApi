@@ -95,6 +95,7 @@ public class Program
         builder.Services.AddScoped<IConnectionService, ConnectionService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IGroupService, GroupService>();
+        builder.Services.AddScoped<IInviteService, InviteService>();
 
         // Validators
         builder.Services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
@@ -102,6 +103,7 @@ public class Program
         builder.Services.AddScoped<IValidator<UpdateAvatarRequest>, UpdateAvatarRequestValidator>();
         builder.Services.AddScoped<IValidator<CreateGroupRequest>, CreateGroupRequestValidator>();
         builder.Services.AddScoped<IValidator<SendMessageRequest>, SendMessageRequestValidator>();
+        builder.Services.AddScoped<IValidator<CreateInviteRequest>, CreateInviteRequestValidator>();
 
         builder.Services.AddRouting(options => options.LowercaseUrls = true);
         builder.Services.AddSignalR();
