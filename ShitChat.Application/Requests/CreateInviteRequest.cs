@@ -4,7 +4,7 @@ namespace ShitChat.Application.Requests;
 
 public class CreateInviteRequest
 {
-    public string ValidThrough { get; set; }
+    public DateOnly ValidThrough { get; set; }
 }
 
 public class CreateInviteRequestValidator : AbstractValidator<CreateInviteRequest>

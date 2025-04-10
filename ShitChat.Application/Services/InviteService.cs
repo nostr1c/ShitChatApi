@@ -50,7 +50,7 @@ public class InviteService : IInviteService
         {
             GroupId = groupGuid,
             UserId = userId,
-            ValidThrough = DateTime.UtcNow.AddDays(7),
+            ValidThrough = request.ValidThrough,
             InviteString = GenerateInviteString()
         };
 
@@ -76,6 +76,34 @@ public class InviteService : IInviteService
         return (true, "SuccessCreatedInvite", inviteDto);
     }
 
+    public async Task<(bool, string, IEnumerable<InviteDto>?)> GetGroupInvites(Guid groupGuid)
+    {
+        var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
+        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
+
+        if (user == null)
+        {
+            return (false, "ErrorLoggedInUser", null);
+        }
+
+        var invites = await _dbContext.Invites.Where(x => x.GroupId == groupGuid).ToListAsync();
+        var inviteDto = invites.Select(x => new InviteDto
+        {
+            Creator = new UserDto
+            {
+                Id = x.Creator.Id,
+                Avatar = x.Creator.AvatarUri,
+                CreatedAt = x.Creator.CreatedAt,
+                Email = x.Creator.Email,
+                Username = x.Creator.UserName
+            },
+            InviteString = x.InviteString,
+            ValidThrough = x.ValidThrough,
+        });
+        
+        return (true, "SuccessGotGroupInvites", inviteDto);
+    }
+
     public async Task<(bool, string, JoinInviteDto?)> JoinWithInviteAsync(string inviteString)
     {
         var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
@@ -98,7 +126,7 @@ public class InviteService : IInviteService
             return (false, "ErrorInviteNotFound", null);
         }
 
-        if (invite.ValidThrough < DateTime.UtcNow)
+        if (invite.ValidThrough < DateOnly.FromDateTime(DateTime.Now))
         {
             return (false, "ErrorInviteExpired", null);
         }

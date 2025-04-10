@@ -1,9 +1,12 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using ShitChat.Api.Hubs;
 using ShitChat.Application.DTOs;
 using ShitChat.Application.Interfaces;
 using ShitChat.Application.Requests;
+using ShitChat.Domain.Entities;
 
 namespace ShitChat.Api.Controllers;
 
@@ -15,17 +18,20 @@ public class InviteController : ControllerBase
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<GroupController> _logger;
     private readonly IInviteService _inviteService;
+    private readonly IHubContext<ChatHub> _hubContext;
 
     public InviteController
     (
         IServiceProvider serviceProvider,
         ILogger<GroupController> logger,
-        IInviteService inviteService
+        IInviteService inviteService,
+        IHubContext<ChatHub> hubContext
     )
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _inviteService = inviteService;
+        _hubContext = hubContext;
     }
 
     [Authorize(Policy = "GroupMember")]
@@ -61,6 +67,8 @@ public class InviteController : ControllerBase
         response.Data = inviteDto;
         response.Message = "SuccessCreatedInvite";
 
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveInvite", inviteDto, groupGuid);
+
         return Ok(response);
     }
 
@@ -74,10 +82,32 @@ public class InviteController : ControllerBase
         {
             response.Message = message;
             response.Data = null;
+            return BadRequest(response);
         }
 
         response.Message = message;
         response.Data = joinInviteDto;
+
+        return Ok(response);
+    }
+
+    [Authorize(Policy = "GroupMember")]
+    [HttpGet("{groupGuid}")]
+    public async Task<ActionResult<GenericResponse<IEnumerable<InviteDto>>>> GetGroupInvites(Guid groupGuid)
+    {
+        var response = new GenericResponse<IEnumerable<InviteDto>>();
+
+        var (success, message, groupInviteDto) = await _inviteService.GetGroupInvites(groupGuid);
+
+        if (!success)
+        {
+            response.Message = message;
+            response.Data = null;
+            return BadRequest(response);
+        }
+
+        response.Message = message;
+        response.Data = groupInviteDto;
 
         return Ok(response);
     }

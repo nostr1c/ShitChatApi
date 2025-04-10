@@ -4,5 +4,5 @@ public class InviteDto
 {
     public string InviteString { get; set; }
     public UserDto Creator { get; set; } 
-    public DateTime ValidThrough { get; set; }
+    public DateOnly ValidThrough { get; set; }
 }
