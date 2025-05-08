@@ -86,7 +86,12 @@ public class InviteService : IInviteService
             return (false, "ErrorLoggedInUser", null);
         }
 
-        var invites = await _dbContext.Invites.Where(x => x.GroupId == groupGuid).ToListAsync();
+        var invites = await _dbContext.Invites
+            .AsNoTracking()
+            .Include(x => x.Group)
+            .Include(x => x.Creator)
+            .Where(x => x.GroupId == groupGuid).ToListAsync();
+
         var inviteDto = invites.Select(x => new InviteDto
         {
             Creator = new UserDto
