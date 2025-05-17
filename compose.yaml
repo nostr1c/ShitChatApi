@@ -36,6 +36,7 @@ services:
     ports:
       - 443:443
       - 81:81
+      - 80:80
     volumes:
       - ./data:/data
       - ./letsencrypt:/etc/letsencrypt
