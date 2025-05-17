@@ -17,6 +17,7 @@ using Scalar.AspNetCore;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting.Server;
+using SixLabors.ImageSharp;
 
 namespace ShitChat.Api;
 
@@ -67,15 +68,13 @@ public class Program
         var dbUser = builder.Configuration["DB_USER"];
         var dbPassword = builder.Configuration["DB_PASSWORD"];
 
-        var connectionString = $"Server={dbServer};Database={dbDatabase};User Id={dbUser};Password={dbPassword};Encrypt=True;TrustServerCertificate=True;";
+        //var connectionString = $"Server={dbServer};Database={dbDatabase};User Id={dbUser};Password={dbPassword};Encrypt=True;TrustServerCertificate=True;";
+        var connectionString = $"Host=postgres;Port=5432;Database={dbDatabase};Username={dbUser};Password={dbPassword}";
 
         //var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(connectionString, sqlOptions =>
-            {
-                sqlOptions.EnableRetryOnFailure();
-            }));
+            options.UseNpgsql(connectionString));
 
         var keysFolder = "/Keys";
 

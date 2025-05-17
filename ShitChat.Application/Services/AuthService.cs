@@ -125,7 +125,7 @@ public class AuthService : IAuthService
         if (user != null)
         {
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userManager.UpdateAsync(user);
         }
 
@@ -145,7 +145,7 @@ public class AuthService : IAuthService
 
         var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.RefreshToken == tokenDto.RefreshTokenn);
 
-        if (user is null || user.RefreshTokenExpiryTime <= DateTime.Now)
+        if (user is null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
             return (false, null);
         }

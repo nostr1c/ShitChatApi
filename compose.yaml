@@ -16,21 +16,20 @@ services:
     volumes:
       - data-protection-keys:/Keys
     depends_on:
-      - mssql
+      - postgres
 
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+  postgres:
+    image: postgres:15-alpine
     restart: always
-    volumes:
-      - mssql-data:/var/opt/mssql
     environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=${DB_PASSWORD}
-      - MSSQL_PID=Express
-      - TZ=Europe/Stockholm
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - 1433:1433
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
 volumes:
   data-protection-keys:
-  mssql-data:
+  pgdata:

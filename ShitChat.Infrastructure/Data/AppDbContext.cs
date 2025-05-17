@@ -127,7 +127,7 @@ public class AppDbContext : IdentityDbContext<User>
             Id = "bb29d713-9414-43fa-9c8e-65fa6ee39243",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
             RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23),
+            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user1UserName,
             NormalizedUserName = user1UserName.ToUpper(),
             Email = user1Email,
@@ -148,7 +148,7 @@ public class AppDbContext : IdentityDbContext<User>
             Id = "a1f2d713-1234-43fa-9c8e-65fa6ee39244",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
             RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23),
+            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user2UserName,
             NormalizedUserName = user2UserName.ToUpper(),
             Email = user2Email,
@@ -169,7 +169,7 @@ public class AppDbContext : IdentityDbContext<User>
             Id = "c1f3d713-5678-43fa-9c8e-65fa6ee39245",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
             RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23),
+            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user3UserName,
             NormalizedUserName = user3UserName.ToUpper(),
             Email = user3Email,
@@ -190,7 +190,7 @@ public class AppDbContext : IdentityDbContext<User>
             Id = "d1f4d713-9101-43fa-9c8e-65fa6ee39246",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
             RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23),
+            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user4UserName,
             NormalizedUserName = user4UserName.ToUpper(),
             Email = user4Email,
@@ -211,7 +211,7 @@ public class AppDbContext : IdentityDbContext<User>
             Id = "e1f5d713-1122-43fa-9c8e-65fa6ee39247",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
             RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23),
+            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user5UserName,
             NormalizedUserName = user5UserName.ToUpper(),
             Email = user5Email,
@@ -232,7 +232,7 @@ public class AppDbContext : IdentityDbContext<User>
             Id = "f1f6d713-3344-43fa-9c8e-65fa6ee39248",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
             RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23),
+            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user6UserName,
             NormalizedUserName = user6UserName.ToUpper(),
             Email = user6Email,
@@ -262,7 +262,7 @@ public class AppDbContext : IdentityDbContext<User>
                 UserId = user1.Id,
                 FriendId = user2.Id,
                 Accepted = true,
-                CreatedAt = new DateTime(2024, 12, 23),
+                CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             },
             new Connection
             {
@@ -270,7 +270,7 @@ public class AppDbContext : IdentityDbContext<User>
                 UserId = user1.Id,
                 FriendId = user3.Id,
                 Accepted = true,
-                CreatedAt = new DateTime(2024, 12, 23),
+                CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             },
             new Connection
             {
@@ -278,7 +278,7 @@ public class AppDbContext : IdentityDbContext<User>
                 UserId = user1.Id,
                 FriendId = user4.Id,
                 Accepted = true,
-                CreatedAt = new DateTime(2024, 12, 23),
+                CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             },
             new Connection
             {
@@ -286,7 +286,7 @@ public class AppDbContext : IdentityDbContext<User>
                 UserId = user1.Id,
                 FriendId = user5.Id,
                 Accepted = true,
-                CreatedAt = new DateTime(2024, 12, 23),
+                CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             },
             new Connection
             {
@@ -294,7 +294,7 @@ public class AppDbContext : IdentityDbContext<User>
                 UserId = user1.Id,
                 FriendId = user6.Id,
                 Accepted = true,
-                CreatedAt = new DateTime(2024, 12, 23),
+                CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             }
         );
 
@@ -375,7 +375,7 @@ public class AppDbContext : IdentityDbContext<User>
             {
                 Id = Guid.Parse("7acbca3e-d27a-403c-af5b-37b31e4bf53a"),
                 Content = "Hej",
-                CreatedAt = new DateTime(2025, 01, 15),
+                CreatedAt = new DateTime(2025, 01, 15, 0, 0, 0, DateTimeKind.Utc),
                 GroupId = group1,
                 UserId = user1.Id
             },
@@ -383,7 +383,7 @@ public class AppDbContext : IdentityDbContext<User>
             {
                 Id = Guid.Parse("1baf7663-c7da-4954-bd1c-2865de582301"),
                 Content = "Nämen tjena",
-                CreatedAt = new DateTime(2025, 01, 15),
+                CreatedAt = new DateTime(2025, 01, 15, 0, 0, 0, DateTimeKind.Utc),
                 GroupId = group1,
                 UserId = user2.Id
             }

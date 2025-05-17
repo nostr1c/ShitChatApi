@@ -131,7 +131,7 @@ public class InviteService : IInviteService
             return (false, "ErrorInviteNotFound", null);
         }
 
-        if (invite.ValidThrough < DateOnly.FromDateTime(DateTime.Now))
+        if (invite.ValidThrough < DateOnly.FromDateTime(DateTime.UtcNow))
         {
             return (false, "ErrorInviteExpired", null);
         }
