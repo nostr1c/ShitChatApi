@@ -12,15 +12,15 @@ using ShitChat.Infrastructure.Data;
 namespace api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250215100515_SeedMessage")]
-    partial class SeedMessage
+    [Migration("20250517152821_idk")]
+    partial class idk
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "9.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -158,49 +158,7 @@ namespace api.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("UserGroups", b =>
-                {
-                    b.Property<Guid>("GroupsId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UsersId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("GroupsId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("UserGroups");
-
-                    b.HasData(
-                        new
-                        {
-                            GroupsId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            GroupsId = new Guid("25d5ec2b-ebe4-4462-ada9-17c246fb5273"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            GroupsId = new Guid("f50053c8-7fd8-498b-8c0b-30277bc378b0"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            GroupsId = new Guid("707e730d-0d72-4109-b9d9-5dc47b637268"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            GroupsId = new Guid("c7fcbe94-0f5f-47e6-9b71-5cc04ce32538"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        });
-                });
-
-            modelBuilder.Entity("api.Data.Models.Connection", b =>
+            modelBuilder.Entity("ShitChat.Domain.Entities.Connection", b =>
                 {
                     b.Property<Guid>("id")
                         .ValueGeneratedOnAdd()
@@ -272,7 +230,7 @@ namespace api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("api.Data.Models.Group", b =>
+            modelBuilder.Entity("ShitChat.Domain.Entities.Group", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -325,7 +283,93 @@ namespace api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("api.Data.Models.Message", b =>
+            modelBuilder.Entity("ShitChat.Domain.Entities.GroupRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.ToTable("GroupRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("f3dc9330-dce9-4bfc-9844-dd8232fce023"),
+                            Color = "64bcff",
+                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
+                            Name = "Administrator"
+                        },
+                        new
+                        {
+                            Id = new Guid("62a70d41-0339-46f1-81c3-6d27d9cda762"),
+                            Color = "64bcff",
+                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
+                            Name = "Moderator"
+                        },
+                        new
+                        {
+                            Id = new Guid("927af184-f6bc-4d8a-b36e-ff5f8aa3d14b"),
+                            Color = "64bcff",
+                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
+                            Name = "Kung för en dag"
+                        },
+                        new
+                        {
+                            Id = new Guid("eec0a883-0fb8-4f7a-bea7-04892684b1bd"),
+                            Color = "64bcff",
+                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
+                            Name = "Boss"
+                        });
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.Invite", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InviteString")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateOnly>("ValidThrough")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Invites");
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.Message", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -372,7 +416,7 @@ namespace api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("api.Data.Models.User", b =>
+            modelBuilder.Entity("ShitChat.Domain.Entities.User", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -458,7 +502,7 @@ namespace api.Migrations
                             Id = "bb29d713-9414-43fa-9c8e-65fa6ee39243",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 5, 17),
                             Email = "alice.smith@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -477,7 +521,7 @@ namespace api.Migrations
                             Id = "a1f2d713-1234-43fa-9c8e-65fa6ee39244",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 5, 17),
                             Email = "bob.jones@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -496,7 +540,7 @@ namespace api.Migrations
                             Id = "c1f3d713-5678-43fa-9c8e-65fa6ee39245",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 5, 17),
                             Email = "carla.davis@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -515,7 +559,7 @@ namespace api.Migrations
                             Id = "d1f4d713-9101-43fa-9c8e-65fa6ee39246",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 5, 17),
                             Email = "david.lee@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -534,7 +578,7 @@ namespace api.Migrations
                             Id = "e1f5d713-1122-43fa-9c8e-65fa6ee39247",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 5, 17),
                             Email = "emily.white@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -553,7 +597,7 @@ namespace api.Migrations
                             Id = "f1f6d713-3344-43fa-9c8e-65fa6ee39248",
                             AccessFailedCount = 0,
                             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2025, 2, 15),
+                            CreatedAt = new DateOnly(2025, 5, 17),
                             Email = "frank.hall@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
@@ -569,6 +613,101 @@ namespace api.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ShitChat.Domain.Entities.UserGroupRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("GroupRoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupRoleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserGroupRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("4fef1968-54e7-4352-b7dc-52c9e9d223a4"),
+                            GroupRoleId = new Guid("f3dc9330-dce9-4bfc-9844-dd8232fce023"),
+                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                        },
+                        new
+                        {
+                            Id = new Guid("fc1a0e5c-e610-4929-b18e-b25324121a5d"),
+                            GroupRoleId = new Guid("62a70d41-0339-46f1-81c3-6d27d9cda762"),
+                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                        },
+                        new
+                        {
+                            Id = new Guid("3c69703b-48e1-44e0-8bab-6f8d7cf8d41c"),
+                            GroupRoleId = new Guid("927af184-f6bc-4d8a-b36e-ff5f8aa3d14b"),
+                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                        },
+                        new
+                        {
+                            Id = new Guid("27c9c624-d28d-47f8-b875-9502b5522cc7"),
+                            GroupRoleId = new Guid("eec0a883-0fb8-4f7a-bea7-04892684b1bd"),
+                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                        });
+                });
+
+            modelBuilder.Entity("UserGroups", b =>
+                {
+                    b.Property<Guid>("GroupsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UsersId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("GroupsId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("UserGroups");
+
+                    b.HasData(
+                        new
+                        {
+                            GroupsId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
+                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                        },
+                        new
+                        {
+                            GroupsId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
+                            UsersId = "a1f2d713-1234-43fa-9c8e-65fa6ee39244"
+                        },
+                        new
+                        {
+                            GroupsId = new Guid("25d5ec2b-ebe4-4462-ada9-17c246fb5273"),
+                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                        },
+                        new
+                        {
+                            GroupsId = new Guid("f50053c8-7fd8-498b-8c0b-30277bc378b0"),
+                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                        },
+                        new
+                        {
+                            GroupsId = new Guid("707e730d-0d72-4109-b9d9-5dc47b637268"),
+                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                        },
+                        new
+                        {
+                            GroupsId = new Guid("c7fcbe94-0f5f-47e6-9b71-5cc04ce32538"),
+                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                        });
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -580,7 +719,7 @@ namespace api.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("api.Data.Models.User", null)
+                    b.HasOne("ShitChat.Domain.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -589,7 +728,7 @@ namespace api.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("api.Data.Models.User", null)
+                    b.HasOne("ShitChat.Domain.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -604,7 +743,7 @@ namespace api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("api.Data.Models.User", null)
+                    b.HasOne("ShitChat.Domain.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -613,37 +752,22 @@ namespace api.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("api.Data.Models.User", null)
+                    b.HasOne("ShitChat.Domain.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("UserGroups", b =>
+            modelBuilder.Entity("ShitChat.Domain.Entities.Connection", b =>
                 {
-                    b.HasOne("api.Data.Models.Group", null)
-                        .WithMany()
-                        .HasForeignKey("GroupsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("api.Data.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("api.Data.Models.Connection", b =>
-                {
-                    b.HasOne("api.Data.Models.User", "friend")
+                    b.HasOne("ShitChat.Domain.Entities.User", "friend")
                         .WithMany()
                         .HasForeignKey("FriendId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("api.Data.Models.User", "user")
+                    b.HasOne("ShitChat.Domain.Entities.User", "user")
                         .WithMany("Connections")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -654,9 +778,9 @@ namespace api.Migrations
                     b.Navigation("user");
                 });
 
-            modelBuilder.Entity("api.Data.Models.Group", b =>
+            modelBuilder.Entity("ShitChat.Domain.Entities.Group", b =>
                 {
-                    b.HasOne("api.Data.Models.User", "Owner")
+                    b.HasOne("ShitChat.Domain.Entities.User", "Owner")
                         .WithMany("OwnedGroups")
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -665,15 +789,45 @@ namespace api.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("api.Data.Models.Message", b =>
+            modelBuilder.Entity("ShitChat.Domain.Entities.GroupRole", b =>
                 {
-                    b.HasOne("api.Data.Models.Group", "Group")
-                        .WithMany("Messages")
+                    b.HasOne("ShitChat.Domain.Entities.Group", "Group")
+                        .WithMany("Roles")
                         .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("api.Data.Models.User", "User")
+                    b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.Invite", b =>
+                {
+                    b.HasOne("ShitChat.Domain.Entities.Group", "Group")
+                        .WithMany("Invites")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ShitChat.Domain.Entities.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.Message", b =>
+                {
+                    b.HasOne("ShitChat.Domain.Entities.Group", "Group")
+                        .WithMany("Messages")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ShitChat.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -684,14 +838,54 @@ namespace api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("api.Data.Models.Group", b =>
+            modelBuilder.Entity("ShitChat.Domain.Entities.UserGroupRole", b =>
                 {
-                    b.Navigation("Messages");
+                    b.HasOne("ShitChat.Domain.Entities.GroupRole", "GroupRole")
+                        .WithMany()
+                        .HasForeignKey("GroupRoleId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ShitChat.Domain.Entities.User", "User")
+                        .WithMany("GroupRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("GroupRole");
+
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("api.Data.Models.User", b =>
+            modelBuilder.Entity("UserGroups", b =>
+                {
+                    b.HasOne("ShitChat.Domain.Entities.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ShitChat.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.Group", b =>
+                {
+                    b.Navigation("Invites");
+
+                    b.Navigation("Messages");
+
+                    b.Navigation("Roles");
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.User", b =>
                 {
                     b.Navigation("Connections");
+
+                    b.Navigation("GroupRoles");
 
                     b.Navigation("OwnedGroups");
                 });

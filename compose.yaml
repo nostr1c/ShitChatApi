@@ -1,0 +1,36 @@
+services:
+  api:
+    build:
+      context: .
+      target: final
+    restart: always
+    environment:
+      - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DB_SERVER=${DB_SERVER}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    ports:
+      - 8080:8080
+    volumes:
+      - data-protection-keys:/Keys
+    depends_on:
+      - mssql
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: always
+    volumes:
+      - mssql-data:/var/opt/mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD}
+      - MSSQL_PID=Express
+      - TZ=Europe/Stockholm
+    ports:
+      - 1433:1433
+
+volumes:
+  data-protection-keys:
+  mssql-data:

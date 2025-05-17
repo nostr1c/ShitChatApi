@@ -15,6 +15,8 @@ using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 //using System.Reflection;
 using System.Text;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting.Server;
 
 namespace ShitChat.Api;
 
@@ -60,10 +62,25 @@ public class Program
         });
 
         // Entity framework
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        var dbServer = builder.Configuration["DB_SERVER"];
+        var dbDatabase = builder.Configuration["DB_DATABASE"];
+        var dbUser = builder.Configuration["DB_USER"];
+        var dbPassword = builder.Configuration["DB_PASSWORD"];
+
+        var connectionString = $"Server={dbServer};Database={dbDatabase};User Id={dbUser};Password={dbPassword};Encrypt=True;TrustServerCertificate=True;";
+
+        //var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(connectionString));
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure();
+            }));
+
+        var keysFolder = "/Keys";
+
+        builder.Services.AddDataProtection()
+            .PersistKeysToFileSystem(new DirectoryInfo(keysFolder));
 
         // Identity
         builder.Services.AddIdentity<User, IdentityRole>()
@@ -140,7 +157,13 @@ public class Program
             app.MapScalarApiReference();
         }
 
-        app.UseHttpsRedirection();
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            dbContext.Database.Migrate();
+        }
+
+        //app.UseHttpsRedirection();
         app.UseCors("AllowFrontend");
         app.UseAuthentication();
         app.UseAuthorization();
