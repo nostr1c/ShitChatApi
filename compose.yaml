@@ -18,6 +18,8 @@ services:
       - data-protection-keys:/Keys
     depends_on:
       - postgres
+    networks:
+      - webproxy
 
   postgres:
     image: postgres:15-alpine
@@ -41,7 +43,13 @@ services:
     volumes:
       - ./data:/data
       - ./letsencrypt:/etc/letsencrypt
+    networks:
+      - webproxy
 
 volumes:
   data-protection-keys:
   pgdata:
+
+networks:
+  webproxy:
+    external: true
