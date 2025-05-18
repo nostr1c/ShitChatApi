@@ -140,7 +140,7 @@ public class Program
             options.AddPolicy("AllowFrontend",
                 policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173", "http://localhost:4173")
+                    policy.WithOrigins("https://filipsiri.se", "https://filipsiri.se")
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials();
