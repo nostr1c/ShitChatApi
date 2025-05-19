@@ -243,7 +243,7 @@ public class AppDbContext : IdentityDbContext<User>
             Email = user6Email,
             NormalizedEmail = user6Email.ToUpper(),
             EmailConfirmed = true,
-            PasswordHash = "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==", // 12345
+            PasswordHash = "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==", // 12345 
             SecurityStamp = "",
             ConcurrencyStamp = null,
             PhoneNumber = null,
