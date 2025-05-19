@@ -141,7 +141,8 @@ public class AppDbContext : IdentityDbContext<User>
             TwoFactorEnabled = false,
             LockoutEnd = null,
             LockoutEnabled = false,
-            AccessFailedCount = 0
+            AccessFailedCount = 0,
+            CreatedAt = new DateOnly(2024, 05, 15)
         };
         var user2 = new User
         {
@@ -162,7 +163,8 @@ public class AppDbContext : IdentityDbContext<User>
             TwoFactorEnabled = false,
             LockoutEnd = null,
             LockoutEnabled = false,
-            AccessFailedCount = 0
+            AccessFailedCount = 0,
+            CreatedAt = new DateOnly(2024, 05, 15)
         };
         var user3 = new User
         {
@@ -183,7 +185,8 @@ public class AppDbContext : IdentityDbContext<User>
             TwoFactorEnabled = false,
             LockoutEnd = null,
             LockoutEnabled = false,
-            AccessFailedCount = 0
+            AccessFailedCount = 0,
+            CreatedAt = new DateOnly(2024, 05, 15)
         };
         var user4 = new User
         {
@@ -204,7 +207,8 @@ public class AppDbContext : IdentityDbContext<User>
             TwoFactorEnabled = false,
             LockoutEnd = null,
             LockoutEnabled = false,
-            AccessFailedCount = 0
+            AccessFailedCount = 0,
+            CreatedAt = new DateOnly(2024, 05, 15)
         };
         var user5 = new User
         {
@@ -225,7 +229,8 @@ public class AppDbContext : IdentityDbContext<User>
             TwoFactorEnabled = false,
             LockoutEnd = null,
             LockoutEnabled = false,
-            AccessFailedCount = 0
+            AccessFailedCount = 0,
+            CreatedAt = new DateOnly(2024, 05, 15)
         };
         var user6 = new User
         {
@@ -246,7 +251,8 @@ public class AppDbContext : IdentityDbContext<User>
             TwoFactorEnabled = false,
             LockoutEnd = null,
             LockoutEnabled = false,
-            AccessFailedCount = 0
+            AccessFailedCount = 0,
+            CreatedAt = new DateOnly(2024, 05, 15)
         };
 
         // Insert users
