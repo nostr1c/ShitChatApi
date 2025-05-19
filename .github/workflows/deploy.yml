@@ -19,5 +19,5 @@ jobs:
           script: |
             cd /opt/shitshat
             git pull origin main
-            docker compose down
-            docker compose up --build -d
+            docker compose down api
+            docker compose up api --build -d
