@@ -13,7 +13,7 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IGroupService _groupService;
-    private readonly string _imageStoragePath = Path.Combine(Directory.GetCurrentDirectory(), "UploadedImages");
+    private readonly string _imageStoragePath = "/Uploads";
 
     public UserController
     (
