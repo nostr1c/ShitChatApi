@@ -154,12 +154,7 @@ public class GroupService : IGroupService
                 Id = x.Id,
                 Content = x.Content,
                 CreatedAt = x.CreatedAt,
-                User = new MessageUserDto
-                {
-                    Id = x.User.Id,
-                    Username = x.User.UserName,
-                    Avatar = x.User.AvatarUri
-                }
+                UserId = x.UserId
             });
 
         return (true, "SuccessGotGroupMessages", messages);
@@ -190,12 +185,7 @@ public class GroupService : IGroupService
                 Id = x.Id,
                 Content = x.Content,
                 CreatedAt = x.CreatedAt,
-                User = new MessageUserDto
-                {
-                    Id = x.User.Id,
-                    Username = x.User.UserName,
-                    Avatar = x.User.AvatarUri
-                }
+                UserId = x.UserId
             })
             .ToListAsync();
 
@@ -265,7 +255,7 @@ public class GroupService : IGroupService
         var message = new Message
         {
             Content = request.Content,
-            User = user,
+            UserId = user.Id,
             GroupId = groupId,
         };
 
@@ -277,12 +267,7 @@ public class GroupService : IGroupService
             Id = message.Id,
             Content = message.Content,
             CreatedAt = message.CreatedAt,
-            User = new MessageUserDto
-            {
-                Id = user.Id,
-                Username = user.UserName,
-                Avatar = user.AvatarUri
-            }
+            UserId = message.UserId
         };
 
         return (true, "SuccessSentMessage",  messageDto);
