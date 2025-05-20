@@ -45,20 +45,20 @@ public class UserService : IUserService
         return (true, user);
     }
 
-    public async Task<(bool, string)> UpdateAvatarAsync(IFormFile avatar)
+    public async Task<(bool, string, string?)> UpdateAvatarAsync(IFormFile avatar)
     {
         if (avatar == null || avatar.Length == 0)
-            return (false, "ErrorInvalidFile");
+            return (false, "ErrorInvalidFile", null);
 
         var user = await _userManager.FindByIdAsync(_httpContextAccessor.HttpContext.User.GetUserGuid());
         if (user == null)
-            return (false, "ErrorUserNotFound");
+            return (false, "ErrorUserNotFound", null);
 
         string[] allowedExtensions = [".jpg", ".jpeg", ".png"];
 
         var fileExtension = Path.GetExtension(avatar.FileName).ToLower();
         if (!allowedExtensions.Contains(fileExtension))
-            return (false, "ErrorNotValidFileFormat");
+            return (false, "ErrorNotValidFileFormat", null);
 
         string imageId = Guid.NewGuid().ToString();
         string imageName = $"{imageId}{fileExtension}";
@@ -80,7 +80,7 @@ public class UserService : IUserService
         user.AvatarUri = imageName;
         await _userManager.UpdateAsync(user);
 
-        return (true, "SuccessUpdatedAvatar");
+        return (true, "SuccessUpdatedAvatar", imageName);
     }
 
     public async Task<List<ConnectionDto>> GetConnectionsAsync()

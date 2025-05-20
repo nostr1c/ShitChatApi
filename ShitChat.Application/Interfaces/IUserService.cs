@@ -7,6 +7,6 @@ namespace ShitChat.Application.Interfaces;
 public interface IUserService
 {
     public Task<(bool, User?)> GetUserByGuidAsync(string userGuid);
-    public Task<(bool, string)> UpdateAvatarAsync(IFormFile avatar);
+    public Task<(bool, string, string?)> UpdateAvatarAsync(IFormFile avatar);
     public Task<List<ConnectionDto>> GetConnectionsAsync();
 }

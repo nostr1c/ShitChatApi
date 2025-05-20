@@ -59,16 +59,19 @@ public class UserController : ControllerBase
     /// Update avatar
     /// </summary>
     [HttpPut("Avatar")]
-    public async Task<ActionResult<GenericResponse<bool>>> UpdateAvatar(IFormFile avatar)
+    public async Task<ActionResult<GenericResponse<string?>>> UpdateAvatar(IFormFile avatar)
     {
-        var response = new GenericResponse<bool>();
+        var response = new GenericResponse<string?>();
 
-        var (success, message) = await _userService.UpdateAvatarAsync(avatar); 
+        var (success, message, imageName) = await _userService.UpdateAvatarAsync(avatar); 
 
         if (!success || message == null)
-            return BadRequest(message);
+        {
+            response.Message = message;
+            return BadRequest(response);
+        }
 
-        response.Data = true;
+        response.Data = imageName;
         response.Message = message;
         
         return Ok(response);
