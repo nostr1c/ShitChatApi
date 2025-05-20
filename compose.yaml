@@ -16,6 +16,7 @@ services:
       - 8080:8080
     volumes:
       - data-protection-keys:/Keys
+      - image-uploads:/Uploads
     depends_on:
       - postgres
     networks:
@@ -51,6 +52,7 @@ services:
 volumes:
   data-protection-keys:
   pgdata:
+  image-uploads:
 
 networks:
   webproxy:

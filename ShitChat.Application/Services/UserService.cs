@@ -16,7 +16,7 @@ public class UserService : IUserService
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly UserManager<User> _userManager;
-    private readonly string _imageStoragePath = Path.Combine(Directory.GetCurrentDirectory(), "UploadedImages");
+    private readonly string _imageStoragePath = "/Uploads";
 
     public UserService
     (
