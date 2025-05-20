@@ -43,8 +43,8 @@ public class ChatHub : Hub
         await Clients.Group(roomId).SendAsync("ReceiveUserTyping", roomId, userId, isTyping);
     }
 
-    public async Task ChangeAvatar(string roomId, string userId, string imageName)
+    public async Task ChangeAvatar(string userId, string imageName)
     {
-        await Clients.Group(roomId).SendAsync("ReceiveChangedAvatar", userId, imageName);
+        await Clients.All.SendAsync("ReceiveChangedAvatar", userId, imageName);
     }
 }
