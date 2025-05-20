@@ -8,25 +8,12 @@ namespace ShitChat.Api.Hubs;
 
 public class ChatHub : Hub
 {
-    //public async Task SendMessage(string groupId, string userId, string content)
+    //private readonly ILogger<ChatHub> _logger;
+
+    //public ChatHub(ILogger<ChatHub> logger)
     //{
-    //    await Clients.Group(groupId).SendAsync("ReceiveMessage", new MessageDto
-    //    {
-    //        Id
-
-    //        GroupId = groupId,
-    //        UserId = userId,
-    //        Content = content,
-    //        CreatedAt = DateTime.UtcNow
-    //    });
+    //    _logger = logger;
     //}
-
-    private readonly ILogger<ChatHub> _logger;
-
-    public ChatHub(ILogger<ChatHub> logger)
-    {
-        _logger = logger;
-    }
 
     public async Task JoinGroup(string groupId)
     {
