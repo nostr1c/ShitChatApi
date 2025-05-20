@@ -140,10 +140,14 @@ public class Program
             options.AddPolicy("AllowFrontend",
                 policy =>
                 {
-                    policy.WithOrigins("https://filipsiri.se", "https://filipsiri.se")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowCredentials();
+                    policy.WithOrigins(
+                        "http://filipsiri.se",
+                        "https://filipsiri.se",
+                        "http://localhost:3000"
+                    )
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
                 });
         });
 
