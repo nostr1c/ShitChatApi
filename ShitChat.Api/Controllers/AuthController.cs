@@ -56,6 +56,23 @@ public class AuthController : ControllerBase
             return BadRequest("ErrorCreatingUser");
         }
 
+
+        var loginRequest = new LoginUserRequest
+        {
+            Password = request.Password,
+            Email = request.Email,
+        };
+
+        var (success, message, userDto) = await _authService.LoginUserAsync(loginRequest);
+
+        if (!success)
+        {
+            response.Errors.Add("ErrorAuthenticatingUser", new List<string> { message });
+            return BadRequest(response);
+        }
+
+        _authService.SetTokensInsideCookie(userDto.Token, HttpContext);
+
         CreateUserDto dto = new CreateUserDto
         {
             Id = user.Id,
