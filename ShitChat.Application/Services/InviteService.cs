@@ -138,19 +138,20 @@ public class InviteService : IInviteService
 
         var group = invite.Group;
 
+        var joinInviteDto = new JoinInviteDto
+        {
+            Group = group.Id
+        };
+
         if (group.Users.Any(x => x.Id == user.Id))
         {
-            return (false, "ErrorAlreadyInGroup", null);
+            return (false, "ErrorAlreadyInGroup", joinInviteDto);
         }
 
         group.Users.Add(user);
 
         await _dbContext.SaveChangesAsync();
 
-        var joinInviteDto = new JoinInviteDto
-        {
-            Group = group.Id
-        };
 
         return (true, "SuccessJoinedGroup", joinInviteDto);
     }

@@ -78,15 +78,13 @@ public class InviteController : ControllerBase
         var response = new GenericResponse<JoinInviteDto?>();
         var (success, message, joinInviteDto) = await _inviteService.JoinWithInviteAsync(inviteString);
 
-        if (!success)
-        {
-            response.Message = message;
-            response.Data = null;
-            return BadRequest(response);
-        }
-
         response.Message = message;
         response.Data = joinInviteDto;
+
+        if (!success)
+        {
+            return BadRequest(response);
+        }
 
         return Ok(response);
     }
