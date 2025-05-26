@@ -25,6 +25,7 @@ public class AuthService : IAuthService
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<AuthService> _logger;
+    private readonly IPasswordHasher<User> _passwordHasher;
 
     public AuthService
     (
@@ -33,7 +34,8 @@ public class AuthService : IAuthService
         IConfiguration config,
         AppDbContext dbContext,
         IHttpContextAccessor httpContextAccessor,
-        ILogger<AuthService> logger
+        ILogger<AuthService> logger,
+        IPasswordHasher<User> passwordHasher
     )
     {
         _userManager = userManager;
@@ -42,6 +44,7 @@ public class AuthService : IAuthService
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<User?> RegisterUserAsync(CreateUserRequest request)
@@ -116,20 +119,25 @@ public class AuthService : IAuthService
             issuer: jwtIssuer,
             audience: jwtIssuer,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(10),
+            expires: DateTime.UtcNow.AddMinutes(5),
             signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256)
         );
 
-        var refreshToken = CreateRefreshToken();
+        var refreshTokenRaw = CreateRefreshToken();
+        var refreshTokenHash = _passwordHasher.HashPassword(user, refreshTokenRaw);
 
-        if (user != null)
+        var refreshToken = new RefreshToken
         {
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-            await _userManager.UpdateAsync(user);
-        }
+            UserId = user.Id,
+            TokenHash = refreshTokenHash,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            CreatedAt = DateTime.UtcNow,
+        };
 
-        var tokenDto = new TokenDto(new JwtSecurityTokenHandler().WriteToken(token), refreshToken);
+        _dbContext.RefreshTokens.Add(refreshToken);
+        await _dbContext.SaveChangesAsync();
+
+        var tokenDto = new TokenDto(new JwtSecurityTokenHandler().WriteToken(token), refreshTokenRaw);
 
         return tokenDto;
     }
@@ -143,20 +151,24 @@ public class AuthService : IAuthService
             return (false, "ErrorRefreshTokenNull", null);
         }
 
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.RefreshToken == tokenDto.RefreshTokenn);
-        
-        if (user == null)
+        var tokens = await _dbContext.RefreshTokens
+            .Include(r => r.User)
+            .Where(rt => rt.ExpiresAt > DateTime.UtcNow)
+            .ToListAsync();
+
+        var matchingToken = tokens.FirstOrDefault(rt => 
+            _passwordHasher.VerifyHashedPassword(rt.User, rt.TokenHash, tokenDto.RefreshTokenn)
+                == PasswordVerificationResult.Success);
+
+        if (matchingToken == null)
         {
-            return (false, "ErrorUserNotFound", null);
+            return (false, "ErrorInvalidOrExpiredRefreshToken", null);
         }
 
-        if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-        {
-            return (false, "ErrorRefreshTokenExpired", null);
-        }
+        _dbContext.RefreshTokens.Remove(matchingToken);
+        await _dbContext.SaveChangesAsync();
 
-        var newTokenDto = await CreateToken(user);
-
+        var newTokenDto = await CreateToken(matchingToken.User);
         return (true, "SuccessRefreshedToken", newTokenDto);
     }
 
@@ -165,7 +177,7 @@ public class AuthService : IAuthService
         context.Response.Cookies.Append("accessToken", tokenDto.AccessToken,
             new CookieOptions
             {
-                Expires = DateTimeOffset.UtcNow.AddMinutes(10),
+                Expires = DateTimeOffset.UtcNow.AddMinutes(5),
                 HttpOnly = true,
                 IsEssential = true,
                 Secure = true,

@@ -15,6 +15,7 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<GroupRole> GroupRoles { get; set; }
     public DbSet<UserGroupRole> UserGroupRoles { get; set; }
     public DbSet<Invite> Invites { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -104,6 +105,15 @@ public class AppDbContext : IdentityDbContext<User>
             .WithMany(g => g.Invites)
             .HasForeignKey(i =>i.GroupId);
 
+        builder.Entity<RefreshToken>()
+            .HasOne(rt => rt.User)
+            .WithMany(u => u.RefreshTokens)
+            .HasForeignKey(rt => rt.UserId);
+
+        builder.Entity<RefreshToken>()
+            .HasIndex(rt => rt.TokenHash)
+            .IsUnique();
+
         string user1Email = "alice.smith@example.com";
         string user1UserName = "alice123";
 
@@ -126,8 +136,6 @@ public class AppDbContext : IdentityDbContext<User>
         {
             Id = "bb29d713-9414-43fa-9c8e-65fa6ee39243",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-            RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user1UserName,
             NormalizedUserName = user1UserName.ToUpper(),
             Email = user1Email,
@@ -148,8 +156,6 @@ public class AppDbContext : IdentityDbContext<User>
         {
             Id = "a1f2d713-1234-43fa-9c8e-65fa6ee39244",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-            RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user2UserName,
             NormalizedUserName = user2UserName.ToUpper(),
             Email = user2Email,
@@ -170,8 +176,6 @@ public class AppDbContext : IdentityDbContext<User>
         {
             Id = "c1f3d713-5678-43fa-9c8e-65fa6ee39245",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-            RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user3UserName,
             NormalizedUserName = user3UserName.ToUpper(),
             Email = user3Email,
@@ -192,8 +196,6 @@ public class AppDbContext : IdentityDbContext<User>
         {
             Id = "d1f4d713-9101-43fa-9c8e-65fa6ee39246",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-            RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user4UserName,
             NormalizedUserName = user4UserName.ToUpper(),
             Email = user4Email,
@@ -214,8 +216,6 @@ public class AppDbContext : IdentityDbContext<User>
         {
             Id = "e1f5d713-1122-43fa-9c8e-65fa6ee39247",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-            RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user5UserName,
             NormalizedUserName = user5UserName.ToUpper(),
             Email = user5Email,
@@ -236,8 +236,6 @@ public class AppDbContext : IdentityDbContext<User>
         {
             Id = "f1f6d713-3344-43fa-9c8e-65fa6ee39248",
             AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-            RefreshToken = "exampletoken1",
-            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, DateTimeKind.Utc),
             UserName = user6UserName,
             NormalizedUserName = user6UserName.ToUpper(),
             Email = user6Email,
