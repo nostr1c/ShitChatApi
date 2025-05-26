@@ -13,7 +13,7 @@ public interface IAuthService
 
     Task<TokenDto> CreateToken(User user);
 
-    Task<(bool, TokenDto?)> RefreshToken(TokenDto tokenDto);
+    Task<(bool, string, TokenDto?)> RefreshToken(TokenDto tokenDto);
 
     void SetTokensInsideCookie(TokenDto tokenDto, HttpContext context);
 

@@ -136,23 +136,28 @@ public class AuthService : IAuthService
 
 
 
-    public async Task<(bool, TokenDto?)> RefreshToken(TokenDto tokenDto)
+    public async Task<(bool, string, TokenDto?)> RefreshToken(TokenDto tokenDto)
     {
         if (string.IsNullOrEmpty(tokenDto.RefreshTokenn))
         {
-            return (false, null);
+            return (false, "ErrorRefreshTokenNull", null);
         }
 
         var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.RefreshToken == tokenDto.RefreshTokenn);
-
-        if (user is null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        
+        if (user == null)
         {
-            return (false, null);
+            return (false, "ErrorUserNotFound", null);
+        }
+
+        if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        {
+            return (false, "ErrorRefreshTokenExpired", null);
         }
 
         var newTokenDto = await CreateToken(user);
 
-        return (true, newTokenDto);
+        return (true, "SuccessRefreshedToken", newTokenDto);
     }
 
     public void SetTokensInsideCookie(TokenDto tokenDto, HttpContext context)

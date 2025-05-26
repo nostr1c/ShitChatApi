@@ -165,23 +165,25 @@ public class AuthController : ControllerBase
         if (!HttpContext.Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
         {
             response.Errors.Add("TokenError", new List<string> { "Refresh token is missing" });
-            return Ok(response);
-
+            Response.Headers["X-Auth-Status"] = "SessionExpired";
+            return Unauthorized(response);
         }
 
         var tokenDto = new TokenDto(null, refreshToken);
 
-        var (success, tokenDtoToReturn) = await _authService.RefreshToken(tokenDto);
+        var (success, message, tokenDtoToReturn) = await _authService.RefreshToken(tokenDto);
 
         if (!success || tokenDtoToReturn is null)
         {
             response.Errors.Add("ErrorRefreshingSignIn", new List<string> { "Token bad request" });
-            return Ok(response);
+            response.Message = message;
+            Response.Headers["X-Auth-Status"] = "SessionExpired";
+            return Unauthorized(response);
         }
 
         _authService.SetTokensInsideCookie(tokenDtoToReturn, HttpContext);
 
-        response.Message = "Refreshed token";
+        response.Message = message;
 
         return Ok(response);
     }
@@ -197,6 +199,7 @@ public class AuthController : ControllerBase
 
         if (HttpContext.User.GetUserGuid() is null)
         {
+            Response.Headers["X-Auth-Status"] = "SessionExpired";
             return Unauthorized();
         }
 
