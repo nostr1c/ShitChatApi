@@ -6,9 +6,6 @@ public class User : IdentityUser
 {
     public string? AvatarUri { get; set; }
     
-    public string? RefreshToken { get; set; }
-    public DateTime RefreshTokenExpiryTime { get; set; }
-
     public DateOnly CreatedAt { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
 
 
@@ -20,4 +17,6 @@ public class User : IdentityUser
     public ICollection<Group> Groups { get; set; }
 
     public ICollection<UserGroupRole> GroupRoles { get; set; }
+
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }
