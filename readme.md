@@ -1,7 +1,6 @@
-
 # ShitShat Backend
 
-ShitShat is a messaging platform that allows users to create groups, send messages, and manage connections with others. This repository contains the backend API for ShitShat, built with **ASP.NET Core Web API** and **Entity Framework**.
+ShitShat is a messaging platform that allows users to create groups, send messages, and manage connections with others. 
 
 ## Features
 
@@ -9,40 +8,43 @@ ShitShat is a messaging platform that allows users to create groups, send messag
 - **Groups:** Create groups, manage group members, and send messages within groups.
 - **Connections:** Send, accept, and delete connection requests between users.
 - **Messages:** Send and receive messages in groups with rich user information (username, avatar).
+- **Invites:** Create and manage invites.
+- **Group roles:** Create and manage group roles.
 
 ## Technologies Used
 
 - **ASP.NET Core Web API**
 - **Entity Framework Core**
-- **JWT Authentication**
-- **SQL Server** (Database)
+- **JWT Authentication with refresh tokens**
+- **SignalR**
+- **PostgreSQL**
+- **FluentValidation**
+- **Docker**
+- **Github Workflows for automated deploys**
 
 ## TODO
 
-- Refactor all validation logic for better maintainability and consistency.
-- Refactor all generic responses to standardize the format and improve error handling.
+- Refactor error handling, exceptions etc.
 
-## Endpoints
+## Getting Started
 
-- **Auth**
-  - `POST /api/v1/auth/register` - Register a new user
-  - `POST /api/v1/auth/login` - Login a user
+**1. Clone the repository:**
 
-- **Connection**
-  - `POST /api/v1/connection/add` - Send a new connection request
-  - `PUT /api/v1/connection/accept` - Accept a friend request
-  - `DELETE /api/v1/connection/delete` - Delete a friend
+```bash
+git clone https://github.com/nostr1c/ShitChatApi.git
+cd ShitChatApi
+```
 
-- **Group**
-  - `POST /api/v1/group` - Create a new group
-  - `GET /api/v1/group/{groupGuid}` - Get group details
-  - `POST /api/v1/group/{groupGuid}/members` - Add members to a group
-  - `GET /api/v1/group/{groupGuid}/members` - List group members
-  - `GET /api/v1/group/{groupGuid}/messages` - Get group messages
-  - `POST /api/v1/group/{groupGuid}/messages` - Send a message to a group
+**3. Add .env file to root of project**
+```
+DB_DATABASE=ShitChat
+DB_USER=sa
+DB_PASSWORD=changethis
+```
 
-- **User**
-  - `GET /api/v1/user/{guid}` - Get a specific user by GUID
-  - `PUT /api/v1/user/avatar` - Update user avatar
-  - `GET /api/v1/user/connections` - Get user's connections
-  - `GET /api/v1/user/groups` - Get groups the user is a part of
+**2. Start application**
+```bash
+docker-compose up --build
+```
+
+**App is now running at port 8080**
