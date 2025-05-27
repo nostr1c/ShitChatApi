@@ -48,3 +48,6 @@ docker-compose up --build
 ```
 
 **App is now running at port 8080**
+
+## ERD
+![Alt text](https://i.imgur.com/kb5QGbK.jpeg)
