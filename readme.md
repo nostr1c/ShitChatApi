@@ -35,14 +35,14 @@ git clone https://github.com/nostr1c/ShitChatApi.git
 cd ShitChatApi
 ```
 
-**3. Add .env file to root of project**
+**2. Add .env file to root of project**
 ```
 DB_DATABASE=ShitChat
 DB_USER=sa
 DB_PASSWORD=changethis
 ```
 
-**2. Start application**
+**3. Start application**
 ```bash
 docker-compose up --build
 ```
