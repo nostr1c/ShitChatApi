@@ -5,8 +5,7 @@ WORKDIR /source
 
 ARG TARGETARCH
 
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet restore ShitChat.sln --verbosity detailed
+RUN dotnet restore ShitChat.sln --verbosity detailed
 
 WORKDIR /source/ShitChat.Api
 
