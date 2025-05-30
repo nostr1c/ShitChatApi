@@ -5,11 +5,9 @@ WORKDIR /source
 
 ARG TARGETARCH
 
-RUN dotnet restore ShitChat.sln --verbosity detailed
-
-WORKDIR /source/ShitChat.Api
-
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+    dotnet restore ShitChat.sln --verbosity detailed && \
+    cd ShitChat.Api && \
     dotnet publish -a ${TARGETARCH/amd64/x64} --use-current-runtime --self-contained false -o /app
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS final
