@@ -4,10 +4,11 @@ using ShitChat.Application.Interfaces;
 using ShitChat.Infrastructure.Data;
 using ShitChat.Domain.Entities;
 using ShitChat.Shared.Extensions;
+using ShitChat.Application.Caching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
-using SixLabors.ImageSharp.ColorSpaces;
+using System.Text.Json;
 
 namespace ShitChat.Application.Services;
 
@@ -16,17 +17,20 @@ public class GroupService : IGroupService
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<GroupService> _logger;
+    private readonly ICacheService _cache;
 
     public GroupService
     (
         AppDbContext dbContext,
         IHttpContextAccessor httpContextAccessor,
-        ILogger<GroupService> logger
+        ILogger<GroupService> logger,
+        ICacheService cache
     )
     { 
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<(bool, string, UserDto?)> AddUserToGroupAsync(Guid groupId, string userId)
@@ -105,6 +109,15 @@ public class GroupService : IGroupService
 
     public async Task<(bool, string, IEnumerable<GroupMemberDto>?)> GetGroupMembersAsync(Guid groupId)
     {
+        var cacheKey = CacheKeys.GroupMembers(groupId);
+
+        var cached = await _cache.GetAsync(cacheKey);
+        if (!string.IsNullOrEmpty(cached))
+        {
+            var cachedMembers = JsonSerializer.Deserialize<IEnumerable<GroupMemberDto>>(cached);
+            return (true, "SuccessGotGroupMembers", cachedMembers);
+        }
+
         var group = await _dbContext.Groups
             .AsNoTracking()
             .Include(x => x.Users)
@@ -133,36 +146,28 @@ public class GroupService : IGroupService
             })
         });
 
+        var json = JsonSerializer.Serialize(members);
+        await _cache.SetAsync(cacheKey, json, TimeSpan.FromMinutes(10));
+
         return (true, "SuccessGotGroupMembers", members);
-    }
-
-    public async Task<(bool, string, IEnumerable<MessageDto>?)> GetGroupMessagesAsync(Guid groupId)
-    {
-        var group = await _dbContext.Groups
-            .AsNoTracking()
-            .Include(x => x.Messages)
-                .ThenInclude(x => x.User)
-            .SingleOrDefaultAsync(x => x.Id == groupId);
-
-        if (group == null)
-            return (false, "ErrorGroupNotFound", null);
-
-        var messages = group.Messages
-            .OrderBy(x=> x.CreatedAt)
-            .Select(x => new MessageDto
-            {
-                Id = x.Id,
-                Content = x.Content,
-                CreatedAt = x.CreatedAt,
-                UserId = x.UserId
-            });
-
-        return (true, "SuccessGotGroupMessages", messages);
     }
 
     public async Task<(bool, string, IEnumerable<MessageDto>?)> GetGroupMessagesAsync(Guid groupGuid, Guid? lastMessageId, int take)
     {
+        var cacheKey = CacheKeys.GroupMessages(groupGuid);
+
+        if (lastMessageId == null)
+        {
+            var cached = await _cache.GetAsync(cacheKey);
+            if (!string.IsNullOrEmpty(cached))
+            {
+                var cachedMessages = JsonSerializer.Deserialize<List<MessageDto>>(cached)!;
+                return (true, "SuccessGotGroupMessages", cachedMessages);
+            }
+        }
+
         var query = _dbContext.Messages
+            .AsNoTracking()
             .Include(x => x.User)
             .Include(x => x.Group)
             .Where(x => x.GroupId == groupGuid);
@@ -188,6 +193,12 @@ public class GroupService : IGroupService
                 UserId = x.UserId
             })
             .ToListAsync();
+
+        if (lastMessageId == null)
+        {
+            var json = JsonSerializer.Serialize(messages);
+            await _cache.SetAsync(cacheKey, json, TimeSpan.FromMinutes(5));
+        }
 
         return (true, "SuccessGotGroupMessages", messages);
     }
@@ -269,6 +280,26 @@ public class GroupService : IGroupService
             CreatedAt = message.CreatedAt,
             UserId = message.UserId
         };
+
+        var cacheKey = CacheKeys.GroupMessages(groupId);
+
+        var cached = await _cache.GetAsync(cacheKey);
+        List<MessageDto> list;
+        if (!string.IsNullOrEmpty(cached))
+        {
+            list = JsonSerializer.Deserialize<List<MessageDto>>(cached)!
+                .Take(39)
+                .ToList();
+        }
+        else
+        {
+            list = new List<MessageDto>();
+        }
+
+        list.Insert(0, messageDto);
+
+        var updatedJson = JsonSerializer.Serialize(list);
+        await _cache.SetAsync(cacheKey, updatedJson, TimeSpan.FromMinutes(5));
 
         return (true, "SuccessSentMessage",  messageDto);
     }

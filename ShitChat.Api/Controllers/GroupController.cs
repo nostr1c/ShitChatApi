@@ -133,34 +133,11 @@ public class GroupController : ControllerBase
     }
 
     /// <summary>
-    /// List group messages
-    /// </summary>
-    [Authorize(Policy = "GroupMember")]
-    [HttpGet("{groupGuid}/messages")]
-    public async Task<ActionResult<GenericResponse<IEnumerable<MessageDto>>>> GetGroupMessages(Guid groupGuid)
-    {
-        var response = new GenericResponse<IEnumerable<MessageDto>>();
-
-        var (success, message, messages) = await _groupService.GetGroupMessagesAsync(groupGuid);
-
-        if (!success)
-        {
-            response.Errors.Add("Error", new List<string> { message });
-            return BadRequest(response);
-        }
-
-        response.Message = message;
-        response.Data = messages;
-
-        return Ok(response);
-    }
-
-    /// <summary>
     /// List group messages v2
     /// </summary>
     [Authorize(Policy = "GroupMember")]
-    [HttpGet("v2/{groupGuid}/messages")]
-    public async Task<ActionResult<GenericResponse<IEnumerable<MessageDto>>>> GetGroupMessages(Guid groupGuid, [FromQuery] Guid? lastMessageId, [FromQuery] int take = 20)
+    [HttpGet("{groupGuid}/messages")]
+    public async Task<ActionResult<GenericResponse<IEnumerable<MessageDto>>>> GetGroupMessages(Guid groupGuid, [FromQuery] Guid? lastMessageId, [FromQuery] int take = 40)
     {
         var response = new GenericResponse<IEnumerable<MessageDto>>();
 
