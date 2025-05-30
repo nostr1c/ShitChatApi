@@ -46,5 +46,5 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             cd /opt/shitchatapi || exit 1
             docker compose pull api
-            docker compose up -d --no-deps api
+            docker compose up -d
             docker image prune -a -f --filter "until=12h"
