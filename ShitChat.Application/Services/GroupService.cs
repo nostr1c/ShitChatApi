@@ -117,7 +117,7 @@ public class GroupService : IGroupService
             var cachedMembers = JsonSerializer.Deserialize<IEnumerable<GroupMemberDto>>(cached);
             return (true, "SuccessGotGroupMembers", cachedMembers);
         }
-
+         
         var group = await _dbContext.Groups
             .AsNoTracking()
             .Include(x => x.Users)
