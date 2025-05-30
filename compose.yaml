@@ -12,6 +12,7 @@ services:
       - DB_DATABASE=${DB_DATABASE}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     ports:
       - 8080:8080
     volumes:
@@ -19,6 +20,7 @@ services:
       - image-uploads:/Uploads
     depends_on:
       - postgres
+      - redis
     networks:
       - webproxy
 
@@ -29,8 +31,8 @@ services:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    # ports:
-    #   - 5432:5432
+    ports:
+      - 5432:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -49,10 +51,38 @@ services:
     networks:
       - webproxy
 
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - redis-data:/data
+    command: [
+      "redis-server",
+      "--appendonly", "yes",
+      "--requirepass", "${REDIS_PASSWORD}"
+    ]
+    restart: unless-stopped
+    networks:
+      - webproxy
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    ports:
+      - 5540:5540
+    restart: unless-stopped
+    depends_on:
+      - redis
+    networks:
+      - webproxy
+
 volumes:
   data-protection-keys:
   pgdata:
   image-uploads:
+  redis-data:
 
 networks:
   webproxy:

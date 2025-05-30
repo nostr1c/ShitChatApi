@@ -18,6 +18,7 @@ using System.Text;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting.Server;
 using SixLabors.ImageSharp;
+using StackExchange.Redis;
 
 namespace ShitChat.Api;
 
@@ -63,16 +64,22 @@ public class Program
             };
         });
 
+        // Redis
+        var redisPassword = builder.Configuration["REDIS_PASSWORD"];
+        var redisConnectionString = $"redis:6379,password={redisPassword},abortConnect=false";
+        builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+            ConnectionMultiplexer.Connect(redisConnectionString)
+        );
+
+        builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+
         // Entity framework
         var dbServer = builder.Configuration["DB_SERVER"];
         var dbDatabase = builder.Configuration["DB_DATABASE"];
         var dbUser = builder.Configuration["DB_USER"];
         var dbPassword = builder.Configuration["DB_PASSWORD"];
 
-        //var connectionString = $"Server={dbServer};Database={dbDatabase};User Id={dbUser};Password={dbPassword};Encrypt=True;TrustServerCertificate=True;";
         var connectionString = $"Host=postgres;Port=5432;Database={dbDatabase};Username={dbUser};Password={dbPassword}";
-
-        //var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));

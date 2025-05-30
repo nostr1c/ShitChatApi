@@ -1,10 +1,14 @@
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 
 COPY . /source
-
-WORKDIR /source/ShitChat.Api
+WORKDIR /source
 
 ARG TARGETARCH
+
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+    dotnet restore ShitChat.sln
+
+WORKDIR /source/ShitChat.Api
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet publish -a ${TARGETARCH/amd64/x64} --use-current-runtime --self-contained false -o /app
@@ -16,7 +20,5 @@ WORKDIR /app
 RUN apk add --no-cache icu-libs
 
 COPY --from=build /app .
-
-# USER appuser
 
 ENTRYPOINT ["dotnet", "ShitChat.Api.dll"]
