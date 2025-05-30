@@ -5,7 +5,7 @@ WORKDIR /source
 
 ARG TARGETARCH
 
-RUN dotnet restore ShitChat.sln --verbosity detailed && \
+RUN dotnet restore ShitChat.sln --verbosity minimal && \
     cd ShitChat.Api && \
     dotnet publish -a ${TARGETARCH/amd64/x64} --use-current-runtime --self-contained false -o /app
 
