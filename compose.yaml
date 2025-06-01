@@ -1,6 +1,9 @@
 services:
   api:
-    image: ghcr.io/${GITHUB_OWNER}/api:latest
+    build:
+      context: .
+      target: final
+    # image: ghcr.io/${GITHUB_OWNER}/api:latest
     container_name: api
     restart: always
     environment:
