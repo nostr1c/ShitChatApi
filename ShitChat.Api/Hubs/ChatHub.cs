@@ -1,28 +1,35 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.SignalR;
-using ShitChat.Application.DTOs;
-using ShitChat.Domain.Entities;
+﻿using Microsoft.AspNetCore.SignalR;
 using ShitChat.Application.Interfaces;
+using ShitChat.Shared.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ShitChat.Api.Hubs;
 
+[Authorize]
 public class ChatHub : Hub
 {
-    //private readonly ILogger<ChatHub> _logger;
+    private readonly ILogger<ChatHub> _logger;
+    private readonly IPresenceService _presenceService;
 
-    //public ChatHub(ILogger<ChatHub> logger)
-    //{
-    //    _logger = logger;
-    //}
+    public ChatHub(ILogger<ChatHub> logger, IPresenceService presenceService)
+    {
+        _logger = logger;
+        _presenceService = presenceService;
+    }
 
     public async Task JoinGroup(string groupId)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
-    }
+        var userId = Context.User.GetUserGuid();
+        if (userId == null)
+            return;
 
-    public async Task LeaveGroup(string groupId)
-    {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
+        var connectionId = Context.ConnectionId;
+
+        await Groups.AddToGroupAsync(connectionId, groupId);
+        await _presenceService.AddConnectionToGroup(groupId, userId, connectionId);
+
+        var users = await _presenceService.GetUsersInGroup(groupId);
+        await Clients.Group(groupId).SendAsync("PresenceUpdated", groupId, users);
     }
 
     public async Task TypeIndicator(string roomId, string userId, bool isTyping)
@@ -33,5 +40,26 @@ public class ChatHub : Hub
     public async Task ChangeAvatar(string userId, string imageName)
     {
         await Clients.All.SendAsync("ReceiveChangedAvatar", userId, imageName);
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var userId = Context.User.GetUserGuid();
+        var connectionId = Context.ConnectionId;
+
+        if (userId == null)
+            return;
+
+        var groupIds = await _presenceService.GetConnectionGroups(connectionId);
+
+        await _presenceService.RemoveConnection(userId, connectionId);
+
+        foreach (var groupId in groupIds)
+        {
+            var users = await _presenceService.GetUsersInGroup(groupId);
+            await Clients.Group(groupId).SendAsync("PresenceUpdated", groupId, users);
+        }
+
+        await base.OnDisconnectedAsync(exception);
     }
 }

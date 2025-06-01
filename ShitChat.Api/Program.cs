@@ -11,13 +11,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-//using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
-//using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Hosting.Server;
-using SixLabors.ImageSharp;
 using StackExchange.Redis;
 
 namespace ShitChat.Api;
@@ -55,12 +51,16 @@ public class Program
             {
                 OnMessageReceived = ctx =>
                 {
-                    ctx.Request.Cookies.TryGetValue("accessToken", out var accessToken);
-                    if (!string.IsNullOrEmpty(accessToken))
+                    var path = ctx.HttpContext.Request.Path;
+
+                    if (ctx.Request.Cookies.TryGetValue("accessToken", out var accessToken))
+                    {
                         ctx.Token = accessToken;
+                        Console.WriteLine($"[JWT] Token found in cookie for {path}");
+                    }
 
                     return Task.CompletedTask;
-                }
+                },
             };
         });
 
@@ -94,6 +94,16 @@ public class Program
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
+        builder.Services.ConfigureApplicationCookie(options =>
+        {
+            options.Cookie.HttpOnly = true;
+            options.Events.OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = 401;
+                return Task.CompletedTask;
+            };
+        });
+
         builder.Services.Configure<IdentityOptions>(options =>
         {
             options.Password.RequireDigit = false;
@@ -121,6 +131,7 @@ public class Program
         builder.Services.AddScoped<IGroupService, GroupService>();
         builder.Services.AddScoped<IInviteService, InviteService>();
         builder.Services.AddScoped<IRoleService, RoleService>();
+        builder.Services.AddSingleton<IPresenceService, PresenceService>();
 
         // Validators
         builder.Services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
@@ -151,7 +162,8 @@ public class Program
                     policy.WithOrigins(
                         "http://filipsiri.se",
                         "https://filipsiri.se",
-                        "http://localhost:3000"
+                        "http://localhost:3000",
+                        "https://localui.test"
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
@@ -180,8 +192,12 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
+        app.MapHub<ChatHub>("/chatHub").RequireAuthorization(new AuthorizeAttribute
+        {
+            AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+        });
+
         app.MapControllers();
-        app.MapHub<ChatHub>("/chatHub");
 
         app.Run();
     }

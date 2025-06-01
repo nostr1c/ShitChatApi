@@ -120,3 +120,5 @@ src/.vs/config/applicationhost.config
 
 # JetBrains Rider's auto generated files
 .idea/
+database.sqlite
+/letsencrypt

@@ -111,7 +111,7 @@ public class GroupService : IGroupService
     {
         var cacheKey = CacheKeys.GroupMembers(groupId);
 
-        var cached = await _cache.GetAsync(cacheKey);
+        var cached = await _cache.StringGetAsync(cacheKey);
         if (!string.IsNullOrEmpty(cached))
         {
             var cachedMembers = JsonSerializer.Deserialize<IEnumerable<GroupMemberDto>>(cached);
@@ -147,7 +147,7 @@ public class GroupService : IGroupService
         });
 
         var json = JsonSerializer.Serialize(members);
-        await _cache.SetAsync(cacheKey, json, TimeSpan.FromMinutes(10));
+        await _cache.StringSetAsync(cacheKey, json, TimeSpan.FromMinutes(10));
 
         return (true, "SuccessGotGroupMembers", members);
     }
@@ -158,7 +158,7 @@ public class GroupService : IGroupService
 
         if (lastMessageId == null)
         {
-            var cached = await _cache.GetAsync(cacheKey);
+            var cached = await _cache.StringGetAsync(cacheKey);
             if (!string.IsNullOrEmpty(cached))
             {
                 var cachedMessages = JsonSerializer.Deserialize<List<MessageDto>>(cached)!;
@@ -197,7 +197,7 @@ public class GroupService : IGroupService
         if (lastMessageId == null)
         {
             var json = JsonSerializer.Serialize(messages);
-            await _cache.SetAsync(cacheKey, json, TimeSpan.FromMinutes(5));
+            await _cache.StringSetAsync(cacheKey, json, TimeSpan.FromMinutes(5));
         }
 
         return (true, "SuccessGotGroupMessages", messages);
@@ -283,7 +283,7 @@ public class GroupService : IGroupService
 
         var cacheKey = CacheKeys.GroupMessages(groupId);
 
-        var cached = await _cache.GetAsync(cacheKey);
+        var cached = await _cache.StringGetAsync(cacheKey);
         List<MessageDto> list;
         if (!string.IsNullOrEmpty(cached))
         {
@@ -299,7 +299,7 @@ public class GroupService : IGroupService
         list.Insert(0, messageDto);
 
         var updatedJson = JsonSerializer.Serialize(list);
-        await _cache.SetAsync(cacheKey, updatedJson, TimeSpan.FromMinutes(5));
+        await _cache.StringSetAsync(cacheKey, updatedJson, TimeSpan.FromMinutes(5));
 
         return (true, "SuccessSentMessage",  messageDto);
     }
