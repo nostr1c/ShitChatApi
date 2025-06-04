@@ -27,11 +27,16 @@ public class RoleService : IRoleService
     public async Task<(bool, string, GroupRoleDto?)> CreateRoleAsync(Guid groupId, CreateGroupRoleRequest request)
     {
         var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == userId);
+
+        if (user == null)
+            return (false, "ErrorLoggedInUser", null);
 
         var group = await _dbContext.Groups
-             .Include(x => x.Roles)
-             .SingleOrDefaultAsync(x => x.Id == groupId);
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == groupId);
 
         if (group == null)
             return (false, "ErrorGroupNotFound", null);

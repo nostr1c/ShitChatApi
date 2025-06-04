@@ -15,7 +15,6 @@ public class ConnectionService : IConnectionService
     (
         UserManager<User> userManager,
         AppDbContext appDbContext
-
     )
     {
         _userManager = userManager;

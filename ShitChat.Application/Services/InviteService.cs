@@ -32,19 +32,17 @@ public class InviteService : IInviteService
     public async Task<(bool, string, InviteDto?)> CreateInviteAsync(Guid groupGuid, CreateInviteRequest request)
     {
         var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == userId);
 
         if (user == null)
-        {
             return (false, "ErrorLoggedInUser", null);
-        }
 
         var groupExists = await _dbContext.Groups.AnyAsync(x => x.Id == groupGuid);
 
         if (!groupExists)
-        {
             return (false, "ErrorGroupNotFound", null);
-        }
 
         var invite = new Invite
         {
@@ -79,17 +77,18 @@ public class InviteService : IInviteService
     public async Task<(bool, string, IEnumerable<InviteDto>?)> GetGroupInvites(Guid groupGuid)
     {
         var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == userId);
 
         if (user == null)
-        {
             return (false, "ErrorLoggedInUser", null);
-        }
 
         var invites = await _dbContext.Invites
             .AsNoTracking()
             .Include(x => x.Group)
             .Include(x => x.Creator)
+            .AsNoTracking()
             .Where(x => x.GroupId == groupGuid).ToListAsync();
 
         var inviteDto = invites.Select(x => new InviteDto
@@ -117,9 +116,7 @@ public class InviteService : IInviteService
             .SingleOrDefaultAsync(x => x.Id == userId);
 
         if (user == null)
-        {
             return (false, "ErrorLoggedInUser", null);
-        }
 
         var invite = await _dbContext.Invites
             .Include(i => i.Group)
@@ -127,14 +124,10 @@ public class InviteService : IInviteService
             .SingleOrDefaultAsync(x => x.InviteString == inviteString);
 
         if (invite == null)
-        {
             return (false, "ErrorInviteNotFound", null);
-        }
 
         if (invite.ValidThrough < DateOnly.FromDateTime(DateTime.UtcNow))
-        {
             return (false, "ErrorInviteExpired", null);
-        }
 
         var group = invite.Group;
 
@@ -144,14 +137,11 @@ public class InviteService : IInviteService
         };
 
         if (group.Users.Any(x => x.Id == user.Id))
-        {
             return (false, "ErrorAlreadyInGroup", joinInviteDto);
-        }
 
         group.Users.Add(user);
 
         await _dbContext.SaveChangesAsync();
-
 
         return (true, "SuccessJoinedGroup", joinInviteDto);
     }

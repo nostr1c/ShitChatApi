@@ -58,9 +58,8 @@ public class AuthService : IAuthService
         var result = await _userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
-        {
             return null;
-        }
+
         // Check errors
 
         return user;
@@ -147,12 +146,12 @@ public class AuthService : IAuthService
     public async Task<(bool, string, TokenDto?)> RefreshToken(TokenDto tokenDto)
     {
         if (string.IsNullOrEmpty(tokenDto.RefreshTokenn))
-        {
             return (false, "ErrorRefreshTokenNull", null);
-        }
 
         var tokens = await _dbContext.RefreshTokens
+            .AsNoTracking()
             .Include(r => r.User)
+            .AsNoTracking()
             .Where(rt => rt.ExpiresAt > DateTime.UtcNow)
             .ToListAsync();
 
@@ -161,9 +160,7 @@ public class AuthService : IAuthService
                 == PasswordVerificationResult.Success);
 
         if (matchingToken == null)
-        {
             return (false, "ErrorInvalidOrExpiredRefreshToken", null);
-        }
 
         _dbContext.RefreshTokens.Remove(matchingToken);
         await _dbContext.SaveChangesAsync();

@@ -41,7 +41,9 @@ public class GroupService : IGroupService
         if (group == null)
             return (false, "ErrorGroupNotFound", null);
 
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == userId);
         if (user == null)
             return (false, "ErrorUserNotFound", null);
 
@@ -123,6 +125,7 @@ public class GroupService : IGroupService
             .Include(x => x.Users)
             .ThenInclude(y => y.GroupRoles)
             .ThenInclude(z =>  z.GroupRole)
+            .AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == groupId);
 
         if (group == null)
@@ -170,6 +173,7 @@ public class GroupService : IGroupService
             .AsNoTracking()
             .Include(x => x.User)
             .Include(x => x.Group)
+            .AsNoTracking()
             .Where(x => x.GroupId == groupGuid);
 
         if (lastMessageId != null)
@@ -208,6 +212,7 @@ public class GroupService : IGroupService
         var group = await _dbContext.Groups
             .AsNoTracking()
             .Include (x => x.Roles)
+            .AsNoTracking()
             .SingleOrDefaultAsync (x => x.Id == groupId);
 
         if (group == null)
@@ -255,6 +260,7 @@ public class GroupService : IGroupService
 
         var group = await _dbContext.Groups
             .Include(g => g.Users)
+            .AsNoTracking()
             .SingleOrDefaultAsync(g => g.Id == groupId);
 
         if (group == null)
