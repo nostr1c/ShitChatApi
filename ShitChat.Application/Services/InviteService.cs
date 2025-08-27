@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using ShitChat.Application.Caching;
 using ShitChat.Application.DTOs;
 using ShitChat.Application.Interfaces;
 using ShitChat.Application.Requests;
@@ -8,6 +9,7 @@ using ShitChat.Domain.Entities;
 using ShitChat.Infrastructure.Data;
 using ShitChat.Shared.Extensions;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 
 namespace ShitChat.Application.Services;
 
@@ -15,18 +17,21 @@ public class InviteService : IInviteService
 {
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ICacheService _cache;
     private readonly ILogger<InviteService> _logger;
 
     public InviteService
     (
         AppDbContext dbContext,
         IHttpContextAccessor httpContextAccessor,
+        ICacheService cache,
         ILogger<InviteService> logger
 
     )
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
+        _cache = cache;
         _logger = logger;
     }
     public async Task<(bool, string, InviteDto?)> CreateInviteAsync(Guid groupGuid, CreateInviteRequest request)
@@ -133,7 +138,18 @@ public class InviteService : IInviteService
 
         var joinInviteDto = new JoinInviteDto
         {
-            Group = group.Id
+            Group = group.Id,
+            Member = new GroupMemberDto
+            {
+                User = new UserDto
+                {
+                    Id = user.Id,
+                    Avatar = user.AvatarUri,
+                    CreatedAt = user.CreatedAt,
+                    Email = user.Email,
+                    Username = user.UserName
+                }
+            }
         };
 
         if (group.Users.Any(x => x.Id == user.Id))
@@ -142,6 +158,10 @@ public class InviteService : IInviteService
         group.Users.Add(user);
 
         await _dbContext.SaveChangesAsync();
+
+        var cacheKey = CacheKeys.GroupMembers(group.Id);
+
+        await _cache.KeyDeleteAsync(cacheKey);
 
         return (true, "SuccessJoinedGroup", joinInviteDto);
     }

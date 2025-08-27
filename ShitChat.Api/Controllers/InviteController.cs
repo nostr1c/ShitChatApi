@@ -81,10 +81,14 @@ public class InviteController : ControllerBase
         response.Message = message;
         response.Data = joinInviteDto;
 
-        if (!success)
+        if (!success || joinInviteDto is null)
         {
             return BadRequest(response);
         }
+
+        var groupGuid = joinInviteDto.Group;
+
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveMember", groupGuid, joinInviteDto.Member);
 
         return Ok(response);
     }
