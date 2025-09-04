@@ -16,6 +16,8 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<UserGroupRole> UserGroupRoles { get; set; }
     public DbSet<Invite> Invites { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<Permission> Permissions { get; set; }
+    public DbSet<GroupRolePermission> GroupRolePermissions { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -114,6 +116,59 @@ public class AppDbContext : IdentityDbContext<User>
             .HasIndex(rt => rt.TokenHash)
             .IsUnique();
 
+        builder.Entity<GroupRolePermission>()
+            .HasKey(gp => new { gp.GroupRoleId, gp.PermissionId });
+
+        builder.Entity<GroupRolePermission>()
+            .HasOne(gp => gp.GroupRole)
+            .WithMany(gr => gr.Permissions)
+            .HasForeignKey(gp => gp.GroupRoleId);
+
+        builder.Entity<GroupRolePermission>()
+            .HasOne(gp => gp.Permission)
+            .WithMany(p => p.GroupRoles)
+            .HasForeignKey(gp => gp.PermissionId);
+
+        // Seeding permanents
+        builder.Entity<Permission>()
+            .HasData(new Permission
+                {
+                    Id = Guid.Parse("bd74b2af-ed25-48a5-8ab4-f78227a58d06"),
+                    Name = "kick_user"
+                },
+                new Permission
+                {
+                    Id = Guid.Parse("e5bebdec-1a32-4c9d-a54e-39cc0d073ed6"),
+                    Name = "ban_user"
+                },
+                new Permission
+                {
+                    Id = Guid.Parse("c8161caf-eb44-4c71-baf1-eea17481989c"),
+                    Name = "manage_user_roles"
+                },
+                new Permission
+                {
+                    Id = Guid.Parse("61e895bb-021f-42ae-88af-c7444931630e"),
+                    Name = "manage_server_roles"
+                },
+                new Permission
+                {
+                    Id = Guid.Parse("037f49f3-9f9f-4c45-b94b-1b8c0e595fb9"),
+                    Name = "manage_invites"
+                },
+                new Permission
+                {
+                    Id = Guid.Parse("47d3b3f7-2e55-4867-9bca-4e1f971ae5ae"),
+                    Name = "manage_server"
+                },
+                new Permission
+                {
+                    Id = Guid.Parse("5a6ba92e-1013-4c73-9589-0dba08bfa2bf"),
+                    Name = "delete_messages"
+                }
+            );
+
+        // Seeding example data
         string user1Email = "alice.smith@example.com";
         string user1UserName = "alice123";
 

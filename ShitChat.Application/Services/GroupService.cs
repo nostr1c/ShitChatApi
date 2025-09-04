@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using System.Text.Json;
+using Microsoft.AspNetCore.SignalR;
+using StackExchange.Redis;
 
 namespace ShitChat.Application.Services;
 
@@ -141,12 +143,7 @@ public class GroupService : IGroupService
                 Avatar = x.AvatarUri,
                 CreatedAt = x.CreatedAt
             },
-            Roles = x.GroupRoles.Where(y => y.GroupRole.GroupId == groupId).Select(x => new GroupRoleDto
-            {
-                Id = x.GroupRoleId,
-                Name = x.GroupRole.Name,
-                Color = x.GroupRole.Color
-            })
+            Roles = x.GroupRoles.Where(x => x.GroupRole.GroupId == groupId).Select(x => x.GroupRoleId).ToList()
         });
 
         var json = JsonSerializer.Serialize(members);
@@ -211,9 +208,11 @@ public class GroupService : IGroupService
     {
         var group = await _dbContext.Groups
             .AsNoTracking()
-            .Include (x => x.Roles)
+            .Include(x => x.Roles)
+                .ThenInclude(x => x.Permissions)
+                    .ThenInclude(p => p.Permission)
             .AsNoTracking()
-            .SingleOrDefaultAsync (x => x.Id == groupId);
+            .SingleOrDefaultAsync(x => x.Id == groupId);
 
         if (group == null)
             return (false, "ErrorGroupRolesNotFound", null);
@@ -223,7 +222,11 @@ public class GroupService : IGroupService
             {
                 Id = x.Id,
                 Name = x.Name,
-                Color = x.Color
+                Color = x.Color,
+                Permissions = x.Permissions
+                    .Where(p => p.Permission != null)
+                    .Select(p => p.Permission.Name)
+                    .ToList()
             });
 
         return (true, "SuccessGotGroupRoles", roles);
@@ -308,5 +311,188 @@ public class GroupService : IGroupService
         await _cache.StringSetAsync(cacheKey, updatedJson, TimeSpan.FromMinutes(5));
 
         return (true, "SuccessSentMessage",  messageDto);
+    }
+
+    public async Task<(bool, string, AddRoleToUserDto?)> AddRoleToUser(Guid groupId, string userId, Guid roleId)
+    {
+        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId );
+
+        if (user == null)
+            return (false, "ErrorUserNotFound", null);
+
+        var group = await _dbContext.Groups
+            .Include(g => g.Users)
+            .ThenInclude(u => u.GroupRoles)
+            .SingleOrDefaultAsync(g => g.Id == groupId);
+
+        if (group == null)
+            return (false, "ErrorGroupNotFound", null);
+
+        var role = await _dbContext.GroupRoles
+            .SingleOrDefaultAsync(r => r.Id == roleId && r.GroupId == groupId);
+
+        if (role == null)
+            return (false, "ErrorRoleNotFound", null);
+
+        if (user.GroupRoles.Any(x => x.GroupRoleId == role.Id))
+            return (false, "ErrorUserAlreadyHasRole", null);
+
+        user.GroupRoles.Add(new UserGroupRole
+        {
+            UserId = user.Id,
+            GroupRoleId = role.Id
+        });
+
+        await _dbContext.SaveChangesAsync();
+
+        await _cache.KeyDeleteAsync(CacheKeys.GroupMembers(groupId));
+
+        var dto = new AddRoleToUserDto
+        {
+            GroupId = groupId,
+            UserId = user.Id,
+            RoleId = role.Id
+        };
+
+        return (true, "SuccessAddedRoleToUser", dto);
+    }
+
+    public async Task<(bool, string, RemoveRoleFromUserDto?)> RemoveRoleFromUser(Guid groupId, string userId, Guid roleId)
+    {
+        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
+
+        if (user == null)
+            return (false, "ErrorUserNotFound", null);
+
+        var group = await _dbContext.Groups
+            .Include(g => g.Users)
+            .ThenInclude(u => u.GroupRoles)
+            .SingleOrDefaultAsync(g => g.Id == groupId);
+
+        if (group == null)
+            return (false, "ErrorGroupNotFound", null);
+
+        var role = await _dbContext.GroupRoles
+            .SingleOrDefaultAsync(r => r.Id == roleId && r.GroupId == groupId);
+
+        if (role == null)
+            return (false, "ErrorRoleNotFound", null);
+
+        var userGroupRole = user.GroupRoles.FirstOrDefault(x => x.GroupRoleId == role.Id);
+        if (userGroupRole != null)
+            _dbContext.Remove(userGroupRole);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _cache.KeyDeleteAsync(CacheKeys.GroupMembers(groupId));
+
+        var dto = new RemoveRoleFromUserDto
+        {
+            GroupId = groupId,
+            UserId = user.Id,
+            RoleId = role.Id
+        };
+
+        return (true, "SuccessRemovedRoleFromUser", dto);
+    }
+
+    public async Task<(bool, string, GroupRoleDto?)> CreateRoleAsync(Guid groupId, CreateGroupRoleRequest request)
+    {
+        var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == userId);
+
+        if (user == null)
+            return (false, "ErrorLoggedInUser", null);
+
+        var group = await _dbContext.Groups
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == groupId);
+
+        if (group == null)
+            return (false, "ErrorGroupNotFound", null);
+
+        var groupRole = new GroupRole
+        {
+            GroupId = groupId,
+            Name = request.Name,
+            Color = request.Color,
+            Permissions = new List<GroupRolePermission>()
+        };
+
+        var permissions = await _dbContext.Permissions
+            .Where(x => request.Permissions.Contains(x.Name))
+            .ToListAsync();
+
+        foreach (var permission in permissions)
+        {
+            groupRole.Permissions.Add(new GroupRolePermission
+            {
+                PermissionId = permission.Id
+            });
+        }
+
+        _dbContext.GroupRoles.Add(groupRole);
+        await _dbContext.SaveChangesAsync();
+
+        var groupRoleDto = new GroupRoleDto
+        {
+            Id = groupRole.Id,
+            Name = groupRole.Name,
+            Color = groupRole.Color,
+            Permissions = permissions.Select(x => x.Name).ToList()
+        };
+
+        return (true, "SuccessCreatedGroupRole", groupRoleDto);
+    }
+
+    public async Task<(bool, string, GroupRoleDto?)> EditRoleAsync(Guid roleId, EditGroupRoleRequest request)
+    {
+        var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == userId);
+
+        if (user == null)
+            return (false, "ErrorLoggedInUser", null);
+
+
+
+        var groupRole = await _dbContext.GroupRoles
+            .Include(x => x.Permissions)
+            .ThenInclude(x => x.Permission)
+            .SingleOrDefaultAsync(x => x.Id == roleId);
+
+        if (groupRole == null)
+            return (false, "ErrorRoleNotFound", null);
+
+        groupRole.Name = request.Name;
+        groupRole.Color = request.Color;
+
+        _dbContext.GroupRolePermissions.RemoveRange(groupRole.Permissions);
+
+        var permissions = await _dbContext.Permissions
+            .Where(x => request.Permissions.Contains(x.Name))
+            .ToListAsync();
+
+        groupRole.Permissions = permissions.Select(p => new GroupRolePermission
+            {
+                GroupRoleId = groupRole.Id,
+                PermissionId = p.Id
+            })
+            .ToList();
+
+        await _dbContext.SaveChangesAsync();
+
+        var groupRoleDto = new GroupRoleDto
+        {
+            Id = groupRole.Id,
+            Name = groupRole.Name,
+            Color = groupRole.Color,
+            Permissions = permissions.Select(x => x.Name).ToList()
+        };
+
+        return (true, "SuccessCreatedGroupRole", groupRoleDto);
     }
 }

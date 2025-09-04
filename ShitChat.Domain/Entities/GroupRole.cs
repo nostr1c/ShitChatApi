@@ -12,4 +12,6 @@ public class GroupRole
     // Navigation
     [ForeignKey(nameof(GroupId))]
     public Group Group { get; set; }
+
+    public ICollection<GroupRolePermission> Permissions { get; set; }
 }

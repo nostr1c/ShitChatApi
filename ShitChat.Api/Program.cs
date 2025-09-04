@@ -130,7 +130,6 @@ public class Program
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IGroupService, GroupService>();
         builder.Services.AddScoped<IInviteService, InviteService>();
-        builder.Services.AddScoped<IRoleService, RoleService>();
         builder.Services.AddSingleton<IPresenceService, PresenceService>();
 
         // Validators
@@ -141,6 +140,7 @@ public class Program
         builder.Services.AddScoped<IValidator<SendMessageRequest>, SendMessageRequestValidator>();
         builder.Services.AddScoped<IValidator<CreateInviteRequest>, CreateInviteRequestValidator>();
         builder.Services.AddScoped<IValidator<CreateGroupRoleRequest>, CreateGroupRoleRequestValidator>();
+        builder.Services.AddScoped<IValidator<EditGroupRoleRequest>, EditGroupRoleRequestValidator>();
 
         builder.Services.AddRouting(options => options.LowercaseUrls = true);
         builder.Services.AddSignalR();

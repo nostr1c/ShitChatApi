@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ShitChat.Infrastructure.Data;
@@ -11,9 +12,11 @@ using ShitChat.Infrastructure.Data;
 namespace ShitChat.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250903180953_AddRolePermission")]
+    partial class AddRolePermission
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -440,43 +443,6 @@ namespace ShitChat.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Permissions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("bd74b2af-ed25-48a5-8ab4-f78227a58d06"),
-                            Name = "kick_user"
-                        },
-                        new
-                        {
-                            Id = new Guid("e5bebdec-1a32-4c9d-a54e-39cc0d073ed6"),
-                            Name = "ban_user"
-                        },
-                        new
-                        {
-                            Id = new Guid("c8161caf-eb44-4c71-baf1-eea17481989c"),
-                            Name = "manage_user_roles"
-                        },
-                        new
-                        {
-                            Id = new Guid("61e895bb-021f-42ae-88af-c7444931630e"),
-                            Name = "manage_server_roles"
-                        },
-                        new
-                        {
-                            Id = new Guid("037f49f3-9f9f-4c45-b94b-1b8c0e595fb9"),
-                            Name = "manage_invites"
-                        },
-                        new
-                        {
-                            Id = new Guid("47d3b3f7-2e55-4867-9bca-4e1f971ae5ae"),
-                            Name = "manage_server"
-                        },
-                        new
-                        {
-                            Id = new Guid("5a6ba92e-1013-4c73-9589-0dba08bfa2bf"),
-                            Name = "delete_messages"
-                        });
                 });
 
             modelBuilder.Entity("ShitChat.Domain.Entities.RefreshToken", b =>

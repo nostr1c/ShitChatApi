@@ -1,11 +1,12 @@
-﻿using ShitChat.Application.DTOs;
-using ShitChat.Application.Requests;
-using ShitChat.Application.Interfaces;
-using ShitChat.Api.Hubs;
-using FluentValidation;
+﻿using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using ShitChat.Api.Hubs;
+using ShitChat.Application.DTOs;
+using ShitChat.Application.Interfaces;
+using ShitChat.Application.Requests;
+using ShitChat.Application.Services;
 using ShitChat.Domain.Entities;
 
 namespace ShitChat.Api.Controllers;
@@ -214,6 +215,135 @@ public class GroupController : ControllerBase
 
         response.Message = message;
         response.Data = roles;
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Add role to user in group
+    /// </summary>
+    [Authorize(Policy = "GroupMember")]
+    [HttpPost("{groupGuid}/user/{userId}/roles")] // Should change this & use Admin policy
+    public async Task<ActionResult<GenericResponse<object>>> AddRoleToUser(Guid groupGuid, string userId, [FromBody] AddRoleToUserRequest request)
+    {
+        var response = new GenericResponse<object>();
+        var (success, message, dto) = await _groupService.AddRoleToUser(groupGuid, userId, request.RoleId);
+
+        if (!success)
+        {
+            response.Errors.Add("Error", new List<string> { message });
+            return BadRequest(response);
+        }
+
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("UserAddedRole", dto.GroupId, dto.UserId, dto.RoleId);
+
+        response.Message = message;
+        response.Data = dto;
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Remove role from user in group
+    /// </summary>
+    [Authorize(Policy = "GroupMember")]
+    [HttpDelete("{groupGuid}/user/{userId}/roles")] // Should change this & use Admin policy
+    public async Task<ActionResult<GenericResponse<object>>> RemoveRoleFromUser(Guid groupGuid, string userId, [FromBody] RemoveRoleFromUserRequest request)
+    {
+        var response = new GenericResponse<object>();
+        var (success, message, dto) = await _groupService.RemoveRoleFromUser(groupGuid, userId, request.RoleId);
+
+        if (!success)
+        {
+            response.Errors.Add("Error", new List<string> { message });
+            return BadRequest(response);
+        }
+
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("UserRemovedRole", dto.GroupId, dto.UserId, dto.RoleId);
+
+        response.Message = message;
+        response.Data = dto;
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Create group role
+    /// </summary>
+    [HttpPost("{groupGuid}/roles")]
+    public async Task<ActionResult<GenericResponse<GroupRoleDto>>> CreateRole(Guid groupGuid, [FromBody] CreateGroupRoleRequest request)
+    {
+        var validator = _serviceProvider.GetRequiredService<IValidator<CreateGroupRoleRequest>>();
+        var validationResult = await validator.ValidateAsync(request);
+        var response = new GenericResponse<GroupRoleDto?>();
+
+        if (!validationResult.IsValid)
+        {
+            response.Errors = validationResult.Errors
+                .GroupBy(x => x.PropertyName)
+                .ToDictionary(
+                    x => x.Key,
+                    x => x.Select(y => y.ErrorMessage).ToList()
+                );
+
+            response.Message = "ErrorValidationFailed";
+            return BadRequest(response);
+        }
+
+        var (success, message, dto) = await _groupService.CreateRoleAsync(groupGuid, request);
+
+        if (!success)
+        {
+            response.Message = message;
+            response.Data = null;
+            return BadRequest(response);
+        }
+
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RoleCreated", groupGuid, dto);
+
+        response.Data = dto;
+        response.Message = "SuccessCreatedGroupRole";
+
+        return Ok(response);
+    }
+
+
+    /// <summary>
+    /// Edit group role
+    /// </summary>
+    [HttpPut("{groupGuid}/roles/{roleId}")]
+    public async Task<ActionResult<GenericResponse<GroupRoleDto>>> EditRole(Guid groupGuid, Guid roleId, [FromBody] EditGroupRoleRequest request)
+    {
+        var validator = _serviceProvider.GetRequiredService<IValidator<EditGroupRoleRequest>>();
+        var validationResult = await validator.ValidateAsync(request);
+        var response = new GenericResponse<GroupRoleDto?>();
+
+        if (!validationResult.IsValid)
+        {
+            response.Errors = validationResult.Errors
+                .GroupBy(x => x.PropertyName)
+                .ToDictionary(
+                    x => x.Key,
+                    x => x.Select(y => y.ErrorMessage).ToList()
+                );
+
+            response.Message = "ErrorValidationFailed";
+            return BadRequest(response);
+        }
+
+        var (success, message, dto) = await _groupService.EditRoleAsync(roleId, request);
+
+        if (!success)
+        {
+            response.Message = message;
+            response.Data = null;
+            return BadRequest(response);
+        }
+
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RoleEdited", groupGuid, dto);
+
+        response.Data = dto;
+        response.Message = "SuccessEditedGroupRole";
 
         return Ok(response);
     }

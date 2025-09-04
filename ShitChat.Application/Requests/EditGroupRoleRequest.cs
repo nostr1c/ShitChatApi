@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ShitChat.Application.Requests;
 
-public class CreateGroupRoleRequest
+public class EditGroupRoleRequest
 {
     [Required]
     public string Name { get; set; } = string.Empty;
@@ -11,9 +11,9 @@ public class CreateGroupRoleRequest
     public List<string> Permissions { get; set; } = new();
 }
 
-public class CreateGroupRoleRequestValidator : AbstractValidator<CreateGroupRoleRequest>
+public class EditGroupRoleRequestValidator : AbstractValidator<EditGroupRoleRequest>
 {
-    public CreateGroupRoleRequestValidator()
+    public EditGroupRoleRequestValidator()
     {
         RuleFor(x => x.Name)
             .NotEmpty()

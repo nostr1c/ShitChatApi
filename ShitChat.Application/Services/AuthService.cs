@@ -118,7 +118,7 @@ public class AuthService : IAuthService
             issuer: jwtIssuer,
             audience: jwtIssuer,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(5),
+            expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256)
         );
 
@@ -174,7 +174,7 @@ public class AuthService : IAuthService
         context.Response.Cookies.Append("accessToken", tokenDto.AccessToken,
             new CookieOptions
             {
-                Expires = DateTimeOffset.UtcNow.AddMinutes(5),
+                Expires = DateTimeOffset.UtcNow.AddHours(1),
                 HttpOnly = true,
                 IsEssential = true,
                 Secure = true,
