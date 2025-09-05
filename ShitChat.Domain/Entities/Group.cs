@@ -8,13 +8,14 @@ public class Group
 
     public string Name { get; set; }
 
+    // Foreign keys
     public string OwnerId { get; set; }
 
     // Navigation props
     [ForeignKey(nameof(OwnerId))]
     public User Owner { get; set; }
 
-    public List<User> Users { get; set; } = new List<User>();
+    public List<UserGroup> UserGroups { get; set; }
 
     public ICollection<Message> Messages { get; set; }
     public ICollection<GroupRole> Roles { get; set; }

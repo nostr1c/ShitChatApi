@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ShitChat.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class fix : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -34,8 +34,6 @@ namespace ShitChat.Infrastructure.Migrations
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
                     AvatarUri = table.Column<string>(type: "text", nullable: true),
-                    RefreshToken = table.Column<string>(type: "text", nullable: true),
-                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedAt = table.Column<DateOnly>(type: "date", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -55,6 +53,18 @@ namespace ShitChat.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Permissions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Permissions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -209,6 +219,27 @@ namespace ShitChat.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RefreshTokens",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TokenHash = table.Column<string>(type: "text", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RefreshTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "GroupRoles",
                 columns: table => new
                 {
@@ -285,22 +316,49 @@ namespace ShitChat.Infrastructure.Migrations
                 name: "UserGroups",
                 columns: table => new
                 {
-                    GroupsId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UsersId = table.Column<string>(type: "text", nullable: false)
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    LastReadMessageId = table.Column<Guid>(type: "uuid", nullable: true),
+                    JoinedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserGroups", x => new { x.GroupsId, x.UsersId });
+                    table.PrimaryKey("PK_UserGroups", x => new { x.UserId, x.GroupId });
                     table.ForeignKey(
-                        name: "FK_UserGroups_AspNetUsers_UsersId",
-                        column: x => x.UsersId,
+                        name: "FK_UserGroups_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UserGroups_Groups_GroupsId",
-                        column: x => x.GroupsId,
+                        name: "FK_UserGroups_Groups_GroupId",
+                        column: x => x.GroupId,
                         principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GroupRolePermissions",
+                columns: table => new
+                {
+                    GroupRoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PermissionId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupRolePermissions", x => new { x.GroupRoleId, x.PermissionId });
+                    table.ForeignKey(
+                        name: "FK_GroupRolePermissions_GroupRoles_GroupRoleId",
+                        column: x => x.GroupRoleId,
+                        principalTable: "GroupRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupRolePermissions_Permissions_PermissionId",
+                        column: x => x.PermissionId,
+                        principalTable: "Permissions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -329,84 +387,17 @@ namespace ShitChat.Infrastructure.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "AspNetUsers",
-                columns: new[] { "Id", "AccessFailedCount", "AvatarUri", "ConcurrencyStamp", "CreatedAt", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "RefreshToken", "RefreshTokenExpiryTime", "SecurityStamp", "TwoFactorEnabled", "UserName" },
+                table: "Permissions",
+                columns: new[] { "Id", "Name" },
                 values: new object[,]
                 {
-                    { "a1f2d713-1234-43fa-9c8e-65fa6ee39244", 0, "a2138670-ffb4-466c-b40c-44dde76566ed.jpg", null, new DateOnly(2024, 5, 15), "bob.jones@example.com", true, false, null, "BOB.JONES@EXAMPLE.COM", "BOBLORD1337", "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==", null, false, "exampletoken1", new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "", false, "BobLord1337" },
-                    { "bb29d713-9414-43fa-9c8e-65fa6ee39243", 0, "a2138670-ffb4-466c-b40c-44dde76566ed.jpg", null, new DateOnly(2024, 5, 15), "alice.smith@example.com", true, false, null, "ALICE.SMITH@EXAMPLE.COM", "ALICE123", "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==", null, false, "exampletoken1", new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "", false, "alice123" },
-                    { "c1f3d713-5678-43fa-9c8e-65fa6ee39245", 0, "a2138670-ffb4-466c-b40c-44dde76566ed.jpg", null, new DateOnly(2024, 5, 15), "carla.davis@example.com", true, false, null, "CARLA.DAVIS@EXAMPLE.COM", "CARLIS", "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==", null, false, "exampletoken1", new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "", false, "Carlis" },
-                    { "d1f4d713-9101-43fa-9c8e-65fa6ee39246", 0, "a2138670-ffb4-466c-b40c-44dde76566ed.jpg", null, new DateOnly(2024, 5, 15), "david.lee@example.com", true, false, null, "DAVID.LEE@EXAMPLE.COM", "DAVIDLEE", "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==", null, false, "exampletoken1", new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "", false, "DavidLee" },
-                    { "e1f5d713-1122-43fa-9c8e-65fa6ee39247", 0, "a2138670-ffb4-466c-b40c-44dde76566ed.jpg", null, new DateOnly(2024, 5, 15), "emily.white@example.com", true, false, null, "EMILY.WHITE@EXAMPLE.COM", "EMILYCOOL", "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==", null, false, "exampletoken1", new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "", false, "EmilyCool" },
-                    { "f1f6d713-3344-43fa-9c8e-65fa6ee39248", 0, "a2138670-ffb4-466c-b40c-44dde76566ed.jpg", null, new DateOnly(2024, 5, 15), "frank.hall@example.com", true, false, null, "FRANK.HALL@EXAMPLE.COM", "FRANKTHEMAN", "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==", null, false, "exampletoken1", new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "", false, "FrankTheMan" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Connections",
-                columns: new[] { "id", "Accepted", "CreatedAt", "FriendId", "UserId" },
-                values: new object[,]
-                {
-                    { new Guid("60f01455-f4f7-4986-9489-75ffd3d699e0"), true, new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "c1f3d713-5678-43fa-9c8e-65fa6ee39245", "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("a875b4fb-f2b1-4a68-8684-4ab4915c002d"), true, new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "d1f4d713-9101-43fa-9c8e-65fa6ee39246", "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("bbb967e5-a6b5-41c0-9d69-6a72cc05a12f"), true, new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "e1f5d713-1122-43fa-9c8e-65fa6ee39247", "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("cfa42098-b22a-4272-b9d9-52f4b57de616"), true, new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "f1f6d713-3344-43fa-9c8e-65fa6ee39248", "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("dcdf519b-70a5-448a-8599-515d9da297d9"), true, new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc), "a1f2d713-1234-43fa-9c8e-65fa6ee39244", "bb29d713-9414-43fa-9c8e-65fa6ee39243" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Groups",
-                columns: new[] { "Id", "Name", "OwnerId" },
-                values: new object[,]
-                {
-                    { new Guid("25d5ec2b-ebe4-4462-ada9-17c246fb5273"), "Group 2", "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("707e730d-0d72-4109-b9d9-5dc47b637268"), "Group 4", "d1f4d713-9101-43fa-9c8e-65fa6ee39246" },
-                    { new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"), "Group 1", "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("c7fcbe94-0f5f-47e6-9b71-5cc04ce32538"), "Group 5", "e1f5d713-1122-43fa-9c8e-65fa6ee39247" },
-                    { new Guid("f50053c8-7fd8-498b-8c0b-30277bc378b0"), "Group 3", "c1f3d713-5678-43fa-9c8e-65fa6ee39245" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "GroupRoles",
-                columns: new[] { "Id", "Color", "GroupId", "Name" },
-                values: new object[,]
-                {
-                    { new Guid("62a70d41-0339-46f1-81c3-6d27d9cda762"), "64bcff", new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"), "Moderator" },
-                    { new Guid("927af184-f6bc-4d8a-b36e-ff5f8aa3d14b"), "64bcff", new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"), "Kung för en dag" },
-                    { new Guid("eec0a883-0fb8-4f7a-bea7-04892684b1bd"), "64bcff", new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"), "Boss" },
-                    { new Guid("f3dc9330-dce9-4bfc-9844-dd8232fce023"), "64bcff", new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"), "Administrator" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Messages",
-                columns: new[] { "Id", "Content", "CreatedAt", "GroupId", "UserId" },
-                values: new object[,]
-                {
-                    { new Guid("1baf7663-c7da-4954-bd1c-2865de582301"), "Nämen tjena", new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc), new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"), "a1f2d713-1234-43fa-9c8e-65fa6ee39244" },
-                    { new Guid("7acbca3e-d27a-403c-af5b-37b31e4bf53a"), "Hej", new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc), new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"), "bb29d713-9414-43fa-9c8e-65fa6ee39243" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "UserGroups",
-                columns: new[] { "GroupsId", "UsersId" },
-                values: new object[,]
-                {
-                    { new Guid("25d5ec2b-ebe4-4462-ada9-17c246fb5273"), "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("707e730d-0d72-4109-b9d9-5dc47b637268"), "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"), "a1f2d713-1234-43fa-9c8e-65fa6ee39244" },
-                    { new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"), "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("c7fcbe94-0f5f-47e6-9b71-5cc04ce32538"), "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("f50053c8-7fd8-498b-8c0b-30277bc378b0"), "bb29d713-9414-43fa-9c8e-65fa6ee39243" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "UserGroupRoles",
-                columns: new[] { "Id", "GroupRoleId", "UserId" },
-                values: new object[,]
-                {
-                    { new Guid("27c9c624-d28d-47f8-b875-9502b5522cc7"), new Guid("eec0a883-0fb8-4f7a-bea7-04892684b1bd"), "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("3c69703b-48e1-44e0-8bab-6f8d7cf8d41c"), new Guid("927af184-f6bc-4d8a-b36e-ff5f8aa3d14b"), "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("4fef1968-54e7-4352-b7dc-52c9e9d223a4"), new Guid("f3dc9330-dce9-4bfc-9844-dd8232fce023"), "bb29d713-9414-43fa-9c8e-65fa6ee39243" },
-                    { new Guid("fc1a0e5c-e610-4929-b18e-b25324121a5d"), new Guid("62a70d41-0339-46f1-81c3-6d27d9cda762"), "bb29d713-9414-43fa-9c8e-65fa6ee39243" }
+                    { new Guid("037f49f3-9f9f-4c45-b94b-1b8c0e595fb9"), "manage_invites" },
+                    { new Guid("47d3b3f7-2e55-4867-9bca-4e1f971ae5ae"), "manage_server" },
+                    { new Guid("5a6ba92e-1013-4c73-9589-0dba08bfa2bf"), "delete_messages" },
+                    { new Guid("61e895bb-021f-42ae-88af-c7444931630e"), "manage_server_roles" },
+                    { new Guid("bd74b2af-ed25-48a5-8ab4-f78227a58d06"), "kick_user" },
+                    { new Guid("c8161caf-eb44-4c71-baf1-eea17481989c"), "manage_user_roles" },
+                    { new Guid("e5bebdec-1a32-4c9d-a54e-39cc0d073ed6"), "ban_user" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -463,6 +454,11 @@ namespace ShitChat.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_GroupRolePermissions_PermissionId",
+                table: "GroupRolePermissions",
+                column: "PermissionId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_GroupRoles_GroupId",
                 table: "GroupRoles",
                 column: "GroupId");
@@ -493,6 +489,17 @@ namespace ShitChat.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_TokenHash",
+                table: "RefreshTokens",
+                column: "TokenHash",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_UserId",
+                table: "RefreshTokens",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserGroupRoles_GroupRoleId",
                 table: "UserGroupRoles",
                 column: "GroupRoleId");
@@ -503,9 +510,9 @@ namespace ShitChat.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserGroups_UsersId",
+                name: "IX_UserGroups_GroupId",
                 table: "UserGroups",
-                column: "UsersId");
+                column: "GroupId");
         }
 
         /// <inheritdoc />
@@ -530,10 +537,16 @@ namespace ShitChat.Infrastructure.Migrations
                 name: "Connections");
 
             migrationBuilder.DropTable(
+                name: "GroupRolePermissions");
+
+            migrationBuilder.DropTable(
                 name: "Invites");
 
             migrationBuilder.DropTable(
                 name: "Messages");
+
+            migrationBuilder.DropTable(
+                name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "UserGroupRoles");
@@ -543,6 +556,9 @@ namespace ShitChat.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Permissions");
 
             migrationBuilder.DropTable(
                 name: "GroupRoles");

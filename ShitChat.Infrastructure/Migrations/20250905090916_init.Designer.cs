@@ -12,15 +12,15 @@ using ShitChat.Infrastructure.Data;
 namespace ShitChat.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250519161617_fix")]
-    partial class fix
+    [Migration("20250905090916_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.3")
+                .HasAnnotation("ProductVersion", "9.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -185,48 +185,6 @@ namespace ShitChat.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Connections");
-
-                    b.HasData(
-                        new
-                        {
-                            id = new Guid("dcdf519b-70a5-448a-8599-515d9da297d9"),
-                            Accepted = true,
-                            CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            FriendId = "a1f2d713-1234-43fa-9c8e-65fa6ee39244",
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            id = new Guid("60f01455-f4f7-4986-9489-75ffd3d699e0"),
-                            Accepted = true,
-                            CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            FriendId = "c1f3d713-5678-43fa-9c8e-65fa6ee39245",
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            id = new Guid("a875b4fb-f2b1-4a68-8684-4ab4915c002d"),
-                            Accepted = true,
-                            CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            FriendId = "d1f4d713-9101-43fa-9c8e-65fa6ee39246",
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            id = new Guid("bbb967e5-a6b5-41c0-9d69-6a72cc05a12f"),
-                            Accepted = true,
-                            CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            FriendId = "e1f5d713-1122-43fa-9c8e-65fa6ee39247",
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            id = new Guid("cfa42098-b22a-4272-b9d9-52f4b57de616"),
-                            Accepted = true,
-                            CreatedAt = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            FriendId = "f1f6d713-3344-43fa-9c8e-65fa6ee39248",
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        });
                 });
 
             modelBuilder.Entity("ShitChat.Domain.Entities.Group", b =>
@@ -248,38 +206,6 @@ namespace ShitChat.Infrastructure.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Groups");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            Name = "Group 1",
-                            OwnerId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            Id = new Guid("25d5ec2b-ebe4-4462-ada9-17c246fb5273"),
-                            Name = "Group 2",
-                            OwnerId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            Id = new Guid("f50053c8-7fd8-498b-8c0b-30277bc378b0"),
-                            Name = "Group 3",
-                            OwnerId = "c1f3d713-5678-43fa-9c8e-65fa6ee39245"
-                        },
-                        new
-                        {
-                            Id = new Guid("707e730d-0d72-4109-b9d9-5dc47b637268"),
-                            Name = "Group 4",
-                            OwnerId = "d1f4d713-9101-43fa-9c8e-65fa6ee39246"
-                        },
-                        new
-                        {
-                            Id = new Guid("c7fcbe94-0f5f-47e6-9b71-5cc04ce32538"),
-                            Name = "Group 5",
-                            OwnerId = "e1f5d713-1122-43fa-9c8e-65fa6ee39247"
-                        });
                 });
 
             modelBuilder.Entity("ShitChat.Domain.Entities.GroupRole", b =>
@@ -304,36 +230,21 @@ namespace ShitChat.Infrastructure.Migrations
                     b.HasIndex("GroupId");
 
                     b.ToTable("GroupRoles");
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("f3dc9330-dce9-4bfc-9844-dd8232fce023"),
-                            Color = "64bcff",
-                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            Name = "Administrator"
-                        },
-                        new
-                        {
-                            Id = new Guid("62a70d41-0339-46f1-81c3-6d27d9cda762"),
-                            Color = "64bcff",
-                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            Name = "Moderator"
-                        },
-                        new
-                        {
-                            Id = new Guid("927af184-f6bc-4d8a-b36e-ff5f8aa3d14b"),
-                            Color = "64bcff",
-                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            Name = "Kung för en dag"
-                        },
-                        new
-                        {
-                            Id = new Guid("eec0a883-0fb8-4f7a-bea7-04892684b1bd"),
-                            Color = "64bcff",
-                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            Name = "Boss"
-                        });
+            modelBuilder.Entity("ShitChat.Domain.Entities.GroupRolePermission", b =>
+                {
+                    b.Property<Guid>("GroupRoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("GroupRoleId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("GroupRolePermissions");
                 });
 
             modelBuilder.Entity("ShitChat.Domain.Entities.Invite", b =>
@@ -395,24 +306,88 @@ namespace ShitChat.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.Permission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Permissions");
 
                     b.HasData(
                         new
                         {
-                            Id = new Guid("7acbca3e-d27a-403c-af5b-37b31e4bf53a"),
-                            Content = "Hej",
-                            CreatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
-                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
+                            Id = new Guid("bd74b2af-ed25-48a5-8ab4-f78227a58d06"),
+                            Name = "kick_user"
                         },
                         new
                         {
-                            Id = new Guid("1baf7663-c7da-4954-bd1c-2865de582301"),
-                            Content = "Nämen tjena",
-                            CreatedAt = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
-                            GroupId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            UserId = "a1f2d713-1234-43fa-9c8e-65fa6ee39244"
+                            Id = new Guid("e5bebdec-1a32-4c9d-a54e-39cc0d073ed6"),
+                            Name = "ban_user"
+                        },
+                        new
+                        {
+                            Id = new Guid("c8161caf-eb44-4c71-baf1-eea17481989c"),
+                            Name = "manage_user_roles"
+                        },
+                        new
+                        {
+                            Id = new Guid("61e895bb-021f-42ae-88af-c7444931630e"),
+                            Name = "manage_server_roles"
+                        },
+                        new
+                        {
+                            Id = new Guid("037f49f3-9f9f-4c45-b94b-1b8c0e595fb9"),
+                            Name = "manage_invites"
+                        },
+                        new
+                        {
+                            Id = new Guid("47d3b3f7-2e55-4867-9bca-4e1f971ae5ae"),
+                            Name = "manage_server"
+                        },
+                        new
+                        {
+                            Id = new Guid("5a6ba92e-1013-4c73-9589-0dba08bfa2bf"),
+                            Name = "delete_messages"
                         });
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("ShitChat.Domain.Entities.User", b =>
@@ -463,12 +438,6 @@ namespace ShitChat.Infrastructure.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("RefreshTokenExpiryTime")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
@@ -492,122 +461,30 @@ namespace ShitChat.Infrastructure.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = "bb29d713-9414-43fa-9c8e-65fa6ee39243",
-                            AccessFailedCount = 0,
-                            AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2024, 5, 15),
-                            Email = "alice.smith@example.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "ALICE.SMITH@EXAMPLE.COM",
-                            NormalizedUserName = "ALICE123",
-                            PasswordHash = "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==",
-                            PhoneNumberConfirmed = false,
-                            RefreshToken = "exampletoken1",
-                            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            SecurityStamp = "",
-                            TwoFactorEnabled = false,
-                            UserName = "alice123"
-                        },
-                        new
-                        {
-                            Id = "a1f2d713-1234-43fa-9c8e-65fa6ee39244",
-                            AccessFailedCount = 0,
-                            AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2024, 5, 15),
-                            Email = "bob.jones@example.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "BOB.JONES@EXAMPLE.COM",
-                            NormalizedUserName = "BOBLORD1337",
-                            PasswordHash = "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==",
-                            PhoneNumberConfirmed = false,
-                            RefreshToken = "exampletoken1",
-                            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            SecurityStamp = "",
-                            TwoFactorEnabled = false,
-                            UserName = "BobLord1337"
-                        },
-                        new
-                        {
-                            Id = "c1f3d713-5678-43fa-9c8e-65fa6ee39245",
-                            AccessFailedCount = 0,
-                            AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2024, 5, 15),
-                            Email = "carla.davis@example.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "CARLA.DAVIS@EXAMPLE.COM",
-                            NormalizedUserName = "CARLIS",
-                            PasswordHash = "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==",
-                            PhoneNumberConfirmed = false,
-                            RefreshToken = "exampletoken1",
-                            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            SecurityStamp = "",
-                            TwoFactorEnabled = false,
-                            UserName = "Carlis"
-                        },
-                        new
-                        {
-                            Id = "d1f4d713-9101-43fa-9c8e-65fa6ee39246",
-                            AccessFailedCount = 0,
-                            AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2024, 5, 15),
-                            Email = "david.lee@example.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "DAVID.LEE@EXAMPLE.COM",
-                            NormalizedUserName = "DAVIDLEE",
-                            PasswordHash = "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==",
-                            PhoneNumberConfirmed = false,
-                            RefreshToken = "exampletoken1",
-                            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            SecurityStamp = "",
-                            TwoFactorEnabled = false,
-                            UserName = "DavidLee"
-                        },
-                        new
-                        {
-                            Id = "e1f5d713-1122-43fa-9c8e-65fa6ee39247",
-                            AccessFailedCount = 0,
-                            AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2024, 5, 15),
-                            Email = "emily.white@example.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "EMILY.WHITE@EXAMPLE.COM",
-                            NormalizedUserName = "EMILYCOOL",
-                            PasswordHash = "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==",
-                            PhoneNumberConfirmed = false,
-                            RefreshToken = "exampletoken1",
-                            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            SecurityStamp = "",
-                            TwoFactorEnabled = false,
-                            UserName = "EmilyCool"
-                        },
-                        new
-                        {
-                            Id = "f1f6d713-3344-43fa-9c8e-65fa6ee39248",
-                            AccessFailedCount = 0,
-                            AvatarUri = "a2138670-ffb4-466c-b40c-44dde76566ed.jpg",
-                            CreatedAt = new DateOnly(2024, 5, 15),
-                            Email = "frank.hall@example.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "FRANK.HALL@EXAMPLE.COM",
-                            NormalizedUserName = "FRANKTHEMAN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEG719JW0JH1H9VQgj8uzgJ4HLJ+/2qP7NjjLeDMIku1+rtQT16BvU3uracoab0E0Gg==",
-                            PhoneNumberConfirmed = false,
-                            RefreshToken = "exampletoken1",
-                            RefreshTokenExpiryTime = new DateTime(2024, 12, 23, 0, 0, 0, 0, DateTimeKind.Utc),
-                            SecurityStamp = "",
-                            TwoFactorEnabled = false,
-                            UserName = "FrankTheMan"
-                        });
+            modelBuilder.Entity("ShitChat.Domain.Entities.UserGroup", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastReadMessageId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserId", "GroupId");
+
+                    b.HasIndex("GroupId");
+
+                    b.ToTable("UserGroups");
                 });
 
             modelBuilder.Entity("ShitChat.Domain.Entities.UserGroupRole", b =>
@@ -630,79 +507,6 @@ namespace ShitChat.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserGroupRoles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("4fef1968-54e7-4352-b7dc-52c9e9d223a4"),
-                            GroupRoleId = new Guid("f3dc9330-dce9-4bfc-9844-dd8232fce023"),
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            Id = new Guid("fc1a0e5c-e610-4929-b18e-b25324121a5d"),
-                            GroupRoleId = new Guid("62a70d41-0339-46f1-81c3-6d27d9cda762"),
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            Id = new Guid("3c69703b-48e1-44e0-8bab-6f8d7cf8d41c"),
-                            GroupRoleId = new Guid("927af184-f6bc-4d8a-b36e-ff5f8aa3d14b"),
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            Id = new Guid("27c9c624-d28d-47f8-b875-9502b5522cc7"),
-                            GroupRoleId = new Guid("eec0a883-0fb8-4f7a-bea7-04892684b1bd"),
-                            UserId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        });
-                });
-
-            modelBuilder.Entity("UserGroups", b =>
-                {
-                    b.Property<Guid>("GroupsId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UsersId")
-                        .HasColumnType("text");
-
-                    b.HasKey("GroupsId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("UserGroups");
-
-                    b.HasData(
-                        new
-                        {
-                            GroupsId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            GroupsId = new Guid("be081304-63c6-4cae-bf25-b7e33cc6e495"),
-                            UsersId = "a1f2d713-1234-43fa-9c8e-65fa6ee39244"
-                        },
-                        new
-                        {
-                            GroupsId = new Guid("25d5ec2b-ebe4-4462-ada9-17c246fb5273"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            GroupsId = new Guid("f50053c8-7fd8-498b-8c0b-30277bc378b0"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            GroupsId = new Guid("707e730d-0d72-4109-b9d9-5dc47b637268"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        },
-                        new
-                        {
-                            GroupsId = new Guid("c7fcbe94-0f5f-47e6-9b71-5cc04ce32538"),
-                            UsersId = "bb29d713-9414-43fa-9c8e-65fa6ee39243"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -797,6 +601,25 @@ namespace ShitChat.Infrastructure.Migrations
                     b.Navigation("Group");
                 });
 
+            modelBuilder.Entity("ShitChat.Domain.Entities.GroupRolePermission", b =>
+                {
+                    b.HasOne("ShitChat.Domain.Entities.GroupRole", "GroupRole")
+                        .WithMany("Permissions")
+                        .HasForeignKey("GroupRoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ShitChat.Domain.Entities.Permission", "Permission")
+                        .WithMany("GroupRoles")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GroupRole");
+
+                    b.Navigation("Permission");
+                });
+
             modelBuilder.Entity("ShitChat.Domain.Entities.Invite", b =>
                 {
                     b.HasOne("ShitChat.Domain.Entities.Group", "Group")
@@ -835,6 +658,36 @@ namespace ShitChat.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ShitChat.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("ShitChat.Domain.Entities.User", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.UserGroup", b =>
+                {
+                    b.HasOne("ShitChat.Domain.Entities.Group", "Group")
+                        .WithMany("UserGroups")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ShitChat.Domain.Entities.User", "User")
+                        .WithMany("UserGroups")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ShitChat.Domain.Entities.UserGroupRole", b =>
                 {
                     b.HasOne("ShitChat.Domain.Entities.GroupRole", "GroupRole")
@@ -854,21 +707,6 @@ namespace ShitChat.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("UserGroups", b =>
-                {
-                    b.HasOne("ShitChat.Domain.Entities.Group", null)
-                        .WithMany()
-                        .HasForeignKey("GroupsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ShitChat.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("ShitChat.Domain.Entities.Group", b =>
                 {
                     b.Navigation("Invites");
@@ -876,6 +714,18 @@ namespace ShitChat.Infrastructure.Migrations
                     b.Navigation("Messages");
 
                     b.Navigation("Roles");
+
+                    b.Navigation("UserGroups");
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.GroupRole", b =>
+                {
+                    b.Navigation("Permissions");
+                });
+
+            modelBuilder.Entity("ShitChat.Domain.Entities.Permission", b =>
+                {
+                    b.Navigation("GroupRoles");
                 });
 
             modelBuilder.Entity("ShitChat.Domain.Entities.User", b =>
@@ -885,6 +735,10 @@ namespace ShitChat.Infrastructure.Migrations
                     b.Navigation("GroupRoles");
 
                     b.Navigation("OwnedGroups");
+
+                    b.Navigation("RefreshTokens");
+
+                    b.Navigation("UserGroups");
                 });
 #pragma warning restore 612, 618
         }

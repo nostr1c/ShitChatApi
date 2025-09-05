@@ -32,8 +32,8 @@ public class GroupMembershipHandler : AuthorizationHandler<GroupMembershipRequir
             return;
         }
 
-        var isMember = await _dbContext.Groups
-            .AnyAsync(g => g.Id == groupGuid && g.Users.Any(u => u.Id == userId));
+        var isMember = await _dbContext.UserGroups
+            .AnyAsync(ug => ug.GroupId == groupGuid && ug.UserId == userId);
 
         if (isMember)
         {

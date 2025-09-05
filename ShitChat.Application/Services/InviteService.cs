@@ -117,15 +117,14 @@ public class InviteService : IInviteService
     {
         var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
         var user = await _dbContext.Users
-            .Include(u => u.Groups)
             .SingleOrDefaultAsync(x => x.Id == userId);
 
-        if (user == null)
+        if (userId == null)
             return (false, "ErrorLoggedInUser", null);
 
         var invite = await _dbContext.Invites
             .Include(i => i.Group)
-            .ThenInclude(g => g.Users)
+                .ThenInclude(g => g.UserGroups)
             .SingleOrDefaultAsync(x => x.InviteString == inviteString);
 
         if (invite == null)
@@ -135,6 +134,7 @@ public class InviteService : IInviteService
             return (false, "ErrorInviteExpired", null);
 
         var group = invite.Group;
+
 
         var joinInviteDto = new JoinInviteDto
         {
@@ -152,10 +152,16 @@ public class InviteService : IInviteService
             }
         };
 
-        if (group.Users.Any(x => x.Id == user.Id))
+        if (group.UserGroups.Any(x => x.UserId == user.Id))
             return (false, "ErrorAlreadyInGroup", joinInviteDto);
 
-        group.Users.Add(user);
+        group.UserGroups.Add(new UserGroup
+        {
+            UserId = user.Id,
+            GroupId = group.Id,
+            JoinedAt = DateTime.UtcNow
+        });
+
 
         await _dbContext.SaveChangesAsync();
 
