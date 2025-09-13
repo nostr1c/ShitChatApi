@@ -13,7 +13,8 @@ public class CreateInviteRequestValidator : AbstractValidator<CreateInviteReques
     {
         RuleFor(x => x.ValidThrough)
             .NotEmpty()
-            .WithMessage("ErrorValidThroughCannotBeEmpty");
-        RuleFor(x => x.ValidThrough);
+            .WithMessage("ErrorValidThroughCannotBeEmpty")
+            .Must(date => date >= DateOnly.FromDateTime(DateTime.UtcNow))
+            .WithMessage("ErrorValidThroughMustBeAFutureDate");
     }
 }

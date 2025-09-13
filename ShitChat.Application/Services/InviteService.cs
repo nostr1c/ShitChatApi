@@ -9,7 +9,6 @@ using ShitChat.Domain.Entities;
 using ShitChat.Infrastructure.Data;
 using ShitChat.Shared.Extensions;
 using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 
 namespace ShitChat.Application.Services;
 
@@ -93,7 +92,6 @@ public class InviteService : IInviteService
             .AsNoTracking()
             .Include(x => x.Group)
             .Include(x => x.Creator)
-            .AsNoTracking()
             .Where(x => x.GroupId == groupGuid).ToListAsync();
 
         var inviteDto = invites.Select(x => new InviteDto
@@ -119,7 +117,7 @@ public class InviteService : IInviteService
         var user = await _dbContext.Users
             .SingleOrDefaultAsync(x => x.Id == userId);
 
-        if (userId == null)
+        if (user == null)
             return (false, "ErrorLoggedInUser", null);
 
         var invite = await _dbContext.Invites
@@ -134,7 +132,6 @@ public class InviteService : IInviteService
             return (false, "ErrorInviteExpired", null);
 
         var group = invite.Group;
-
 
         var joinInviteDto = new JoinInviteDto
         {

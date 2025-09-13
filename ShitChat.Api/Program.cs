@@ -1,20 +1,22 @@
-using ShitChat.Api.Hubs;
-using ShitChat.Api.Authorization;
-using ShitChat.Application.Services;
-using ShitChat.Domain.Entities;
-using ShitChat.Infrastructure.Data;
-using ShitChat.Application.Requests;
-using ShitChat.Application.Interfaces;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
-using System.Text;
-using Microsoft.AspNetCore.DataProtection;
+using ShitChat.Api.Authorization;
+using ShitChat.Api.Filters;
+using ShitChat.Api.Hubs;
+using ShitChat.Api.Middleware;
+using ShitChat.Application.Interfaces;
+using ShitChat.Application.Requests;
+using ShitChat.Application.Services;
+using ShitChat.Domain.Entities;
+using ShitChat.Infrastructure.Data;
 using StackExchange.Redis;
+using System.Text;
 
 namespace ShitChat.Api;
 
@@ -142,8 +144,16 @@ public class Program
         builder.Services.AddScoped<IValidator<CreateGroupRoleRequest>, CreateGroupRoleRequestValidator>();
         builder.Services.AddScoped<IValidator<EditGroupRoleRequest>, EditGroupRoleRequestValidator>();
 
+        builder.Services.AddScoped<ValidationFilter>();
+
         builder.Services.AddRouting(options => options.LowercaseUrls = true);
         builder.Services.AddSignalR();
+
+        builder.Services.AddControllers(options =>
+        {
+            options.Filters.AddService<ValidationFilter>();
+        });
+
         builder.Services.AddControllers();
 
 
@@ -191,6 +201,7 @@ public class Program
         app.UseCors("AllowFrontend");
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseMiddleware<ExceptionMiddleware>();
 
         app.MapHub<ChatHub>("/chatHub").RequireAuthorization(new AuthorizeAttribute
         {
