@@ -6,7 +6,8 @@ namespace ShitChat.Application.Interfaces;
 
 public interface IUserService
 {
-    public Task<(bool, User?)> GetUserByGuidAsync(string userGuid);
-    public Task<(bool, string, string?)> UpdateAvatarAsync(IFormFile avatar);
-    public Task<List<ConnectionDto>> GetConnectionsAsync();
+    Task<(bool, string, UserDto?)> GetUserByGuidAsync(string userGuid);
+    Task<(bool, string, string?)> UpdateAvatarAsync(IFormFile avatar);
+    Task<(bool, string, List<ConnectionDto>)> GetConnectionsAsync();
+    Task<(bool, string, List<GroupDto>)> GetUserGroupsAsync();
 }

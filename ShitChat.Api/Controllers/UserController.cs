@@ -1,8 +1,7 @@
-﻿using ShitChat.Domain.Entities;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ShitChat.Application.DTOs;
 using ShitChat.Application.Interfaces;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
 namespace ShitChat.Api.Controllers;
 
@@ -12,17 +11,14 @@ namespace ShitChat.Api.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly IGroupService _groupService;
     private readonly string _imageStoragePath = "/Uploads";
 
     public UserController
     (
-        IUserService userService,
-        IGroupService groupService
+        IUserService userService
     )
     {
         _userService = userService;
-        _groupService = groupService;
     }
 
     /// <summary>
@@ -31,28 +27,16 @@ public class UserController : ControllerBase
     [HttpGet("{guid}")]
     public async Task<ActionResult<GenericResponse<UserDto>>> GetUserByGuid(string guid)
     {
-        var response = new GenericResponse<UserDto>();
+        var (success, message, userDto) = await _userService.GetUserByGuidAsync(guid);
 
-        var (success, user) = await _userService.GetUserByGuidAsync(guid);
+        if (!success || userDto == null)
+            return NotFound(ResponseHelper.Error<UserDto>(message: message, status: StatusCodes.Status404NotFound));
 
-        if (!success || user == null)
-        {
-            response.Errors.Add("Error", new List<string> { "ErrorUserNotFound" });
-            return NotFound(response);
-        }
-
-        var dto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.UserName,
-            Email = user.Email,
-            Avatar = user.AvatarUri,
-            CreatedAt = user.CreatedAt
-        };
-       
-        response.Data = dto;
-
-        return Ok(response);
+        return Ok(new GenericResponse<UserDto>{
+            Data = userDto,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -61,20 +45,17 @@ public class UserController : ControllerBase
     [HttpPut("Avatar")]
     public async Task<ActionResult<GenericResponse<string?>>> UpdateAvatar(IFormFile avatar)
     {
-        var response = new GenericResponse<string?>();
-
-        var (success, message, imageName) = await _userService.UpdateAvatarAsync(avatar); 
+        var (success, message, imageName) = await _userService.UpdateAvatarAsync(avatar);
 
         if (!success || message == null)
-        {
-            response.Message = message;
-            return BadRequest(response);
-        }
+            return BadRequest(ResponseHelper.Error<string?>(message));
 
-        response.Data = imageName;
-        response.Message = message;
-        
-        return Ok(response);
+        return Ok(new GenericResponse<string?>
+        {
+            Data = imageName,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -102,13 +83,17 @@ public class UserController : ControllerBase
     [HttpGet("Connections")]
     public async Task<ActionResult<GenericResponse<List<ConnectionDto>>>> GetConnections()
     {
-        var response = new GenericResponse<List<ConnectionDto>>();
-        // TODO: Change to groupservice
-        var connections = await _userService.GetConnectionsAsync();
+        var (success, message, connections) = await _userService.GetConnectionsAsync();
 
-        response.Data = connections;
+        if (!success || connections == null)
+            return BadRequest(ResponseHelper.Error<List<ConnectionDto>>(message));
 
-        return Ok(response);
+        return Ok(new GenericResponse<List<ConnectionDto>>
+        {
+            Data = connections,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -117,11 +102,16 @@ public class UserController : ControllerBase
     [HttpGet("Groups")]
     public async Task<ActionResult<GenericResponse<List<GroupDto>>>> GetGroups()
     {
-        var response = new GenericResponse<List<GroupDto>>();
-        var groups = await _groupService.GetUserGroupsAsync();
+        var (success, message, groups) = await _userService.GetUserGroupsAsync();
 
-        response.Data = groups;
+        if (!success || groups == null)
+            return BadRequest(ResponseHelper.Error<List<GroupDto>>(message));
 
-        return Ok(response);
+        return Ok(new GenericResponse<List<GroupDto>>
+        {
+            Data = groups,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 }

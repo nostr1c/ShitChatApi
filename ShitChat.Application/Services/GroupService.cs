@@ -250,36 +250,6 @@ public class GroupService : IGroupService
         return (true, "SuccessGotGroupRoles", roles);
     }
 
-    public async Task<List<GroupDto>> GetUserGroupsAsync()
-    {
-        var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
-
-        var groups = await _dbContext.Groups
-            .AsNoTracking()
-            .Where(g => g.UserGroups.Any(ug => ug.UserId == userId))
-            .Select(g => new GroupDto
-            {
-                Id = g.Id,
-                Name = g.Name,
-                Latest = g.Messages
-                    .OrderByDescending(m => m.CreatedAt)
-                    .Select(m => m.Content)
-                    .FirstOrDefault(),
-                OwnerId = g.OwnerId,
-
-                UnreadCount = g.Messages.Count(m =>
-                    !g.UserGroups.Any(ug =>
-                        ug.UserId == userId &&
-                        ug.LastReadMessageId != null &&
-                        m.Id.CompareTo(ug.LastReadMessageId.Value) <= 0
-                    )
-                )
-            })
-            .ToListAsync();
-
-        return groups;
-    }
-
     public async Task<(bool, string, MessageDto?)> SendMessageAsync(Guid groupId, SendMessageRequest request)
     {
         var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
