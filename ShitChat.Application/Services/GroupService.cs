@@ -9,8 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using System.Text.Json;
-using Microsoft.AspNetCore.SignalR;
-using StackExchange.Redis;
 
 namespace ShitChat.Application.Services;
 
@@ -35,53 +33,13 @@ public class GroupService : IGroupService
         _cache = cache;
     }
 
-    public async Task<(bool, string, UserDto?)> AddUserToGroupAsync(Guid groupId, string userId)
-    {
-        var group = await _dbContext.Groups
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == groupId);
-
-        if (group == null)
-            return (false, "ErrorGroupNotFound", null);
-
-        var user = await _dbContext.Users
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == userId);
-        if (user == null)
-            return (false, "ErrorUserNotFound", null);
-
-        var exists = await _dbContext.UserGroups
-            .AnyAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
-
-        if (exists)
-            return (false, "ErrorUserAlreadyInGroup", null);
-
-        var userGroup = new UserGroup
-        {
-            UserId = user.Id,
-            GroupId = group.Id,
-            JoinedAt = DateTime.UtcNow
-        };
-        _dbContext.UserGroups.Add(userGroup);
-
-        await _dbContext.SaveChangesAsync();
-
-        var dto = new UserDto
-        {
-            Id = user.Id,
-            Email = user.Email,
-            Username = user.UserName,
-            Avatar = user.AvatarUri,
-            CreatedAt = user.CreatedAt
-        };
-
-        return (true, "SuccessAddedUserToGroup", dto);
-    }
-
-    public async Task<GroupDto> CreateGroupAsync(CreateGroupRequest request)
+    public async Task<(bool, string, GroupDto?)> CreateGroupAsync(CreateGroupRequest request)
     {
         var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
         var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
+
+        if (user == null)
+            return (false, "ErrorLoggedInUser", null);
 
         var group = new Group
         {
@@ -109,15 +67,61 @@ public class GroupService : IGroupService
             OwnerId = userId
         };
 
-        return groupDto;
+        return (true, "SuccessCreatedGroup", groupDto);
+    }
+    
+    public async Task<(bool, string, UserDto?)> AddUserToGroupAsync(Guid groupId, string userId)
+    {
+        var group = await _dbContext.Groups
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == groupId);
+
+        if (group == null)
+            return (false, "ErrorGroupNotFound", null);
+
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == userId);
+
+        if (user == null)
+            return (false, "ErrorUserNotFound", null);
+
+        var exists = await _dbContext.UserGroups
+            .AnyAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
+
+        if (exists)
+            return (false, "ErrorUserAlreadyInGroup", null);
+
+        var userGroup = new UserGroup
+        {
+            UserId = user.Id,
+            GroupId = group.Id,
+            JoinedAt = DateTime.UtcNow
+        };
+
+        _dbContext.UserGroups.Add(userGroup);
+        await _dbContext.SaveChangesAsync();
+
+        var dto = new UserDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            Username = user.UserName,
+            Avatar = user.AvatarUri,
+            CreatedAt = user.CreatedAt
+        };
+
+        return (true, "SuccessAddedUserToGroup", dto);
     }
 
-    public async Task<GroupDto?> GetGroupByGuidAsync(Guid groupId)
+    public async Task<(bool, string, GroupDto?)> GetGroupByGuidAsync(Guid groupId)
     {
         var group = await _dbContext.Groups
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == groupId);
-        if (group == null) return null;
+
+        if (group == null)
+            return (false, "ErrorGroupNotFound", null);
 
         var groupDto = new GroupDto
         {
@@ -126,7 +130,7 @@ public class GroupService : IGroupService
             OwnerId = group.OwnerId
         };
 
-        return groupDto;
+        return (true, "SuccessGotGroup", groupDto);
     }
      
     public async Task<(bool, string, IEnumerable<GroupMemberDto>?)> GetGroupMembersAsync(Guid groupId)
@@ -314,7 +318,6 @@ public class GroupService : IGroupService
 
         if (user == null)
             return (false, "ErrorUserNotFound", null);
-
         
         var role = await _dbContext.GroupRoles
             .SingleOrDefaultAsync(r => r.Id == roleId && r.GroupId == groupId);

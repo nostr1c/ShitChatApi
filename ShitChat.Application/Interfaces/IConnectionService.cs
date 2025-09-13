@@ -2,9 +2,9 @@
 
 public interface IConnectionService
 {
-    Task<(bool Success, string Message)> CreateConnectionAsync(string userName, string friendId);
+    Task<(bool, string)> CreateConnectionAsync(string friendId);
 
-    Task<(bool Success, string Message)> AcceptConnectionAsync(string userName, string friendId);
+    Task<(bool, string)> AcceptConnectionAsync(string friendId);
 
-    Task<(bool Success, string Message)> DeleteConnectionAsync(string userName, string friendId);
+    Task<(bool, string)> DeleteConnectionAsync(string friendId);
 }

@@ -6,8 +6,6 @@ using ShitChat.Api.Hubs;
 using ShitChat.Application.DTOs;
 using ShitChat.Application.Interfaces;
 using ShitChat.Application.Requests;
-using ShitChat.Application.Services;
-using ShitChat.Domain.Entities;
 
 namespace ShitChat.Api.Controllers;
 
@@ -16,20 +14,17 @@ namespace ShitChat.Api.Controllers;
 [Route("api/v1/[controller]")]
 public class GroupController : ControllerBase
 {
-    private readonly IServiceProvider _serviceProvider;
     private readonly IGroupService _groupService;
     private readonly ILogger<GroupController> _logger;
     private readonly IHubContext<ChatHub> _hubContext;
 
     public GroupController
     (
-        IServiceProvider serviceProvider,
         IGroupService groupService,
         ILogger<GroupController> logger,
         IHubContext<ChatHub> hubContext
     )
     {
-        _serviceProvider = serviceProvider;
         _groupService = groupService;
         _logger = logger;
         _hubContext = hubContext;
@@ -41,29 +36,16 @@ public class GroupController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<GenericResponse<GroupDto>>> CreateGroup([FromBody] CreateGroupRequest request)
     {
-        var validator = _serviceProvider.GetRequiredService<IValidator<CreateGroupRequest>>();
-        var validationResult = await validator.ValidateAsync(request);
-        var response = new GenericResponse<GroupDto>();
+        var (success, message, group) = await _groupService.CreateGroupAsync(request);
+        if (!success || group == null)
+            return BadRequest(ResponseHelper.Error<GroupDto>(message));
 
-        if (!validationResult.IsValid)
+        return Ok(new GenericResponse<GroupDto>
         {
-            response.Errors = validationResult.Errors
-                .GroupBy(x => x.PropertyName)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.Select(y => y.ErrorMessage).ToList()
-                );
-
-            response.Message = "ErrorValidationFailed";
-            return BadRequest(response);
-        }
-
-        var group = await _groupService.CreateGroupAsync(request);
-
-        response.Data = group;
-        response.Message = "SuccessCreatedGroup";
-
-        return Ok(response);
+            Data = group,
+            Message = message,
+            Status = StatusCodes.Status201Created
+        });
     }
 
     /// <summary>
@@ -73,19 +55,16 @@ public class GroupController : ControllerBase
     [HttpGet("{groupGuid}")]
     public async Task<ActionResult<GenericResponse<GroupDto>>> GetGroupByGuid(Guid groupGuid)
     {
-        var response = new GenericResponse<GroupDto>();
+        var (success, message, group) = await _groupService.GetGroupByGuidAsync(groupGuid);
+        if (!success || group == null)
+            return BadRequest(ResponseHelper.Error<GroupDto>(message));
 
-        var group = await _groupService.GetGroupByGuidAsync(groupGuid);
-
-        if (group == null)
+        return Ok(new GenericResponse<GroupDto>
         {
-            response.Message = "ErrorGroupNotFound";
-            return NotFound(response);
-        }
-
-        response.Data = group;
-
-        return Ok(response);
+            Data = group,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -94,20 +73,17 @@ public class GroupController : ControllerBase
     [HttpPost("{groupGuid}/members")]
     public async Task<ActionResult<GenericResponse<UserDto>>> AddUserToGroup(Guid groupGuid, [FromBody] string userId)
     {
-        var response = new GenericResponse<UserDto>();
-
         var (success, message, userDto) = await _groupService.AddUserToGroupAsync(groupGuid, userId);
 
         if (!success || userDto == null)
+            return BadRequest(ResponseHelper.Error<UserDto>(message));
+
+        return Ok(new GenericResponse<UserDto>
         {
-            response.Errors.Add("Error", new List<string> { message });
-            return BadRequest(response);
-        }
-
-        response.Message = message;
-        response.Data = userDto;
-
-        return Ok(response);
+            Data = userDto,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -117,20 +93,17 @@ public class GroupController : ControllerBase
     [HttpGet("{groupGuid}/members")]
     public async Task<ActionResult<GenericResponse<IEnumerable<GroupMemberDto>>>> GetGroupMembers(Guid groupGuid)
     {
-        var response = new GenericResponse<IEnumerable<GroupMemberDto>>();
-
-        var (success, message, users) = await _groupService.GetGroupMembersAsync(groupGuid);
+        var (success, message, groupMemberDto) = await _groupService.GetGroupMembersAsync(groupGuid);
 
         if (!success)
+            return BadRequest(ResponseHelper.Error<IEnumerable<GroupMemberDto>>(message));
+
+        return Ok(new GenericResponse<IEnumerable<GroupMemberDto>>
         {
-            response.Errors.Add("Error", new List<string> { message });
-            return BadRequest(response);
-        }
-
-        response.Message = message;
-        response.Data = users;
-
-        return Ok(response);
+            Data = groupMemberDto,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -140,20 +113,17 @@ public class GroupController : ControllerBase
     [HttpGet("{groupGuid}/messages")]
     public async Task<ActionResult<GenericResponse<IEnumerable<MessageDto>>>> GetGroupMessages(Guid groupGuid, [FromQuery] Guid? lastMessageId, [FromQuery] int take = 40)
     {
-        var response = new GenericResponse<IEnumerable<MessageDto>>();
-
         var (success, message, messages) = await _groupService.GetGroupMessagesAsync(groupGuid, lastMessageId, take);
 
         if (!success)
+            return BadRequest(ResponseHelper.Error<IEnumerable<MessageDto>>(message));
+
+        return Ok(new GenericResponse<IEnumerable<MessageDto>>
         {
-            response.Errors.Add("Error", new List<string> { message });
-            return BadRequest(response);
-        }
-
-        response.Message = message;
-        response.Data = messages;
-
-        return Ok(response);
+            Data = messages,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -161,39 +131,21 @@ public class GroupController : ControllerBase
     /// </summary>
     [Authorize(Policy = "GroupMember")]
     [HttpPost("{groupGuid}/messages")]
-    public async Task<ActionResult<GenericResponse<IEnumerable<MessageDto>>>> SendMessage(Guid groupGuid, [FromBody] SendMessageRequest request)
+    public async Task<ActionResult<GenericResponse<MessageDto>>> SendMessage(Guid groupGuid, [FromBody] SendMessageRequest request)
     {
-        var validator = _serviceProvider.GetRequiredService<IValidator<SendMessageRequest>>();
-        var validationResult = await validator.ValidateAsync(request);
-        var response = new GenericResponse<MessageDto>();
-
-        if (!validationResult.IsValid)
-        {
-            response.Errors = validationResult.Errors
-                .GroupBy(x => x.PropertyName)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.Select(y => y.ErrorMessage).ToList()
-                );
-
-            response.Message = "ErrorValidationFailed";
-            return BadRequest(response);
-        }
-
         var (success, message, messages) = await _groupService.SendMessageAsync(groupGuid, request);
 
         if (!success)
-        {
-            response.Errors.Add("Error", new List<string> { message });
-            return BadRequest(response);
-        }
+            return BadRequest(ResponseHelper.Error<IEnumerable<MessageDto>>(message));
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveMessage", messages, groupGuid);
 
-        response.Message = message;
-        response.Data = messages;
-
-        return Ok(response);
+        return Ok(new GenericResponse<MessageDto>
+        {
+            Data = messages,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -203,20 +155,17 @@ public class GroupController : ControllerBase
     [HttpGet("{groupGuid}/roles")]
     public async Task<ActionResult<GenericResponse<IEnumerable<GroupRoleDto>>>> GetGroupRoles(Guid groupGuid)
     {
-        var response = new GenericResponse<IEnumerable<GroupRoleDto>>();
-
         var (success, message, roles) = await _groupService.GetGroupRolesAsync(groupGuid);
 
         if (!success)
+            return BadRequest(ResponseHelper.Error<IEnumerable<GroupRoleDto>>(message));
+
+        return Ok(new GenericResponse<IEnumerable<GroupRoleDto>>
         {
-            response.Errors.Add("Error", new List<string> { message });
-            return BadRequest(response);
-        }
-
-        response.Message = message;
-        response.Data = roles;
-
-        return Ok(response);
+            Data = roles,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -224,23 +173,21 @@ public class GroupController : ControllerBase
     /// </summary>
     [Authorize(Policy = "GroupMember")]
     [HttpPost("{groupGuid}/user/{userId}/roles")] // Should change this & use Admin policy
-    public async Task<ActionResult<GenericResponse<object>>> AddRoleToUser(Guid groupGuid, string userId, [FromBody] AddRoleToUserRequest request)
+    public async Task<ActionResult<GenericResponse<AddRoleToUserDto?>>> AddRoleToUser(Guid groupGuid, string userId, [FromBody] AddRoleToUserRequest request)
     {
-        var response = new GenericResponse<object>();
         var (success, message, dto) = await _groupService.AddRoleToUser(groupGuid, userId, request.RoleId);
 
         if (!success)
-        {
-            response.Errors.Add("Error", new List<string> { message });
-            return BadRequest(response);
-        }
+            return BadRequest(ResponseHelper.Error<AddRoleToUserDto?>(message));
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("UserAddedRole", dto.GroupId, dto.UserId, dto.RoleId);
 
-        response.Message = message;
-        response.Data = dto;
-
-        return Ok(response);
+        return Ok(new GenericResponse<AddRoleToUserDto?>
+        {
+            Data = dto,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -248,23 +195,21 @@ public class GroupController : ControllerBase
     /// </summary>
     [Authorize(Policy = "GroupMember")]
     [HttpDelete("{groupGuid}/user/{userId}/roles")] // Should change this & use Admin policy
-    public async Task<ActionResult<GenericResponse<object>>> RemoveRoleFromUser(Guid groupGuid, string userId, [FromBody] RemoveRoleFromUserRequest request)
+    public async Task<ActionResult<GenericResponse<RemoveRoleFromUserDto?>>> RemoveRoleFromUser(Guid groupGuid, string userId, [FromBody] RemoveRoleFromUserRequest request)
     {
-        var response = new GenericResponse<object>();
         var (success, message, dto) = await _groupService.RemoveRoleFromUser(groupGuid, userId, request.RoleId);
 
         if (!success)
-        {
-            response.Errors.Add("Error", new List<string> { message });
-            return BadRequest(response);
-        }
+            return BadRequest(ResponseHelper.Error<RemoveRoleFromUserDto?>(message));
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("UserRemovedRole", dto.GroupId, dto.UserId, dto.RoleId);
 
-        response.Message = message;
-        response.Data = dto;
-
-        return Ok(response);
+        return Ok(new GenericResponse<RemoveRoleFromUserDto?>
+        {
+            Data = dto,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     /// <summary>
@@ -273,38 +218,19 @@ public class GroupController : ControllerBase
     [HttpPost("{groupGuid}/roles")]
     public async Task<ActionResult<GenericResponse<GroupRoleDto>>> CreateRole(Guid groupGuid, [FromBody] CreateGroupRoleRequest request)
     {
-        var validator = _serviceProvider.GetRequiredService<IValidator<CreateGroupRoleRequest>>();
-        var validationResult = await validator.ValidateAsync(request);
-        var response = new GenericResponse<GroupRoleDto?>();
-
-        if (!validationResult.IsValid)
-        {
-            response.Errors = validationResult.Errors
-                .GroupBy(x => x.PropertyName)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.Select(y => y.ErrorMessage).ToList()
-                );
-
-            response.Message = "ErrorValidationFailed";
-            return BadRequest(response);
-        }
-
         var (success, message, dto) = await _groupService.CreateRoleAsync(groupGuid, request);
 
         if (!success)
-        {
-            response.Message = message;
-            response.Data = null;
-            return BadRequest(response);
-        }
+            return BadRequest(ResponseHelper.Error<GroupRoleDto>(message));
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RoleCreated", groupGuid, dto);
 
-        response.Data = dto;
-        response.Message = "SuccessCreatedGroupRole";
-
-        return Ok(response);
+        return Ok(new GenericResponse<GroupRoleDto?>
+        {
+            Data = dto,
+            Message = message,
+            Status = StatusCodes.Status201Created
+        });
     }
 
 
@@ -314,64 +240,33 @@ public class GroupController : ControllerBase
     [HttpPut("{groupGuid}/roles/{roleId}")]
     public async Task<ActionResult<GenericResponse<GroupRoleDto>>> EditRole(Guid groupGuid, Guid roleId, [FromBody] EditGroupRoleRequest request)
     {
-        var validator = _serviceProvider.GetRequiredService<IValidator<EditGroupRoleRequest>>();
-        var validationResult = await validator.ValidateAsync(request);
-        var response = new GenericResponse<GroupRoleDto?>();
-
-        if (!validationResult.IsValid)
-        {
-            response.Errors = validationResult.Errors
-                .GroupBy(x => x.PropertyName)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.Select(y => y.ErrorMessage).ToList()
-                );
-
-            response.Message = "ErrorValidationFailed";
-            return BadRequest(response);
-        }
-
         var (success, message, dto) = await _groupService.EditRoleAsync(roleId, request);
 
         if (!success)
-        {
-            response.Message = message;
-            response.Data = null;
-            return BadRequest(response);
-        }
+            return BadRequest(ResponseHelper.Error<GroupRoleDto>(message));
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RoleEdited", groupGuid, dto);
 
-        response.Data = dto;
-        response.Message = "SuccessEditedGroupRole";
-
-        return Ok(response);
+        return Ok(new GenericResponse<GroupRoleDto>
+        {
+            Data = dto,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 
     [HttpPost("{groupGuid}/read")]
     public async Task<ActionResult<GenericResponse<object>>> MarkAsRead(Guid groupGuid, [FromBody] MarkAsReadRequest request)
     {
-        var validator = _serviceProvider.GetRequiredService<IValidator<MarkAsReadRequest>>();
-        var validationResult = await validator.ValidateAsync(request);
-        var response = new GenericResponse<object>();
-        if (!validationResult.IsValid)
-        {
-            response.Errors = validationResult.Errors
-                .GroupBy(x => x.PropertyName)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.Select(y => y.ErrorMessage).ToList()
-                );
-            response.Message = "ErrorValidationFailed";
-            return BadRequest(response);
-        }
         var (success, message) = await _groupService.MarkAsReadAsync(groupGuid, request);
         if (!success)
+            return BadRequest(ResponseHelper.Error<object>(message));
+
+        return Ok(new GenericResponse<object>
         {
-            response.Message = message;
-            return BadRequest(response);
-        }
-        response.Message = message;
-        return Ok(response);
+            Data = null,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
     }
 }

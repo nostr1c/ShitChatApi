@@ -5,8 +5,8 @@ namespace ShitChat.Application.Interfaces;
 
 public interface IGroupService
 {
-    Task<GroupDto> CreateGroupAsync(CreateGroupRequest request);
-    Task<GroupDto> GetGroupByGuidAsync(Guid groupId);
+    Task<(bool, string, GroupDto?)> CreateGroupAsync(CreateGroupRequest request);
+    Task<(bool, string, GroupDto?)> GetGroupByGuidAsync(Guid groupId);
     Task<(bool, string, UserDto?)> AddUserToGroupAsync(Guid groupId, string userId);
     Task<(bool, string, IEnumerable<GroupMemberDto>?)> GetGroupMembersAsync(Guid groupId);
     Task<(bool, string, IEnumerable<MessageDto>?)> GetGroupMessagesAsync(Guid groupGuid, Guid? lastMessageId, int take);

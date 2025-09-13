@@ -1,8 +1,6 @@
 ﻿using ShitChat.Application.DTOs;
 using ShitChat.Application.Interfaces;
-using ShitChat.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ShitChat.Api.Controllers;
@@ -14,64 +12,53 @@ public class ConnectionController : ControllerBase
 {
     private readonly ILogger<ConnectionController> _logger;
     private readonly IConnectionService _connectionService;
-    private readonly UserManager<User> _userManager;
 
     public ConnectionController
     (
         ILogger<ConnectionController> logger,
-        IConnectionService connectionService,
-        UserManager<User> userManager
+        IConnectionService connectionService
     )
     {
         _logger = logger;
         _connectionService = connectionService;
-        _userManager = userManager;
     }
 
     /// <summary>
     /// Create a new connection request
     /// </summary>
     [HttpPost("Add")]
-    public async Task<ActionResult<GenericResponse<string>>> CreateConnection([FromBody] string friendId)
+    public async Task<ActionResult<GenericResponse<object>>> CreateConnection([FromBody] string friendId)
     {
-        var response = new GenericResponse<string>();
-
-        var (success, message) = await _connectionService.CreateConnectionAsync(User.Identity.Name, friendId);
+        var (success, message) = await _connectionService.CreateConnectionAsync(friendId);
 
         if (!success)
+            return BadRequest(ResponseHelper.Error<object>(message));
+
+        return Ok(new GenericResponse<object>
         {
-            response.Errors.Add("ErrorCreatingConnection", new List<string> { message });
-            return BadRequest(response);
-        }
-
-        response.Message = message;
-
-        return Ok(response);
+            Data = null,
+            Message = message,
+            Status = 200
+        });
     }
 
     /// <summary>
     /// Accept a friend request.
     /// </summary>
     [HttpPut("Accept")]
-    public async Task<ActionResult<GenericResponse<string>>> AcceptConnection([FromBody] string friendId)
+    public async Task<ActionResult<GenericResponse<object>>> AcceptConnection([FromBody] string friendId)
     {
-        var response = new GenericResponse<string>();
-
-        var user = await _userManager.GetUserAsync(HttpContext.User);
-        if (user == null)
-            return BadRequest("error");
-
-        var (success, message) = await _connectionService.AcceptConnectionAsync(user.Id, friendId);
+        var (success, message) = await _connectionService.AcceptConnectionAsync(friendId);
 
         if (!success)
+            return BadRequest(ResponseHelper.Error<object>(message));
+
+        return Ok(new GenericResponse<object>
         {
-            response.Errors.Add("Error", new List<string> { message });
-            return BadRequest(response);
-        }
-
-        response.Message = message;
-
-        return Ok(response);
+            Data = null,
+            Message = message,
+            Status = 200
+        });
     }
 
 
@@ -79,24 +66,18 @@ public class ConnectionController : ControllerBase
     /// Delete a friend
     /// </summary>
     [HttpDelete("Delete")]
-    public async Task<ActionResult<GenericResponse<string>>> DeleteConnection([FromBody] string friendId)
+    public async Task<ActionResult<GenericResponse<object>>> DeleteConnection([FromBody] string friendId)
     {
-        var response = new GenericResponse<string>();
-
-        var user = await _userManager.GetUserAsync(HttpContext.User);
-        if (user == null)
-            return BadRequest("error");
-
-        var (success, message) = await _connectionService.DeleteConnectionAsync(user.Id, friendId);
+        var (success, message) = await _connectionService.DeleteConnectionAsync(friendId);
 
         if (!success)
+            return BadRequest(ResponseHelper.Error<object>(message));
+
+        return Ok(new GenericResponse<object>
         {
-            response.Errors.Add("Error", new List<string> { message });
-            return BadRequest(response);
-        }
-
-        response.Message = message;
-
-        return Ok(response);
+            Data = null,
+            Message = message,
+            Status = 200
+        });
     }
 }
