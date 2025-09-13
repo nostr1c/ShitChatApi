@@ -143,6 +143,7 @@ public class Program
         builder.Services.AddScoped<IValidator<CreateInviteRequest>, CreateInviteRequestValidator>();
         builder.Services.AddScoped<IValidator<CreateGroupRoleRequest>, CreateGroupRoleRequestValidator>();
         builder.Services.AddScoped<IValidator<EditGroupRoleRequest>, EditGroupRoleRequestValidator>();
+        builder.Services.AddScoped<IValidator<MarkAsReadRequest>, MarkAsReadRequestValidator>();
 
         builder.Services.AddScoped<ValidationFilter>();
 

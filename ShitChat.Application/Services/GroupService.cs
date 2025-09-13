@@ -256,17 +256,26 @@ public class GroupService : IGroupService
 
         var groups = await _dbContext.Groups
             .AsNoTracking()
-            .Where(x => x.UserGroups.Any(x => x.UserId == userId))
-            .Select(x => new GroupDto
+            .Where(g => g.UserGroups.Any(ug => ug.UserId == userId))
+            .Select(g => new GroupDto
             {
-                Id = x.Id,
-                Name = x.Name,
-                Latest = x.Messages
-                    .OrderByDescending(y => y.CreatedAt)
-                    .Select(z => z.Content)
+                Id = g.Id,
+                Name = g.Name,
+                Latest = g.Messages
+                    .OrderByDescending(m => m.CreatedAt)
+                    .Select(m => m.Content)
                     .FirstOrDefault(),
-                OwnerId = x.OwnerId,
-            }).ToListAsync();
+                OwnerId = g.OwnerId,
+
+                UnreadCount = g.Messages.Count(m =>
+                    !g.UserGroups.Any(ug =>
+                        ug.UserId == userId &&
+                        ug.LastReadMessageId != null &&
+                        m.Id.CompareTo(ug.LastReadMessageId.Value) <= 0
+                    )
+                )
+            })
+            .ToListAsync();
 
         return groups;
     }
@@ -484,5 +493,25 @@ public class GroupService : IGroupService
         };
 
         return (true, "SuccessCreatedGroupRole", groupRoleDto);
+    }
+
+    public async Task<(bool, string)> MarkAsReadAsync(Guid groupId, MarkAsReadRequest request)
+    {
+        var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
+
+        if (userId == null)
+            return (false, "ErrorLoggedInUser");
+
+        var userGroup = await _dbContext.UserGroups
+            .SingleOrDefaultAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
+
+        if (userGroup == null)
+            return (false, "ErrorUserNotInGroup");
+
+        userGroup.LastReadMessageId = request.LastMessageId;
+
+        await _dbContext.SaveChangesAsync();
+
+        return (true, "SuccessMarkedAsRead");
     }
 }

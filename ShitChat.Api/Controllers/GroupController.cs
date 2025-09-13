@@ -347,4 +347,31 @@ public class GroupController : ControllerBase
 
         return Ok(response);
     }
+
+    [HttpPost("{groupGuid}/read")]
+    public async Task<ActionResult<GenericResponse<object>>> MarkAsRead(Guid groupGuid, [FromBody] MarkAsReadRequest request)
+    {
+        var validator = _serviceProvider.GetRequiredService<IValidator<MarkAsReadRequest>>();
+        var validationResult = await validator.ValidateAsync(request);
+        var response = new GenericResponse<object>();
+        if (!validationResult.IsValid)
+        {
+            response.Errors = validationResult.Errors
+                .GroupBy(x => x.PropertyName)
+                .ToDictionary(
+                    x => x.Key,
+                    x => x.Select(y => y.ErrorMessage).ToList()
+                );
+            response.Message = "ErrorValidationFailed";
+            return BadRequest(response);
+        }
+        var (success, message) = await _groupService.MarkAsReadAsync(groupGuid, request);
+        if (!success)
+        {
+            response.Message = message;
+            return BadRequest(response);
+        }
+        response.Message = message;
+        return Ok(response);
+    }
 }
