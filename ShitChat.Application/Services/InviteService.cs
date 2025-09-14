@@ -114,8 +114,7 @@ public class InviteService : IInviteService
     public async Task<(bool, string, JoinInviteDto?)> JoinWithInviteAsync(string inviteString)
     {
         var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
-        var user = await _dbContext.Users
-            .SingleOrDefaultAsync(x => x.Id == userId);
+        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
 
         if (user == null)
             return (false, "ErrorLoggedInUser", null);
@@ -168,7 +167,6 @@ public class InviteService : IInviteService
 
         return (true, "SuccessJoinedGroup", joinInviteDto);
     }
-
 
     private string GenerateInviteString()
     {

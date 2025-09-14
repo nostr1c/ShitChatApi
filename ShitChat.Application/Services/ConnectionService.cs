@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ShitChat.Application.Interfaces;
 using ShitChat.Domain.Entities;
@@ -10,18 +9,15 @@ namespace ShitChat.Application.Services;
 
 public class ConnectionService : IConnectionService
 {
-    private UserManager<User> _userManager;
     private AppDbContext _appDbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public ConnectionService
     (
-        UserManager<User> userManager,
         AppDbContext appDbContext,
         IHttpContextAccessor httpContextAccessor
     )
     {
-        _userManager = userManager;
         _appDbContext = appDbContext;
         _httpContextAccessor = httpContextAccessor;
     }

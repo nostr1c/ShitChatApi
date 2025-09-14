@@ -1,5 +1,4 @@
 ﻿using ShitChat.Application.Interfaces;
-using ShitChat.Domain.Entities;
 using StackExchange.Redis;
 
 namespace ShitChat.Application.Services;

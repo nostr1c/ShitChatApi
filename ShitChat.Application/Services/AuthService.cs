@@ -46,7 +46,6 @@ public class AuthService : IAuthService
         _logger = logger;
         _passwordHasher = passwordHasher;
     }
-
     public async Task<User?> RegisterUserAsync(CreateUserRequest request)
     {
         var user = new User
@@ -60,31 +59,18 @@ public class AuthService : IAuthService
         if (!result.Succeeded)
             return null;
 
-        // Check errors
-
         return user;
     }
 
-    public async Task<(bool, string, LoginUserDto)> LoginUserAsync(LoginUserRequest request)
+    public async Task<(bool, string, LoginUserDto?)> LoginUserAsync(LoginUserRequest request)
     {
-        bool success;
-        string message = "";
-
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
-        {
-            success = false;
-            message = "Invalid Email or Password";
-            return (success, message, null);
-        }
+            return (false, "ErrorInvalidEmailOrPassword", null);
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
         if (!result.Succeeded)
-        {
-            success = false;
-            message = "Invalid Email or Password";
-            return (success, message, null);
-        }
+            return (false, "ErrorInvalidEmailOrPassword", null);
 
         var token = await CreateToken(user);
 
@@ -94,10 +80,7 @@ public class AuthService : IAuthService
             Token = token,
         };
 
-        success = true;
-        message = "Successfully logged in.";
-
-        return (success, message, userDto);
+        return (true, "SuccessLoggedIn", userDto);
     }
     public async Task<TokenDto> CreateToken(User user)
     {
@@ -140,8 +123,6 @@ public class AuthService : IAuthService
 
         return tokenDto;
     }
-
-
 
     public async Task<(bool, string, TokenDto?)> RefreshToken(TokenDto tokenDto)
     {
@@ -194,7 +175,8 @@ public class AuthService : IAuthService
 
     public async Task<UserDto?> GetCurrentUserAsync()
     {
-        var user = await _userManager.FindByIdAsync(_httpContextAccessor.HttpContext.User.GetUserGuid());
+        var userId = _httpContextAccessor.HttpContext.User.GetUserGuid();
+        var user = await _dbContext.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == userId);
         if (user is null)
             return null;
 
