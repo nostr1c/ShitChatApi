@@ -87,6 +87,26 @@ public class GroupController : ControllerBase
     }
 
     /// <summary>
+    /// kick member from group
+    /// </summary>
+    [HttpPost("{groupGuid}/members/{userId}/kick")]
+    public async Task<ActionResult<GenericResponse<object>>> KickUserFromGroup(Guid groupGuid, string userId)
+    {
+        var (success, message) = await _groupService.KickUserFromGroupAsync(groupGuid, userId);
+
+        if (!success)
+            return BadRequest(ResponseHelper.Error<object>(message));
+
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RemoveMember", groupGuid, userId);
+
+        return Ok(new GenericResponse<object>
+        {
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
+    }
+
+    /// <summary>
     /// List group members
     /// </summary>
     [Authorize(Policy = "GroupMember")]

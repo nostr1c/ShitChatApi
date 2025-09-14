@@ -114,6 +114,45 @@ public class GroupService : IGroupService
         return (true, "SuccessAddedUserToGroup", dto);
     }
 
+    public async Task<(bool, string)> KickUserFromGroupAsync(Guid groupId, string userId)
+    {
+        var group = await _dbContext.Groups
+        .AsNoTracking()
+        .SingleOrDefaultAsync(x => x.Id == groupId);
+
+        if (group == null)
+            return (false, "ErrorGroupNotFound");
+
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == userId);
+
+        if (user == null)
+            return (false, "ErrorUserNotFound");
+
+        var userGroup = await _dbContext.UserGroups
+            .SingleOrDefaultAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
+
+        if (userGroup == null)
+            return (false, "ErrorUserNotInGroup");
+
+        var userRoles = await _dbContext.UserGroupRoles
+            .Where(ugr => ugr.UserId == userId && ugr.GroupRole.GroupId == groupId)
+            .ToListAsync();
+
+        _dbContext.UserGroupRoles.RemoveRange(userRoles);
+        await _dbContext.SaveChangesAsync();
+
+        _dbContext.UserGroups.Remove(userGroup);
+        await _dbContext.SaveChangesAsync();
+
+        var cacheKey = CacheKeys.GroupMembers(group.Id);
+
+        await _cache.KeyDeleteAsync(cacheKey);
+
+        return (true, "SuccessKickedUser");
+    }
+
     public async Task<(bool, string, GroupDto?)> GetGroupByGuidAsync(Guid groupId)
     {
         var group = await _dbContext.Groups
@@ -206,6 +245,7 @@ public class GroupService : IGroupService
 
         var messages = await query
             .AsNoTracking()
+            .Include(x => x.User)
             .OrderByDescending(x => x.CreatedAt)
             .Take(take)
             .Select(x => new MessageDto
@@ -213,7 +253,9 @@ public class GroupService : IGroupService
                 Id = x.Id,
                 Content = x.Content,
                 CreatedAt = x.CreatedAt,
-                UserId = x.UserId
+                UserId = x.UserId,
+                UserName = x.User.UserName,
+                Avatar = x.User.AvatarUri,
             })
             .ToListAsync();
 

@@ -8,6 +8,7 @@ public interface IGroupService
     Task<(bool, string, GroupDto?)> CreateGroupAsync(CreateGroupRequest request);
     Task<(bool, string, GroupDto?)> GetGroupByGuidAsync(Guid groupId);
     Task<(bool, string, UserDto?)> AddUserToGroupAsync(Guid groupId, string userId);
+    Task<(bool, string)> KickUserFromGroupAsync(Guid groupId, string userId);
     Task<(bool, string, IEnumerable<GroupMemberDto>?)> GetGroupMembersAsync(Guid groupId);
     Task<(bool, string, IEnumerable<MessageDto>?)> GetGroupMessagesAsync(Guid groupGuid, Guid? lastMessageId, int take);
     Task<(bool, string, MessageDto?)> SendMessageAsync(Guid groupId, SendMessageRequest request);
