@@ -147,17 +147,20 @@ public class UserService : IUserService
             {
                 Id = g.Id,
                 Name = g.Name,
-                Latest = g.Messages
+                LatestMessage = g.Messages
                     .OrderByDescending(m => m.CreatedAt)
                     .Select(m => m.Content)
                     .FirstOrDefault(),
                 OwnerId = g.OwnerId,
 
                 UnreadCount = g.Messages.Count(m =>
-                    !g.UserGroups.Any(ug =>
-                        ug.UserId == userId &&
-                        ug.LastReadMessageId != null &&
-                        m.Id.CompareTo(ug.LastReadMessageId.Value) <= 0
+                    g.UserGroups.Any(ug => ug.UserId == userId) &&
+                    (
+                        g.UserGroups.First(ug => ug.UserId == userId).LastReadMessageId == null ||
+                        m.CreatedAt > g.Messages
+                            .Where(x => x.Id == g.UserGroups.First(ug => ug.UserId == userId).LastReadMessageId)
+                            .Select(x => x.CreatedAt)
+                            .FirstOrDefault()
                     )
                 )
             })

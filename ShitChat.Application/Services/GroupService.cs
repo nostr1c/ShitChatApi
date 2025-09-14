@@ -465,7 +465,7 @@ public class GroupService : IGroupService
             Permissions = permissions.Select(x => x.Name).ToList()
         };
 
-        return (true, "SuccessCreatedGroupRole", groupRoleDto);
+        return (true, "SuccessEditedGroupRole", groupRoleDto);
     }
 
     public async Task<(bool, string)> MarkAsReadAsync(Guid groupId, MarkAsReadRequest request)
