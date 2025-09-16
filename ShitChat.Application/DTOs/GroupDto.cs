@@ -7,4 +7,5 @@ public class GroupDto
     public string? LatestMessage { get; set; }
     public int UnreadCount { get; set; }
     public string OwnerId { get; set; }
+    public DateTime? LastActivity { get; set; }
 }

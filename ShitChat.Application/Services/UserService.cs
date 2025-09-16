@@ -143,6 +143,7 @@ public class UserService : IUserService
         var groups = await _dbContext.Groups
             .AsNoTracking()
             .Where(g => g.UserGroups.Any(ug => ug.UserId == userId))
+            .OrderByDescending(g => g.LastActivity)
             .Select(g => new GroupDto
             {
                 Id = g.Id,
@@ -151,8 +152,9 @@ public class UserService : IUserService
                     .OrderByDescending(m => m.CreatedAt)
                     .Select(m => m.Content)
                     .FirstOrDefault(),
-                OwnerId = g.OwnerId,
 
+                LastActivity = g.LastActivity,
+                OwnerId = g.OwnerId,
                 UnreadCount = g.Messages.Count(m =>
                     g.UserGroups.Any(ug => ug.UserId == userId) &&
                     (

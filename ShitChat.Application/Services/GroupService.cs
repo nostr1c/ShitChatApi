@@ -305,7 +305,6 @@ public class GroupService : IGroupService
             return (false, "ErrorUserNotFound", null);
 
         var group = await _dbContext.Groups
-            .AsNoTracking()
             .SingleOrDefaultAsync(g => g.Id == groupId);
 
         if (group == null)
@@ -317,6 +316,8 @@ public class GroupService : IGroupService
             UserId = user.Id,
             GroupId = groupId,
         };
+
+        group.LastActivity = DateTime.UtcNow;
 
         _dbContext.Messages.Add(message);
         await _dbContext.SaveChangesAsync();

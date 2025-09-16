@@ -8,6 +8,8 @@ public class Group
 
     public string Name { get; set; }
 
+    public DateTime? LastActivity { get; set; }
+
     // Foreign keys
     public string OwnerId { get; set; }
 
