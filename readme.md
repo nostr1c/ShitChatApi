@@ -22,10 +22,6 @@ ShitShat is a messaging platform that allows users to create groups, send messag
 - **Docker**
 - **Github Workflows for automated deploys**
 
-## TODO
-
-- Refactor error handling, exceptions etc.
-
 ## Getting Started
 
 **1. Clone the repository:**
