@@ -119,22 +119,35 @@ public class InviteService : IInviteService
         if (user == null)
             return (false, "ErrorLoggedInUser", null);
 
-        var invite = await _dbContext.Invites
-            .Include(i => i.Group)
-                .ThenInclude(g => g.UserGroups)
-            .SingleOrDefaultAsync(x => x.InviteString == inviteString);
+        var inviteProjection = await _dbContext.Invites
+            .Where(x => x.InviteString == inviteString)
+            .Select(i => new
+            {
+                Invite = i,
+                Group = new GroupDto
+                {
+                    Id = i.Group.Id,
+                    OwnerId = i.Group.OwnerId,
+                    Name = i.Group.Name,
+                    LastActivity = i.Group.LastActivity,
+                    LatestMessage = i.Group.Messages
+                        .OrderByDescending(m => m.CreatedAt)
+                        .Select(m => m.Content)
+                        .FirstOrDefault(),
+                },
+                Members = i.Group.UserGroups.Select(ug => ug.UserId).ToList(),
+            })
+            .SingleOrDefaultAsync();
 
-        if (invite == null)
+        if (inviteProjection == null)
             return (false, "ErrorInviteNotFound", null);
 
-        if (invite.ValidThrough < DateOnly.FromDateTime(DateTime.UtcNow))
+        if (inviteProjection.Invite.ValidThrough < DateOnly.FromDateTime(DateTime.UtcNow))
             return (false, "ErrorInviteExpired", null);
-
-        var group = invite.Group;
 
         var joinInviteDto = new JoinInviteDto
         {
-            Group = group.Id,
+            Group = inviteProjection.Group,
             Member = new GroupMemberDto
             {
                 User = new UserDto
@@ -148,20 +161,19 @@ public class InviteService : IInviteService
             }
         };
 
-        if (group.UserGroups.Any(x => x.UserId == user.Id))
+        if (inviteProjection.Members.Contains(user.Id))
             return (false, "ErrorAlreadyInGroup", joinInviteDto);
 
-        group.UserGroups.Add(new UserGroup
+        _dbContext.UserGroups.Add(new UserGroup
         {
             UserId = user.Id,
-            GroupId = group.Id,
-            JoinedAt = DateTime.UtcNow
+            GroupId = inviteProjection.Group.Id,
+            JoinedAt = DateTime.UtcNow,
         });
-
 
         await _dbContext.SaveChangesAsync();
 
-        var cacheKey = CacheKeys.GroupMembers(group.Id);
+        var cacheKey = CacheKeys.GroupMembers(inviteProjection.Group.Id);
 
         await _cache.KeyDeleteAsync(cacheKey);
 

@@ -56,7 +56,7 @@ public class InviteController : ControllerBase
         if (!success || joinInviteDto is null)
             return BadRequest(ResponseHelper.Error<JoinInviteDto>(message));
 
-        var groupGuid = joinInviteDto.Group;
+        var groupGuid = joinInviteDto.Group.Id;
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveMember", groupGuid, joinInviteDto.Member);
 
