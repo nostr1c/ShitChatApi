@@ -1,7 +1,7 @@
 ﻿using ShitChat.Application.DTOs;
-using ShitChat.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ShitChat.Application.Connections.Services;
 
 namespace ShitChat.Api.Controllers;
 

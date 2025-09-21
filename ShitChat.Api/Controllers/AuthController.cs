@@ -1,9 +1,11 @@
 ﻿using ShitChat.Application.DTOs;
-using ShitChat.Application.Requests;
-using ShitChat.Application.Interfaces;
 using ShitChat.Shared.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using ShitChat.Application.Users.DTOs;
+using ShitChat.Application.Auth.DTOs;
+using ShitChat.Application.Auth.Requests;
+using ShitChat.Application.Auth.Services;
 
 namespace ShitChat.ShitChat.Api.Controllers;
 
@@ -68,7 +70,7 @@ public class AuthController : ControllerBase
     {
         var (success, message, userDto) = await _authService.LoginUserAsync(request);
 
-        if (!success)
+        if (!success || userDto == null)
             return BadRequest(ResponseHelper.Error<LoginUserDto?>(message));
 
         _authService.SetTokensInsideCookie(userDto.Token, HttpContext);
@@ -122,7 +124,7 @@ public class AuthController : ControllerBase
             return Unauthorized(ResponseHelper.Error<string>("ErrorRefreshTokenMissing"));
         }
 
-        var (success, message, tokenDtoToReturn) = await _authService.RefreshToken(new TokenDto(null, refreshToken));
+        var (success, message, tokenDtoToReturn) = await _authService.RefreshToken(new TokenDto { AccessToken = null, RefreshToken = refreshToken });
 
         if (!success || tokenDtoToReturn is null)
         {

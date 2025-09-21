@@ -10,9 +10,16 @@ using ShitChat.Api.Authorization;
 using ShitChat.Api.Filters;
 using ShitChat.Api.Hubs;
 using ShitChat.Api.Middleware;
-using ShitChat.Application.Interfaces;
-using ShitChat.Application.Requests;
-using ShitChat.Application.Services;
+using ShitChat.Application.Auth.Requests;
+using ShitChat.Application.Auth.Services;
+using ShitChat.Application.Caching.Services;
+using ShitChat.Application.Connections.Services;
+using ShitChat.Application.Groups.Requests;
+using ShitChat.Application.Groups.Services;
+using ShitChat.Application.Invites.Requests;
+using ShitChat.Application.Invites.Services;
+using ShitChat.Application.Users.Requests;
+using ShitChat.Application.Users.Services;
 using ShitChat.Domain.Entities;
 using ShitChat.Infrastructure.Data;
 using StackExchange.Redis;
@@ -45,7 +52,7 @@ public class Program
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = jwtIssuer,
                 ValidAudience = jwtIssuer,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!)),
                 ClockSkew = TimeSpan.Zero,
             };
 

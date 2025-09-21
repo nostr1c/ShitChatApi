@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using ShitChat.Api.Hubs;
 using ShitChat.Application.DTOs;
-using ShitChat.Application.Interfaces;
-using ShitChat.Application.Requests;
+using ShitChat.Application.Groups.DTOs;
+using ShitChat.Application.Groups.Requests;
+using ShitChat.Application.Groups.Services;
+using ShitChat.Application.Users.DTOs;
 
 namespace ShitChat.Api.Controllers;
 
@@ -197,7 +199,7 @@ public class GroupController : ControllerBase
     {
         var (success, message, dto) = await _groupService.AddRoleToUser(groupGuid, userId, request.RoleId);
 
-        if (!success)
+        if (!success || dto == null)
             return BadRequest(ResponseHelper.Error<AddRoleToUserDto?>(message));
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("UserAddedRole", dto.GroupId, dto.UserId, dto.RoleId);
@@ -219,7 +221,7 @@ public class GroupController : ControllerBase
     {
         var (success, message, dto) = await _groupService.RemoveRoleFromUser(groupGuid, userId, request.RoleId);
 
-        if (!success)
+        if (!success || dto == null)
             return BadRequest(ResponseHelper.Error<RemoveRoleFromUserDto?>(message));
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("UserRemovedRole", dto.GroupId, dto.UserId, dto.RoleId);

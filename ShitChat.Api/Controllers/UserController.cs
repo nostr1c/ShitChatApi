@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ShitChat.Application.Connections.DTOs;
 using ShitChat.Application.DTOs;
-using ShitChat.Application.Interfaces;
+using ShitChat.Application.Groups.DTOs;
+using ShitChat.Application.Users.DTOs;
+using ShitChat.Application.Users.Services;
 
 namespace ShitChat.Api.Controllers;
 
@@ -47,7 +50,7 @@ public class UserController : ControllerBase
     {
         var (success, message, imageName) = await _userService.UpdateAvatarAsync(avatar);
 
-        if (!success || message == null)
+        if (!success || imageName == null)
             return BadRequest(ResponseHelper.Error<string?>(message));
 
         return Ok(new GenericResponse<string?>

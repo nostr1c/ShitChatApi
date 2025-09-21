@@ -19,7 +19,7 @@ public class GroupMembershipHandler : AuthorizationHandler<GroupMembershipRequir
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, GroupMembershipRequirement requirement)
     {
         var httpContext = _httpContextAccessor.HttpContext;
-        var userId = httpContext.User.GetUserGuid();
+        var userId = httpContext!.User.GetUserGuid();
         if (userId == null)
         {
             context.Fail();

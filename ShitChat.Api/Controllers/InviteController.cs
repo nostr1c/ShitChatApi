@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using ShitChat.Api.Hubs;
 using ShitChat.Application.DTOs;
-using ShitChat.Application.Interfaces;
-using ShitChat.Application.Requests;
+using ShitChat.Application.Invites.DTOs;
+using ShitChat.Application.Invites.Requests;
+using ShitChat.Application.Invites.Services;
 
 namespace ShitChat.Api.Controllers;
 

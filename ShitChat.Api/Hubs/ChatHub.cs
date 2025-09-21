@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using ShitChat.Application.Interfaces;
 using ShitChat.Shared.Extensions;
 using Microsoft.AspNetCore.Authorization;
+using ShitChat.Application.Groups.Services;
 
 namespace ShitChat.Api.Hubs;
 
@@ -19,7 +19,7 @@ public class ChatHub : Hub
 
     public async Task JoinGroup(string groupId)
     {
-        var userId = Context.User.GetUserGuid();
+        var userId = Context.User!.GetUserGuid();
         if (userId == null)
             return;
 
@@ -44,7 +44,7 @@ public class ChatHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId = Context.User.GetUserGuid();
+        var userId = Context.User!.GetUserGuid();
         var connectionId = Context.ConnectionId;
 
         if (userId == null)
