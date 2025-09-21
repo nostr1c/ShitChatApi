@@ -36,11 +36,9 @@ public class GroupService : IGroupService
 
     public async Task<(bool, string, GroupDto?)> CreateGroupAsync(CreateGroupRequest request)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
+        var userId = _httpContextAccessor.GetUserId();
 
-        if (user == null)
-            return (false, "ErrorLoggedInUser", null);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
         var group = new Group
         {
@@ -48,18 +46,19 @@ public class GroupService : IGroupService
             OwnerId = userId
         };
 
-        await _dbContext.Groups.AddAsync(group);
-        await _dbContext.SaveChangesAsync();
+        _dbContext.Groups.Add(group);
 
         var userGroup = new UserGroup
         {
-            UserId = user.Id,
+            UserId = userId,
             GroupId = group.Id,
             JoinedAt = DateTime.UtcNow
         };
 
         _dbContext.UserGroups.Add(userGroup);
+
         await _dbContext.SaveChangesAsync();
+        await transaction.CommitAsync();
 
         var groupDto = new GroupDto
         {
@@ -73,64 +72,49 @@ public class GroupService : IGroupService
     
     public async Task<(bool, string, UserDto?)> AddUserToGroupAsync(Guid groupId, string userId)
     {
-        var group = await _dbContext.Groups
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == groupId);
-
-        if (group == null)
-            return (false, "ErrorGroupNotFound", null);
-
-        var user = await _dbContext.Users
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == userId);
-
-        if (user == null)
-            return (false, "ErrorUserNotFound", null);
-
         var exists = await _dbContext.UserGroups
+            .AsNoTracking()
             .AnyAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
 
         if (exists)
             return (false, "ErrorUserAlreadyInGroup", null);
 
+        var groupExists = await _dbContext.Groups
+            .AsNoTracking()
+            .AnyAsync(g => g.Id == groupId);
+
+        if (!groupExists)
+            return (false, "ErrorGroupNotFound", null);
+
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .Select(u => new UserDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                Username = u.UserName,
+                Avatar = u.AvatarUri,
+                CreatedAt = u.CreatedAt
+            }).SingleOrDefaultAsync();
+
+        if (user == null)
+            return (false, "ErrorUserNotFound", null);
+
         var userGroup = new UserGroup
         {
             UserId = user.Id,
-            GroupId = group.Id,
+            GroupId = groupId,
             JoinedAt = DateTime.UtcNow
         };
 
         _dbContext.UserGroups.Add(userGroup);
         await _dbContext.SaveChangesAsync();
 
-        var dto = new UserDto
-        {
-            Id = user.Id,
-            Email = user.Email,
-            Username = user.UserName,
-            Avatar = user.AvatarUri,
-            CreatedAt = user.CreatedAt
-        };
-
-        return (true, "SuccessAddedUserToGroup", dto);
+        return (true, "SuccessAddedUserToGroup", user);
     }
 
     public async Task<(bool, string)> KickUserFromGroupAsync(Guid groupId, string userId)
     {
-        var group = await _dbContext.Groups
-        .AsNoTracking()
-        .SingleOrDefaultAsync(x => x.Id == groupId);
-
-        if (group == null)
-            return (false, "ErrorGroupNotFound");
-
-        var user = await _dbContext.Users
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == userId);
-
-        if (user == null)
-            return (false, "ErrorUserNotFound");
-
         var userGroup = await _dbContext.UserGroups
             .SingleOrDefaultAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
 
@@ -142,33 +126,27 @@ public class GroupService : IGroupService
             .ToListAsync();
 
         _dbContext.UserGroupRoles.RemoveRange(userRoles);
-        await _dbContext.SaveChangesAsync();
-
         _dbContext.UserGroups.Remove(userGroup);
         await _dbContext.SaveChangesAsync();
 
-        var cacheKey = CacheKeys.GroupMembers(group.Id);
-
-        await _cache.KeyDeleteAsync(cacheKey);
-
+        await _cache.KeyDeleteAsync(CacheKeys.GroupMembers(groupId));
         return (true, "SuccessKickedUser");
     }
 
     public async Task<(bool, string, GroupDto?)> GetGroupByGuidAsync(Guid groupId)
     {
-        var group = await _dbContext.Groups
+        var groupDto = await _dbContext.Groups
             .AsNoTracking()
+            .Select(x => new GroupDto
+            {
+                Id = groupId,
+                Name = x.Name,
+                OwnerId = x.OwnerId,
+            })
             .FirstOrDefaultAsync(x => x.Id == groupId);
 
-        if (group == null)
+        if (groupDto == null)
             return (false, "ErrorGroupNotFound", null);
-
-        var groupDto = new GroupDto
-        {
-            Id = group.Id,
-            Name = group.Name,
-            OwnerId = group.OwnerId
-        };
 
         return (true, "SuccessGotGroup", groupDto);
     }
@@ -184,29 +162,31 @@ public class GroupService : IGroupService
             return (true, "SuccessGotGroupMembers", cachedMembers);
         }
         
-        var group = await _dbContext.Groups
+        var groupExists = await _dbContext.Groups
             .AsNoTracking()
-            .Include(g => g.UserGroups)
-                .ThenInclude(ug => ug.User)
-                    .ThenInclude(u => u.GroupRoles)
-                    .ThenInclude(gr =>  gr.GroupRole)
-            .SingleOrDefaultAsync(x => x.Id == groupId);
+            .AnyAsync(x => x.Id == groupId);
 
-        if (group == null)
+        if (!groupExists)
             return (false, "ErrorGroupNotFound", null);
 
-        var members = group.UserGroups.Select(x => new GroupMemberDto
-        {
-            User = new UserDto
+        var members = await _dbContext.UserGroups
+            .AsNoTracking()
+            .Where(ug => ug.GroupId == groupId)
+            .Select(ug => new GroupMemberDto
             {
-                Id = x.User.Id,
-                Email = x.User.Email,
-                Username = x.User.UserName,
-                Avatar = x.User.AvatarUri,
-                CreatedAt = x.User.CreatedAt
-            },
-            Roles = x.User.GroupRoles.Where(x => x.GroupRole.GroupId == groupId).Select(x => x.GroupRoleId).ToList()
-        });
+                User = new UserDto
+                {
+                    Id = ug.User.Id,
+                    Email = ug.User.Email,
+                    Username = ug.User.UserName,
+                    Avatar = ug.User.AvatarUri,
+                    CreatedAt = ug.User.CreatedAt
+                },
+                Roles = ug.User.GroupRoles
+                    .Where(gr => gr.GroupRole.GroupId == groupId)
+                    .Select(gr => gr.GroupRoleId)
+                    .ToList()
+            }).ToListAsync();
 
         var json = JsonSerializer.Serialize(members);
         await _cache.StringSetAsync(cacheKey, json, TimeSpan.FromMinutes(10));
@@ -230,23 +210,20 @@ public class GroupService : IGroupService
 
         var query = _dbContext.Messages
             .AsNoTracking()
-            .Include(x => x.User)
-            .Include(x => x.Group)
-            .AsNoTracking()
             .Where(x => x.GroupId == groupGuid);
 
         if (lastMessageId != null)
         {
-            var lastMessage = await _dbContext.Messages.FindAsync(lastMessageId);
-            if (lastMessage != null)
-            {
-                query = query.Where(x => x.CreatedAt < lastMessage.CreatedAt).OrderByDescending(x => x.CreatedAt);
-            }
+            var lastCreatedAt = await _dbContext.Messages
+                .Where(m => m.Id == lastMessageId)
+                .Select(m => m.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (lastCreatedAt != default)
+                query = query.Where(m => m.CreatedAt < lastCreatedAt);
         }
 
         var messages = await query
-            .AsNoTracking()
-            .Include(x => x.User)
             .OrderByDescending(x => x.CreatedAt)
             .Take(take)
             .Select(x => new MessageDto
@@ -271,39 +248,33 @@ public class GroupService : IGroupService
 
     public async Task<(bool, string, IEnumerable<GroupRoleDto>?)> GetGroupRolesAsync(Guid groupId)
     {
-        var group = await _dbContext.Groups
-            .AsNoTracking()
-            .Include(x => x.Roles)
-                .ThenInclude(x => x.Permissions)
-                    .ThenInclude(p => p.Permission)
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == groupId);
+        var groupExists = await _dbContext.Groups
+             .AsNoTracking()
+             .AnyAsync(g => g.Id == groupId);
 
-        if (group == null)
-            return (false, "ErrorGroupRolesNotFound", null);
+        if (!groupExists)
+            return (false, "ErrorGroupNotFound", null);
 
-        var roles = group.Roles
-            .Select(x => new GroupRoleDto
+        var roles = await _dbContext.GroupRoles
+            .AsNoTracking()
+            .Where(r => r.GroupId == groupId)
+            .Select(r => new GroupRoleDto
             {
-                Id = x.Id,
-                Name = x.Name,
-                Color = x.Color,
-                Permissions = x.Permissions
-                    .Where(p => p.Permission != null)
+                Id = r.Id,
+                Name = r.Name,
+                Color = r.Color,
+                Permissions = r.Permissions
                     .Select(p => p.Permission.Name)
                     .ToList()
-            });
+            })
+            .ToListAsync();
 
         return (true, "SuccessGotGroupRoles", roles);
     }
 
     public async Task<(bool, string, MessageDto?)> SendMessageAsync(Guid groupId, SendMessageRequest request)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
-
-        if (user == null)
-            return (false, "ErrorUserNotFound", null);
+        var userId = _httpContextAccessor.GetUserId();
 
         var group = await _dbContext.Groups
             .SingleOrDefaultAsync(g => g.Id == groupId);
@@ -314,7 +285,7 @@ public class GroupService : IGroupService
         var message = new Message
         {
             Content = request.Content,
-            UserId = user.Id,
+            UserId = userId,
             GroupId = groupId,
         };
 
@@ -332,52 +303,57 @@ public class GroupService : IGroupService
         };
 
         var cacheKey = CacheKeys.GroupMessages(groupId);
-
         var cached = await _cache.StringGetAsync(cacheKey);
+
         List<MessageDto> list;
-        if (!string.IsNullOrEmpty(cached))
+        if (string.IsNullOrEmpty(cached))
         {
-            list = JsonSerializer.Deserialize<List<MessageDto>>(cached)!
-                .Take(39)
-                .ToList();
+            list = new List<MessageDto>();
         }
         else
         {
-            list = new List<MessageDto>();
+            list = JsonSerializer.Deserialize<List<MessageDto>>(cached)!
+            .Take(39)
+            .ToList();
         }
 
         list.Insert(0, messageDto);
 
-        var updatedJson = JsonSerializer.Serialize(list);
-        await _cache.StringSetAsync(cacheKey, updatedJson, TimeSpan.FromMinutes(5));
+        await _cache.StringSetAsync(cacheKey, JsonSerializer.Serialize(list), TimeSpan.FromMinutes(5));
 
         return (true, "SuccessSentMessage",  messageDto);
     }
 
     public async Task<(bool, string, AddRoleToUserDto?)> AddRoleToUser(Guid groupId, string userId, Guid roleId)
     {
-        var user = await _dbContext.Users
-            .Include(u => u.GroupRoles)
-            .SingleOrDefaultAsync(x => x.Id == userId );
+        var roleExists = await _dbContext.GroupRoles
+            .AsNoTracking()
+            .AnyAsync(gr => gr.Id == roleId && gr.GroupId == groupId );
 
-        if (user == null)
-            return (false, "ErrorUserNotFound", null);
-        
-        var role = await _dbContext.GroupRoles
-            .SingleOrDefaultAsync(r => r.Id == roleId && r.GroupId == groupId);
-
-        if (role == null)
+        if (!roleExists)
             return (false, "ErrorRoleNotFound", null);
 
-        if (user.GroupRoles.Any(x => x.GroupRoleId == role.Id))
-            return (false, "ErrorUserAlreadyHasRole", null);
+        var userExists = await _dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.Id == userId);
 
-        user.GroupRoles.Add(new UserGroupRole
+        if (!userExists)
+            return (false, "ErrorUserNotFound", null);
+
+        var alreadyHasRole = await _dbContext.UserGroupRoles
+            .AsNoTracking()
+            .AnyAsync(ugr => ugr.UserId == userId && ugr.GroupRoleId == roleId );
+
+        if (alreadyHasRole)
+            return (false, "ErrroUserAlreadyHasRole", null);
+
+        var userGroupRole = new UserGroupRole
         {
-            UserId = user.Id,
-            GroupRoleId = role.Id
-        });
+            UserId = userId,
+            GroupRoleId = roleId
+        };
 
+        _dbContext.UserGroupRoles.Add(userGroupRole);
         await _dbContext.SaveChangesAsync();
 
         await _cache.KeyDeleteAsync(CacheKeys.GroupMembers(groupId));
@@ -385,8 +361,8 @@ public class GroupService : IGroupService
         var dto = new AddRoleToUserDto
         {
             GroupId = groupId,
-            UserId = user.Id,
-            RoleId = role.Id
+            UserId = userId,
+            RoleId = roleId
         };
 
         return (true, "SuccessAddedRoleToUser", dto);
@@ -394,16 +370,18 @@ public class GroupService : IGroupService
 
     public async Task<(bool, string, RemoveRoleFromUserDto?)> RemoveRoleFromUser(Guid groupId, string userId, Guid roleId)
     {
-        var user = await _dbContext.Users
-            .Include(x => x.GroupRoles)
-            .SingleOrDefaultAsync(x => x.Id == userId);
+        var userExists = await _dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.Id == userId);
 
-        if (user == null)
+        if (!userExists)
             return (false, "ErrorUserNotFound", null);
 
-        var userGroupRole = user.GroupRoles.FirstOrDefault(x => x.GroupRoleId == roleId);
+        var userGroupRole = await _dbContext.UserGroupRoles
+            .SingleOrDefaultAsync(ugr => ugr.UserId == userId && ugr.GroupRoleId == roleId);
+
         if (userGroupRole == null)
-            return (false, "ErrorRoleNotAssignedToUser", null);
+            return (false, "ErrorUserDoesNotHaveRole", null);
 
         _dbContext.UserGroupRoles.Remove(userGroupRole);
         await _dbContext.SaveChangesAsync();
@@ -413,7 +391,7 @@ public class GroupService : IGroupService
         var dto = new RemoveRoleFromUserDto
         {
             GroupId = groupId,
-            UserId = user.Id,
+            UserId = userId,
             RoleId = roleId
         };
 
@@ -422,30 +400,27 @@ public class GroupService : IGroupService
 
     public async Task<(bool, string, GroupRoleDto?)> CreateRoleAsync(Guid groupId, CreateGroupRoleRequest request)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
+        var groupExists = await _dbContext.Groups
+            .AsNoTracking()
+            .AnyAsync(g => g.Id == groupId);
 
-        if (userId == null)
-            return (false, "ErrorLoggedInUser", null);
-
-        var group = await _dbContext.Groups.SingleOrDefaultAsync(x => x.Id == groupId);
-
-        if (group == null)
+        if (!groupExists)
             return (false, "ErrorGroupNotFound", null);
+
+        var permissionEntities = await _dbContext.Permissions
+            .Where(p => request.Permissions.Contains(p.Name))
+            .ToListAsync();
 
         var groupRole = new GroupRole
         {
             GroupId = groupId,
             Name = request.Name,
             Color = request.Color,
-            Permissions = request.Permissions
-                .Select(pName => new GroupRolePermission
+            Permissions = permissionEntities
+                .Select(p => new GroupRolePermission
                 {
-                    PermissionId = _dbContext.Permissions
-                        .Where(p => p.Name == pName)
-                        .Select(p => p.Id)
-                        .FirstOrDefault()
-                })
-                .ToList()
+                    PermissionId = p.Id,
+                }).ToList()
         };
 
         _dbContext.GroupRoles.Add(groupRole);
@@ -456,12 +431,7 @@ public class GroupService : IGroupService
             Id = groupRole.Id,
             Name = groupRole.Name,
             Color = groupRole.Color,
-            Permissions = groupRole.Permissions
-                .Select(pr => _dbContext.Permissions
-                    .Where(p => p.Id == pr.PermissionId)
-                    .Select(p => p.Name)
-                    .FirstOrDefault())
-                .ToList()
+            Permissions = permissionEntities.Select(p => p.Name).ToList()
         };
 
         return (true, "SuccessCreatedGroupRole", groupRoleDto);
@@ -469,16 +439,9 @@ public class GroupService : IGroupService
 
     public async Task<(bool, string, GroupRoleDto?)> EditRoleAsync(Guid roleId, EditGroupRoleRequest request)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
-
-        if (userId == null)
-            return (false, "ErrorLoggedInUser", null);
-
-
         var groupRole = await _dbContext.GroupRoles
-            .Include(x => x.Permissions)
-                .ThenInclude(x => x.Permission)
-            .SingleOrDefaultAsync(x => x.Id == roleId);
+            .Include(gr => gr.Permissions)
+            .SingleOrDefaultAsync(gr => gr.Id == roleId);
 
         if (groupRole == null)
             return (false, "ErrorRoleNotFound", null);
@@ -488,15 +451,12 @@ public class GroupService : IGroupService
 
         _dbContext.GroupRolePermissions.RemoveRange(groupRole.Permissions);
 
-        var permissions = await _dbContext.Permissions
-            .Where(x => request.Permissions.Contains(x.Name))
+        var permissionEntities = await _dbContext.Permissions
+            .Where(p => request.Permissions.Contains(p.Name))
             .ToListAsync();
 
-        groupRole.Permissions = permissions.Select(p => new GroupRolePermission
-            {
-                GroupRoleId = groupRole.Id,
-                PermissionId = p.Id
-            })
+        groupRole.Permissions = permissionEntities
+            .Select(p => new GroupRolePermission { GroupRoleId = groupRole.Id, PermissionId = p.Id })
             .ToList();
 
         await _dbContext.SaveChangesAsync();
@@ -506,7 +466,7 @@ public class GroupService : IGroupService
             Id = groupRole.Id,
             Name = groupRole.Name,
             Color = groupRole.Color,
-            Permissions = permissions.Select(x => x.Name).ToList()
+            Permissions = permissionEntities.Select(p => p.Name).ToList()
         };
 
         return (true, "SuccessEditedGroupRole", groupRoleDto);
@@ -514,10 +474,7 @@ public class GroupService : IGroupService
 
     public async Task<(bool, string)> MarkAsReadAsync(Guid groupId, MarkAsReadRequest request)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
-
-        if (userId == null)
-            return (false, "ErrorLoggedInUser");
+        var userId = _httpContextAccessor.GetUserId();
 
         var userGroup = await _dbContext.UserGroups
             .SingleOrDefaultAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
