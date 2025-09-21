@@ -30,7 +30,7 @@ public class InviteController : ControllerBase
         _hubContext = hubContext;
     }
 
-    [Authorize(Policy = "GroupMember")]
+    [Authorize(Policy = "CanManageInvites")]
     [HttpPost("{groupGuid}")]
     public async Task<ActionResult<GenericResponse<InviteDto?>>> CreateInvite(Guid groupGuid, [FromBody] CreateInviteRequest request)
     {

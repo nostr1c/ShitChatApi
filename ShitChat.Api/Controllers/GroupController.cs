@@ -72,6 +72,7 @@ public class GroupController : ControllerBase
     /// <summary>
     /// Add member to group
     /// </summary>
+    [Authorize(Policy = "GroupMember")]
     [HttpPost("{groupGuid}/members")]
     public async Task<ActionResult<GenericResponse<UserDto>>> AddUserToGroup(Guid groupGuid, [FromBody] string userId)
     {
@@ -91,6 +92,7 @@ public class GroupController : ControllerBase
     /// <summary>
     /// kick member from group
     /// </summary>
+    [Authorize(Policy = "CanKick")]
     [HttpPost("{groupGuid}/members/{userId}/kick")]
     public async Task<ActionResult<GenericResponse<object>>> KickUserFromGroup(Guid groupGuid, string userId)
     {
@@ -193,8 +195,8 @@ public class GroupController : ControllerBase
     /// <summary>
     /// Add role to user in group
     /// </summary>
-    [Authorize(Policy = "GroupMember")]
-    [HttpPost("{groupGuid}/user/{userId}/roles")] // Should change this & use Admin policy
+    [Authorize(Policy = "CanManageUserRoles")]
+    [HttpPost("{groupGuid}/user/{userId}/roles")]
     public async Task<ActionResult<GenericResponse<AddRoleToUserDto?>>> AddRoleToUser(Guid groupGuid, string userId, [FromBody] AddRoleToUserRequest request)
     {
         var (success, message, dto) = await _groupService.AddRoleToUser(groupGuid, userId, request.RoleId);
@@ -215,8 +217,8 @@ public class GroupController : ControllerBase
     /// <summary>
     /// Remove role from user in group
     /// </summary>
-    [Authorize(Policy = "GroupMember")]
-    [HttpDelete("{groupGuid}/user/{userId}/roles")] // Should change this & use Admin policy
+    [Authorize(Policy = "CanManageUserRoles")]
+    [HttpDelete("{groupGuid}/user/{userId}/roles")]
     public async Task<ActionResult<GenericResponse<RemoveRoleFromUserDto?>>> RemoveRoleFromUser(Guid groupGuid, string userId, [FromBody] RemoveRoleFromUserRequest request)
     {
         var (success, message, dto) = await _groupService.RemoveRoleFromUser(groupGuid, userId, request.RoleId);
@@ -237,6 +239,7 @@ public class GroupController : ControllerBase
     /// <summary>
     /// Create group role
     /// </summary>
+    [Authorize(Policy = "CanManageServerRoles")]
     [HttpPost("{groupGuid}/roles")]
     public async Task<ActionResult<GenericResponse<GroupRoleDto>>> CreateRole(Guid groupGuid, [FromBody] CreateGroupRoleRequest request)
     {
@@ -259,6 +262,7 @@ public class GroupController : ControllerBase
     /// <summary>
     /// Edit group role
     /// </summary>
+    [Authorize(Policy = "CanManageServerRoles")]
     [HttpPut("{groupGuid}/roles/{roleId}")]
     public async Task<ActionResult<GenericResponse<GroupRoleDto>>> EditRole(Guid groupGuid, Guid roleId, [FromBody] EditGroupRoleRequest request)
     {
@@ -277,6 +281,7 @@ public class GroupController : ControllerBase
         });
     }
 
+    [Authorize(Policy = "GroupMember")]
     [HttpPost("{groupGuid}/read")]
     public async Task<ActionResult<GenericResponse<object>>> MarkAsRead(Guid groupGuid, [FromBody] MarkAsReadRequest request)
     {

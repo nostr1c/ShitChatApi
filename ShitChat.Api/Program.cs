@@ -127,9 +127,22 @@ public class Program
         {
             options.AddPolicy("GroupMember", policy =>
                 policy.Requirements.Add(new GroupMembershipRequirement()));
+
+            options.AddPolicy("CanKick", policy =>
+                policy.Requirements.Add(new GroupPermissionRequirement("kick_user")));
+
+            options.AddPolicy("CanManageUserRoles", policy =>
+                policy.Requirements.Add(new GroupPermissionRequirement("manage_user_roles")));
+
+            options.AddPolicy("CanManageServerRoles", policy =>
+                policy.Requirements.Add(new GroupPermissionRequirement("manage_server_roles")));
+
+            options.AddPolicy("CanManageInvites", policy =>
+                policy.Requirements.Add(new GroupPermissionRequirement("manage_invites")));
         });
 
         builder.Services.AddScoped<IAuthorizationHandler, GroupMembershipHandler>();
+        builder.Services.AddScoped<IAuthorizationHandler, GroupPermissionHandler>();
 
         // Services
         builder.Services.AddHttpContextAccessor();

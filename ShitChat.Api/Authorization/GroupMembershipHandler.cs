@@ -18,15 +18,18 @@ public class GroupMembershipHandler : AuthorizationHandler<GroupMembershipRequir
 
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, GroupMembershipRequirement requirement)
     {
-        var httpContext = _httpContextAccessor.HttpContext;
-        var userId = httpContext!.User.GetUserGuid();
-        if (userId == null)
+        string userId;
+        try
+        {
+            userId = _httpContextAccessor.GetUserId();
+        }
+        catch
         {
             context.Fail();
             return;
         }
 
-        if (!httpContext.Request.RouteValues.TryGetValue(requirement.GroupIdParameter, out var groupId) || !Guid.TryParse(groupId?.ToString(), out var groupGuid))
+        if (!_httpContextAccessor.HttpContext.Request.RouteValues.TryGetValue(requirement.GroupIdParameter, out var groupId) || !Guid.TryParse(groupId?.ToString(), out var groupGuid))
         {
             context.Fail();
             return;
