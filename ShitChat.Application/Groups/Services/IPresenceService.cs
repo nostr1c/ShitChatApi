@@ -6,6 +6,6 @@
         Task RemoveConnection(string userId, string connectionId);
         Task<string[]> GetUsersInGroup(string groupId);
         Task<string[]> GetUserConnections(string groupId, string userId);
-        Task<string[]> GetConnectionGroups(string connectionId);
+        Task<string[]> GetUserGroups(string userId);
     }
 }

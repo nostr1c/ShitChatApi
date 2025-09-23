@@ -16,63 +16,64 @@ public class PresenceService : IPresenceService
 
     public async Task AddConnectionToGroup(string groupId, string userId, string connectionId)
     {
+        var userConnectionsKey = CacheKeys.UserConnections(userId);
         var groupUsersKey = CacheKeys.GroupUsers(groupId);
-        var userConnectionsKey = CacheKeys.UserConnections(groupId, userId);
-        var connectionGroupsKey = CacheKeys.ConnectionGroups(connectionId);
+        var userGroupsKey = CacheKeys.UserGroups(userId);
 
-        await _cache.SetAddAsync(groupUsersKey, userId);
+        // Add connection
         await _cache.SetAddAsync(userConnectionsKey, connectionId);
-        await _cache.SetAddAsync(connectionGroupsKey, groupId);
+
+        // Add group to users group list
+        await _cache.SetAddAsync(userGroupsKey, groupId);
+
+        // Add user to group (ONLY IF FIRST CONNECTION)
+        var userConnections = await _cache.SetMembersAsync(userConnectionsKey);
+        if (userConnections.Length == 1)
+        {
+            await _cache.SetAddAsync(groupUsersKey, userId);
+        }
     }
 
     public async Task RemoveConnection(string userId, string connectionId)
     {
-        var connectionGroupsKey = CacheKeys.ConnectionGroups(connectionId);
+        var userConnectionsKey = CacheKeys.UserConnections(userId);
+        var userGroupsKey = CacheKeys.UserGroups(userId);
 
-        var groupIds = await _cache.SetMembersAsync(connectionGroupsKey);
-        if (groupIds == null || groupIds.Length == 0)
+        // Remove connection
+        await _cache.SetRemoveAsync(userConnectionsKey, connectionId);
+
+        // Has connections still = keep online
+        var remainingConnections = await _cache.SetMembersAsync(userConnectionsKey);
+        if (remainingConnections != null && remainingConnections.Length > 0)
             return;
 
-        foreach (var groupId in groupIds)
+        // No more connections = remove user from all groups
+        var groups = await _cache.SetMembersAsync(userGroupsKey);
+        if (groups != null)
         {
-            var userConnectionsKey = CacheKeys.UserConnections(groupId, userId);
-            var groupUsersKey = CacheKeys.GroupUsers(groupId);
-
-
-            await _cache.SetRemoveAsync(userConnectionsKey, connectionId);
-
-            var remainingConnections = await _cache.SetMembersAsync(userConnectionsKey);
-                
-            if (remainingConnections == null || remainingConnections.Length == 0)
+            foreach (var groupId in groups)
             {
+                var groupUsersKey = CacheKeys.GroupUsers(groupId);
                 await _cache.SetRemoveAsync(groupUsersKey, userId);
+                await _cache.SetRemoveAsync(userGroupsKey, groupId);
             }
         }
-
-        foreach (var groupId in groupIds)
-        {
-            await _cache.SetRemoveAsync(connectionGroupsKey, groupId);
-        }
+    }
+    public async Task<string[]> GetUsersInGroup(string groupId)
+    {
+        var groupUsersKey = CacheKeys.GroupUsers(groupId);
+        return await _cache.SetMembersAsync(groupUsersKey);
     }
 
     public async Task<string[]> GetUserConnections(string groupId, string userId)
     {
-        var userConnectionsKey = CacheKeys.UserConnections(groupId, userId);
-
+        var userConnectionsKey = CacheKeys.UserConnections(userId);
         return await _cache.SetMembersAsync(userConnectionsKey);
     }
 
-    public async Task<string[]> GetUsersInGroup(string groupId)
+    public async Task<string[]> GetUserGroups(string userId)
     {
-        var groupUsersKey = CacheKeys.GroupUsers(groupId);
-
-        return await _cache.SetMembersAsync(groupUsersKey);
+        var userGroupsKey = CacheKeys.UserGroups(userId);
+        return await _cache.SetMembersAsync(userGroupsKey);
     }
-
-    public async Task<string[]> GetConnectionGroups(string connectionId)
-    {
-        var connectionGroupsKey = CacheKeys.ConnectionGroups(connectionId);
-        return await _cache.SetMembersAsync(connectionGroupsKey);
-    }
-
 }

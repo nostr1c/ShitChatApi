@@ -2,6 +2,8 @@
 using ShitChat.Shared.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using ShitChat.Application.Groups.Services;
+using Castle.Components.DictionaryAdapter;
+using ShitChat.Application.Caching;
 
 namespace ShitChat.Api.Hubs;
 
@@ -25,9 +27,13 @@ public class ChatHub : Hub
 
         var connectionId = Context.ConnectionId;
 
+        // Add to SignalR group.
         await Groups.AddToGroupAsync(connectionId, groupId);
+
+        // Update redis precence
         await _presenceService.AddConnectionToGroup(groupId, userId, connectionId);
 
+        // Send new precense list to group.
         var users = await _presenceService.GetUsersInGroup(groupId);
         await Clients.Group(groupId).SendAsync("PresenceUpdated", groupId, users);
     }
@@ -50,14 +56,20 @@ public class ChatHub : Hub
         if (userId == null)
             return;
 
-        var groupIds = await _presenceService.GetConnectionGroups(connectionId);
+        // Get users groups
+        var groups = await _presenceService.GetUserGroups(userId);
 
+        // Remove connection
         await _presenceService.RemoveConnection(userId, connectionId);
 
-        foreach (var groupId in groupIds)
+        // Send new precence for all users groups
+        if (groups != null)
         {
-            var users = await _presenceService.GetUsersInGroup(groupId);
-            await Clients.Group(groupId).SendAsync("PresenceUpdated", groupId, users);
+            foreach (var groupId in groups)
+            {
+                var users = await _presenceService.GetUsersInGroup(groupId);
+                await Clients.Group(groupId).SendAsync("PresenceUpdated", groupId, users);
+            }
         }
 
         await base.OnDisconnectedAsync(exception);
