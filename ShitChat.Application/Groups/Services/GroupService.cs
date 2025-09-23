@@ -198,16 +198,20 @@ public class GroupService : IGroupService
     {
         var cacheKey = CacheKeys.GroupMessages(groupGuid);
 
+        // Only get cached when fetching latest
         if (lastMessageId == null)
         {
-            var cached = await _cache.StringGetAsync(cacheKey);
-            if (!string.IsNullOrEmpty(cached))
+            var cached = await _cache.ListRangeAsync(cacheKey, 0, -1);
+            if (cached != null && cached.Length > 0)
             {
-                var cachedMessages = JsonSerializer.Deserialize<List<MessageDto>>(cached)!;
+                var cachedMessages = cached.Select(x => JsonSerializer.Deserialize<MessageDto>(x)!)
+                    .Take(take)
+                    .ToList();
                 return (true, "SuccessGotGroupMessages", cachedMessages);
             }
         }
 
+        // No cached = DB fetch
         var query = _dbContext.Messages
             .AsNoTracking()
             .Where(x => x.GroupId == groupGuid);
@@ -237,10 +241,15 @@ public class GroupService : IGroupService
             })
             .ToListAsync();
 
+        // Cache latest only when fetching latest
         if (lastMessageId == null)
         {
-            var json = JsonSerializer.Serialize(messages);
-            await _cache.StringSetAsync(cacheKey, json, TimeSpan.FromMinutes(5));
+            if (messages.Count > 0)
+            {
+                var redisValue = messages.Select(x => JsonSerializer.Serialize(x)).ToArray();
+                await _cache.ListRightPushAsync(cacheKey, redisValue);
+                await _cache.KeyExpireAsync(cacheKey, TimeSpan.FromMinutes(5));
+            }
         }
 
         return (true, "SuccessGotGroupMessages", messages);
@@ -303,23 +312,10 @@ public class GroupService : IGroupService
         };
 
         var cacheKey = CacheKeys.GroupMessages(groupId);
-        var cached = await _cache.StringGetAsync(cacheKey);
-
-        List<MessageDto> list;
-        if (string.IsNullOrEmpty(cached))
-        {
-            list = new List<MessageDto>();
-        }
-        else
-        {
-            list = JsonSerializer.Deserialize<List<MessageDto>>(cached)!
-            .Take(39)
-            .ToList();
-        }
-
-        list.Insert(0, messageDto);
-
-        await _cache.StringSetAsync(cacheKey, JsonSerializer.Serialize(list), TimeSpan.FromMinutes(5));
+        var messageJson = JsonSerializer.Serialize(messageDto);
+        await _cache.ListLeftPushAsync(cacheKey, messageJson);
+        await _cache.ListTrimAsync(cacheKey, 0, 39);
+        await _cache.KeyExpireAsync(cacheKey, TimeSpan.FromMinutes(5));
 
         return (true, "SuccessSentMessage",  messageDto);
     }
