@@ -155,7 +155,8 @@ public class GroupController : ControllerBase
     /// </summary>
     [Authorize(Policy = "GroupMember")]
     [HttpPost("{groupGuid}/messages")]
-    public async Task<ActionResult<GenericResponse<MessageDto>>> SendMessage(Guid groupGuid, [FromBody] SendMessageRequest request)
+    [RequestSizeLimit(20_000_000)]
+    public async Task<ActionResult<GenericResponse<MessageDto>>> SendMessage(Guid groupGuid, [FromForm] SendMessageRequest request)
     {
         var (success, message, messages) = await _groupService.SendMessageAsync(groupGuid, request);
 

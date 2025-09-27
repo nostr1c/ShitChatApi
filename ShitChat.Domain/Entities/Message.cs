@@ -6,7 +6,7 @@ public class Message
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     public Guid GroupId { get; set; }
 
@@ -20,4 +20,5 @@ public class Message
 
     [ForeignKey(nameof(UserId))]
     public User User { get; set; }
+    public MessageAttachment? Attachment { get; set; }
 }

@@ -9,4 +9,6 @@ public class MessageDto
     public string? UserName { get; set; }
     public string? Avatar { get; set; }
     public bool IsFormerMember { get; set; }
+
+    public MessageAttachmentDto? Attachment { get; set; }
 }

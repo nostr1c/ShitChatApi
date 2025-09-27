@@ -10,6 +10,7 @@ using ShitChat.Application.Users.DTOs;
 using ShitChat.Application.Groups.DTOs;
 using ShitChat.Application.Groups.Requests;
 using ShitChat.Application.Caching.Services;
+using ShitChat.Application.Uploads.Services;
 
 namespace ShitChat.Application.Groups.Services;
 
@@ -19,19 +20,22 @@ public class GroupService : IGroupService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<GroupService> _logger;
     private readonly ICacheService _cache;
+    private readonly IUploadService _uploadService;
 
     public GroupService
     (
         AppDbContext dbContext,
         IHttpContextAccessor httpContextAccessor,
         ILogger<GroupService> logger,
-        ICacheService cache
+        ICacheService cache,
+        IUploadService uploadService
     )
     { 
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
         _cache = cache;
+        _uploadService = uploadService;
     }
 
     public async Task<(bool, string, GroupDto?)> CreateGroupAsync(CreateGroupRequest request)
@@ -238,6 +242,12 @@ public class GroupService : IGroupService
                 UserId = x.UserId,
                 UserName = x.User.UserName,
                 Avatar = x.User.AvatarUri,
+                Attachment = x.Attachment != null ? new MessageAttachmentDto
+                {
+                    FileName = x.Attachment.FileName,
+                    FileType = x.Attachment.FileType,
+                    FileSize = x.Attachment.FileSize
+                } : null,
             })
             .ToListAsync();
 
@@ -298,6 +308,21 @@ public class GroupService : IGroupService
             GroupId = groupId,
         };
 
+        if (request.Attachment != null)
+        {
+            var (success, uploadMessage, imageName) = await _uploadService.UploadFileAsync(request.Attachment);
+            if (!success || imageName == null)
+                return (false, uploadMessage, null);
+
+            message.Attachment = new MessageAttachment
+            {
+                FileName = imageName,
+                FileType = request.Attachment.ContentType,
+                FileSize = request.Attachment.Length
+            };
+
+        }
+
         group.LastActivity = DateTime.UtcNow;
 
         _dbContext.Messages.Add(message);
@@ -308,7 +333,13 @@ public class GroupService : IGroupService
             Id = message.Id,
             Content = message.Content,
             CreatedAt = message.CreatedAt,
-            UserId = message.UserId
+            UserId = message.UserId,
+            Attachment = message.Attachment != null ? new MessageAttachmentDto
+            {
+                FileName = message.Attachment.FileName,
+                FileType = message.Attachment.FileType,
+                FileSize = message.Attachment.FileSize
+            } : null,
         };
 
         var cacheKey = CacheKeys.GroupMessages(groupId);

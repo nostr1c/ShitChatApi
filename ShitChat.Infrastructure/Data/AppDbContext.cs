@@ -73,6 +73,16 @@ public class AppDbContext : IdentityDbContext<User>
             .HasForeignKey(m => m.UserId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        builder.Entity<Message>()
+            .HasOne(m => m.Attachment)
+            .WithOne(ma => ma.Message)
+            .HasForeignKey<MessageAttachment>(ma => ma.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<MessageAttachment>()
+            .HasIndex(ma => ma.FileName)
+            .IsUnique();
+
         builder.Entity<GroupRole>()
             .HasOne(gr => gr.Group)
             .WithMany(g => g.Roles)

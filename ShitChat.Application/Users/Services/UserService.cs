@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using ShitChat.Application.Users.DTOs;
 using ShitChat.Application.Groups.DTOs;
 using ShitChat.Application.Connections.DTOs;
+using ShitChat.Application.Uploads.Services;
 
 namespace ShitChat.Application.Users.Services;
 
@@ -17,23 +18,20 @@ public class UserService : IUserService
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly UserManager<User> _userManager;
-    private readonly string _imageStoragePath = "/Uploads";
+    private readonly IUploadService _uploadService;
 
     public UserService
     (
         AppDbContext dbContext,
         IHttpContextAccessor httpContextAccessor,
-        UserManager<User> userManager
+        UserManager<User> userManager,
+        IUploadService uploadService
     )
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
         _userManager = userManager;
-
-        if (!Directory.Exists(_imageStoragePath))
-        {
-            Directory.CreateDirectory(_imageStoragePath);
-        }
+        _uploadService = uploadService;
     }
 
     public async Task<(bool, string, UserDto?)> GetUserByGuidAsync(string userGuid)
@@ -63,31 +61,9 @@ public class UserService : IUserService
         if (user == null)
             return (false, "ErrorUserNotFound", null);
 
-        if (avatar == null || avatar.Length == 0)
-            return (false, "ErrorInvalidFile", null);
-
-        string[] allowedExtensions = [".jpg", ".jpeg", ".png"];
-
-        var fileExtension = Path.GetExtension(avatar.FileName).ToLower();
-        if (!allowedExtensions.Contains(fileExtension))
-            return (false, "ErrorNotValidFileFormat", null);
-
-        string imageId = Guid.NewGuid().ToString();
-        string imageName = $"{imageId}{fileExtension}";
-        string ImagePath = Path.Combine(_imageStoragePath, imageName);
-
-        using var image = await Image.LoadAsync(avatar.OpenReadStream());
-
-        image.Mutate(x => x.Resize(new ResizeOptions
-        {
-            Size = new Size(400, 400),
-            Mode = ResizeMode.Crop
-        }));
-
-        using (var fileStream = new FileStream(ImagePath, FileMode.Create))
-        {
-            await image.SaveAsWebpAsync(fileStream);
-        }
+        var (success, message, imageName) = await _uploadService.UploadFileAsync(avatar, 400, 400);
+        if (!success || imageName == null)
+            return (false, message, null);
 
         user.AvatarUri = imageName;
         await _userManager.UpdateAsync(user);

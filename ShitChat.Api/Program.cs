@@ -18,6 +18,7 @@ using ShitChat.Application.Groups.Requests;
 using ShitChat.Application.Groups.Services;
 using ShitChat.Application.Invites.Requests;
 using ShitChat.Application.Invites.Services;
+using ShitChat.Application.Uploads.Services;
 using ShitChat.Application.Users.Requests;
 using ShitChat.Application.Users.Services;
 using ShitChat.Domain.Entities;
@@ -153,6 +154,7 @@ public class Program
         builder.Services.AddScoped<IGroupService, GroupService>();
         builder.Services.AddScoped<IInviteService, InviteService>();
         builder.Services.AddSingleton<IPresenceService, PresenceService>();
+        builder.Services.AddScoped<IUploadService, UploadService>();
 
         // Validators
         builder.Services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
