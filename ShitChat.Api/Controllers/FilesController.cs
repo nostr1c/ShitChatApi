@@ -18,7 +18,18 @@ public class FilesController : ControllerBase
         if (!System.IO.File.Exists(filePath))
             return NotFound("Image not found.");
 
+        var fileExtension = Path.GetExtension(fileName).ToLower();
+
+        string contentType = fileExtension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            ".gif" => "image/gif",
+            _ => "application/octet-stream"
+        };
+
         var imageStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-        return File(imageStream, "image/jpeg");
+        return File(imageStream, contentType);
     }
 }

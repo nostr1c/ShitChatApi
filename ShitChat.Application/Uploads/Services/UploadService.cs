@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Gif;
+using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
+using System.Runtime.InteropServices;
 
 namespace ShitChat.Application.Uploads.Services;
 
@@ -21,19 +24,19 @@ public class UploadService : IUploadService
         if (file == null || file.Length == 0)
             return (false, "ErrorInvalidFile", null);
 
-        string[] allowedExtensions = [".jpg", ".jpeg", ".png"];
+        string[] allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
         var fileExtension = Path.GetExtension(file.FileName).ToLower();
         if (!allowedExtensions.Contains(fileExtension))
             return (false, "ErrorNotValidFileFormat", null);
 
         string imageId = Guid.NewGuid().ToString();
-        string imageName = $"{imageId}{fileExtension}";
+        string imageName = fileExtension == ".gif" ? $"{imageId}.gif" : $"{imageId}.webp";
         string ImagePath = Path.Combine(_imageStoragePath, imageName);
 
         using var image = await Image.LoadAsync(file.OpenReadStream());
 
-        if (width != null && height != null)
+        if (fileExtension != ".gif" && width != null && height != null)
         {
             image.Mutate(x => x.Resize(new ResizeOptions
             {
@@ -43,9 +46,20 @@ public class UploadService : IUploadService
         }
 
         using (var fileStream = new FileStream(ImagePath, FileMode.Create))
-        {
-            await image.SaveAsWebpAsync(fileStream);
-        }
+
+            if (fileExtension == ".gif")
+            {
+                await image.SaveAsGifAsync(fileStream, new GifEncoder());
+            }
+            else
+            {
+
+                await image.SaveAsWebpAsync(fileStream, new WebpEncoder
+                {
+                    FileFormat = WebpFileFormatType.Lossless
+                });
+            }
+
 
         return (true, "SuccessFileUploaded", imageName);
     }
