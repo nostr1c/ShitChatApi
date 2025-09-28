@@ -11,6 +11,7 @@ using ShitChat.Application.Groups.DTOs;
 using ShitChat.Application.Groups.Requests;
 using ShitChat.Application.Caching.Services;
 using ShitChat.Application.Uploads.Services;
+using System.Runtime.InteropServices;
 
 namespace ShitChat.Application.Groups.Services;
 
@@ -125,6 +126,8 @@ public class GroupService : IGroupService
         if (userGroup == null)
             return (false, "ErrorUserNotInGroup");
 
+        // TODO: Cascade this later?
+
         var userRoles = await _dbContext.UserGroupRoles
             .Where(ugr => ugr.UserId == userId && ugr.GroupRole.GroupId == groupId)
             .ToListAsync();
@@ -135,6 +138,40 @@ public class GroupService : IGroupService
 
         await _cache.KeyDeleteAsync(CacheKeys.GroupMembers(groupId));
         return (true, "SuccessKickedUser");
+    }
+
+    public async Task<(bool, string)> BanUserFromGroupAsync(Guid groupId, string userId, BanUserRequest request)
+    {
+        var userGroup = await _dbContext.UserGroups
+            .SingleOrDefaultAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
+
+        if (userGroup == null)
+            return (false, "ErrorUserNotInGroup");
+
+        // TODO: Cascade this later?
+        var userRoles = await _dbContext.UserGroupRoles
+            .Where(ugr => ugr.UserId == userId && ugr.GroupRole.GroupId == groupId)
+            .ToListAsync();
+
+        _dbContext.UserGroupRoles.RemoveRange(userRoles);
+        _dbContext.UserGroups.Remove(userGroup);
+
+        var ban = new Ban
+        {
+            UserId = userId,
+            GroupId = groupId,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = request.ExpiresAt,
+            Reason = request.Reason,
+            BannedByUserId = _httpContextAccessor.GetUserId()
+
+        };
+        _dbContext.Bans.Add(ban);
+
+        await _dbContext.SaveChangesAsync();
+        await _cache.KeyDeleteAsync(CacheKeys.GroupMembers(groupId));
+
+        return (true, "SuccessBannedUser");
     }
 
     public async Task<(bool, string, GroupDto?)> GetGroupByGuidAsync(Guid groupId)

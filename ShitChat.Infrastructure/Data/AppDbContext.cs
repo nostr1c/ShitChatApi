@@ -19,6 +19,7 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<GroupRolePermission> GroupRolePermissions { get; set; }
     public DbSet<UserGroup> UserGroups { get; set; }
+    public DbSet<Ban> Bans { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -133,6 +134,25 @@ public class AppDbContext : IdentityDbContext<User>
             .WithMany(p => p.GroupRoles)
             .HasForeignKey(gp => gp.PermissionId);
 
+        builder.Entity<Ban>()
+            .HasOne(b => b.User)
+            .WithMany()
+            .HasForeignKey(b => b.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Ban>()
+            .HasOne(b => b.Group)
+            .WithMany(g => g.Bans)
+            .HasForeignKey(b => b.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Ban>()
+            .HasOne(b => b.BannedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.BannedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+
         // Seeding permanents
         builder.Entity<Permission>()
             .HasData(new Permission
@@ -140,36 +160,36 @@ public class AppDbContext : IdentityDbContext<User>
                 Id = Guid.Parse("bd74b2af-ed25-48a5-8ab4-f78227a58d06"),
                 Name = "kick_user"
             },
-                new Permission
-                {
-                    Id = Guid.Parse("e5bebdec-1a32-4c9d-a54e-39cc0d073ed6"),
-                    Name = "ban_user"
-                },
-                new Permission
-                {
-                    Id = Guid.Parse("c8161caf-eb44-4c71-baf1-eea17481989c"),
-                    Name = "manage_user_roles"
-                },
-                new Permission
-                {
-                    Id = Guid.Parse("61e895bb-021f-42ae-88af-c7444931630e"),
-                    Name = "manage_server_roles"
-                },
-                new Permission
-                {
-                    Id = Guid.Parse("037f49f3-9f9f-4c45-b94b-1b8c0e595fb9"),
-                    Name = "manage_invites"
-                },
-                new Permission
-                {
-                    Id = Guid.Parse("47d3b3f7-2e55-4867-9bca-4e1f971ae5ae"),
-                    Name = "manage_server"
-                },
-                new Permission
-                {
-                    Id = Guid.Parse("5a6ba92e-1013-4c73-9589-0dba08bfa2bf"),
-                    Name = "delete_messages"
-                }
+            new Permission
+            {
+                Id = Guid.Parse("e5bebdec-1a32-4c9d-a54e-39cc0d073ed6"),
+                Name = "ban_user"
+            },
+            new Permission
+            {
+                Id = Guid.Parse("c8161caf-eb44-4c71-baf1-eea17481989c"),
+                Name = "manage_user_roles"
+            },
+            new Permission
+            {
+                Id = Guid.Parse("61e895bb-021f-42ae-88af-c7444931630e"),
+                Name = "manage_server_roles"
+            },
+            new Permission
+            {
+                Id = Guid.Parse("037f49f3-9f9f-4c45-b94b-1b8c0e595fb9"),
+                Name = "manage_invites"
+            },
+            new Permission
+            {
+                Id = Guid.Parse("47d3b3f7-2e55-4867-9bca-4e1f971ae5ae"),
+                Name = "manage_server"
+            },
+            new Permission
+            {
+                Id = Guid.Parse("5a6ba92e-1013-4c73-9589-0dba08bfa2bf"),
+                Name = "delete_messages"
+            }
             );
     }
 }

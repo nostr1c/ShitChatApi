@@ -115,17 +115,39 @@ public class InviteService : IInviteService
 
     public async Task<(bool, string, JoinInviteDto?)> JoinWithInviteAsync(string inviteString)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
+        var userId = _httpContextAccessor.GetUserId();
         var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
 
         if (user == null)
             return (false, "ErrorLoggedInUser", null);
 
-        var inviteProjection = await _dbContext.Invites
+        var checks = await _dbContext.Invites
+            .AsNoTracking()
             .Where(x => x.InviteString == inviteString)
             .Select(i => new
             {
-                Invite = i,
+                GroupId = i.Group.Id,
+                IsBanned = i.Group.Bans.Any(b => b.UserId == user.Id && b.ExpiresAt > DateTime.UtcNow),
+                isMember = i.Group.UserGroups.Any(ug => ug.UserId == user.Id),
+                i.ValidThrough
+            }).SingleOrDefaultAsync();
+
+        if (checks == null)
+            return (false, "ErrorInviteNotFound", null);
+
+        if (checks.ValidThrough < DateOnly.FromDateTime(DateTime.UtcNow))
+            return (false, "ErrorInviteExpired", null);
+
+        if (checks.isMember)
+            return (false, "ErrorAlreadyInGroup", null);
+
+        if (checks.IsBanned)
+            return (false, "ErrorBannedFromGroup", null);
+
+        var inviteDto = await _dbContext.Invites
+            .Where(x => x.InviteString == inviteString)
+            .Select(i => new JoinInviteDto
+            {
                 Group = new GroupDto
                 {
                     Id = i.Group.Id,
@@ -137,49 +159,34 @@ public class InviteService : IInviteService
                         .Select(m => m.Content)
                         .FirstOrDefault(),
                 },
-                Members = i.Group.UserGroups.Select(ug => ug.UserId).ToList(),
+                Member = new GroupMemberDto
+                {
+                    User = new UserDto
+                    {
+                        Id = user.Id,
+                        Avatar = user.AvatarUri,
+                        CreatedAt = user.CreatedAt,
+                        Email = user.Email,
+                        Username = user.UserName
+                    }
+                }
             })
             .SingleOrDefaultAsync();
-
-        if (inviteProjection == null)
-            return (false, "ErrorInviteNotFound", null);
-
-        if (inviteProjection.Invite.ValidThrough < DateOnly.FromDateTime(DateTime.UtcNow))
-            return (false, "ErrorInviteExpired", null);
-
-        var joinInviteDto = new JoinInviteDto
-        {
-            Group = inviteProjection.Group,
-            Member = new GroupMemberDto
-            {
-                User = new UserDto
-                {
-                    Id = user.Id,
-                    Avatar = user.AvatarUri,
-                    CreatedAt = user.CreatedAt,
-                    Email = user.Email,
-                    Username = user.UserName
-                }
-            }
-        };
-
-        if (inviteProjection.Members.Contains(user.Id))
-            return (false, "ErrorAlreadyInGroup", joinInviteDto);
 
         _dbContext.UserGroups.Add(new UserGroup
         {
             UserId = user.Id,
-            GroupId = inviteProjection.Group.Id,
+            GroupId = inviteDto.Group.Id,
             JoinedAt = DateTime.UtcNow,
         });
 
         await _dbContext.SaveChangesAsync();
 
-        var cacheKey = CacheKeys.GroupMembers(inviteProjection.Group.Id);
+        var cacheKey = CacheKeys.GroupMembers(inviteDto.Group.Id);
 
         await _cache.KeyDeleteAsync(cacheKey);
 
-        return (true, "SuccessJoinedGroup", joinInviteDto);
+        return (true, "SuccessJoinedGroup", inviteDto);
     }
 
     private string GenerateInviteString()

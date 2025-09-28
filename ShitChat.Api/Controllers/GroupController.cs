@@ -297,4 +297,25 @@ public class GroupController : ControllerBase
             Status = StatusCodes.Status200OK
         });
     }
+
+    /// <summary>
+    /// Ban member from group
+    /// </summary>
+    [Authorize(Policy = "CanBan")]
+    [HttpPost("{groupGuid}/members/{userId}/ban")]
+    public async Task<ActionResult<GenericResponse<object>>> BanUserFromGroup(Guid groupGuid, string userId, [FromBody] BanUserRequest request)
+    {
+        var (success, message) = await _groupService.BanUserFromGroupAsync(groupGuid, userId, request);
+
+        if (!success)
+            return BadRequest(ResponseHelper.Error<object>(message));
+
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RemoveMember", groupGuid, userId);
+
+        return Ok(new GenericResponse<object>
+        {
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
+    }
 }
