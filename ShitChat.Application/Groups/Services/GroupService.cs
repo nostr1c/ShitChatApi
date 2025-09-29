@@ -161,7 +161,6 @@ public class GroupService : IGroupService
             UserId = userId,
             GroupId = groupId,
             CreatedAt = DateTime.UtcNow,
-            ExpiresAt = request.ExpiresAt,
             Reason = request.Reason,
             BannedByUserId = _httpContextAccessor.GetUserId()
 

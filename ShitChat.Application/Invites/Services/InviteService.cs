@@ -127,7 +127,7 @@ public class InviteService : IInviteService
             .Select(i => new
             {
                 GroupId = i.Group.Id,
-                IsBanned = i.Group.Bans.Any(b => b.UserId == user.Id && b.ExpiresAt > DateTime.UtcNow),
+                IsBanned = i.Group.Bans.Any(b => b.UserId == user.Id),
                 isMember = i.Group.UserGroups.Any(ug => ug.UserId == user.Id),
                 i.ValidThrough
             }).SingleOrDefaultAsync();

@@ -6,7 +6,6 @@ public class Ban
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime ExpiresAt { get; set; }
     public string? Reason { get; set; }
 
     // Foreign keys
