@@ -8,6 +8,7 @@ using ShitChat.Application.Groups.DTOs;
 using ShitChat.Application.Groups.Requests;
 using ShitChat.Application.Groups.Services;
 using ShitChat.Application.Users.DTOs;
+using ShitChat.Domain.Entities;
 
 namespace ShitChat.Api.Controllers;
 
@@ -60,6 +61,27 @@ public class GroupController : ControllerBase
         var (success, message, group) = await _groupService.GetGroupByGuidAsync(groupGuid);
         if (!success || group == null)
             return BadRequest(ResponseHelper.Error<GroupDto>(message));
+
+        return Ok(new GenericResponse<GroupDto>
+        {
+            Data = group,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
+    }
+
+    /// <summary>
+    /// Edit specific group
+    /// </summary>
+    [Authorize(Policy = "CanManageServer")]
+    [HttpPut("{groupGuid}")]
+    public async Task<ActionResult<GenericResponse<GroupDto>>> EditGroup(Guid groupGuid, [FromBody] EditGroupRequest request)
+    {
+        var (success, message, group) = await _groupService.EditGroupAsync(groupGuid, request);
+        if (!success || group == null)
+            return BadRequest(ResponseHelper.Error<GroupDto>(message));
+
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("EditedRoom", groupGuid, group);
 
         return Ok(new GenericResponse<GroupDto>
         {

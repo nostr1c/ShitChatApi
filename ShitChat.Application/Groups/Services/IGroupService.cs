@@ -20,4 +20,5 @@ public interface IGroupService
     Task<(bool, string, GroupRoleDto?)> CreateRoleAsync(Guid groupId, CreateGroupRoleRequest request);
     Task<(bool, string, GroupRoleDto?)> EditRoleAsync(Guid roleId, EditGroupRoleRequest request);
     Task<(bool, string)> MarkAsReadAsync(Guid groupId, MarkAsReadRequest request);
+    Task<(bool, string, GroupDto?)> EditGroupAsync(Guid groupId, EditGroupRequest request);
 }

@@ -551,4 +551,24 @@ public class GroupService : IGroupService
 
         return (true, "SuccessMarkedAsRead");
     }
+
+    public async Task<(bool, string, GroupDto?)> EditGroupAsync(Guid groupId, EditGroupRequest request)
+    {
+        var group = _dbContext.Groups.SingleOrDefault(g => g.Id == groupId);
+        if (group == null)
+            return (false, "ErrorGroupNotFound", null);
+
+        group.Name = request.Name;
+
+        await _dbContext.SaveChangesAsync();
+
+        var groupDto = new GroupDto
+        {
+            Id = group.Id,
+            Name = group.Name,
+            OwnerId = group.OwnerId
+        };
+
+        return (true, "SuccessEditedGroup", groupDto);
+    }
 }

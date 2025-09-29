@@ -143,6 +143,9 @@ public class Program
 
             options.AddPolicy("CanManageInvites", policy =>
                 policy.Requirements.Add(new GroupPermissionRequirement("manage_invites")));
+
+            options.AddPolicy("CanManageServer", policy =>
+                policy.Requirements.Add(new GroupPermissionRequirement("manage_server")));
         });
 
         builder.Services.AddScoped<IAuthorizationHandler, GroupMembershipHandler>();
@@ -170,6 +173,7 @@ public class Program
         builder.Services.AddScoped<IValidator<EditGroupRoleRequest>, EditGroupRoleRequestValidator>();
         builder.Services.AddScoped<IValidator<MarkAsReadRequest>, MarkAsReadRequestValidator>();
         builder.Services.AddScoped<IValidator<BanUserRequest>, BanUserRequestValidator>();
+        builder.Services.AddScoped<IValidator<EditGroupRequest>, EditGroupRequestValidator>();
 
         builder.Services.AddScoped<ValidationFilter>();
 
