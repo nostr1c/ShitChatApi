@@ -45,7 +45,7 @@ public class AppDbContext : IdentityDbContext<User>
             .HasOne(g => g.Owner)
             .WithMany(u => u.OwnedGroups)
             .HasForeignKey(g => g.OwnerId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<UserGroup>()
              .HasKey(ug => new { ug.UserId, ug.GroupId });
@@ -88,7 +88,7 @@ public class AppDbContext : IdentityDbContext<User>
             .HasOne(gr => gr.Group)
             .WithMany(g => g.Roles)
             .HasForeignKey(gr => gr.GroupId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<UserGroupRole>()
             .HasOne(ugr => ugr.User)
@@ -110,7 +110,8 @@ public class AppDbContext : IdentityDbContext<User>
         builder.Entity<Invite>()
             .HasOne(i => i.Group)
             .WithMany(g => g.Invites)
-            .HasForeignKey(i => i.GroupId);
+            .HasForeignKey(i => i.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<RefreshToken>()
             .HasOne(rt => rt.User)
@@ -127,12 +128,19 @@ public class AppDbContext : IdentityDbContext<User>
         builder.Entity<GroupRolePermission>()
             .HasOne(gp => gp.GroupRole)
             .WithMany(gr => gr.Permissions)
-            .HasForeignKey(gp => gp.GroupRoleId);
+            .HasForeignKey(gp => gp.GroupRoleId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<GroupRolePermission>()
             .HasOne(gp => gp.Permission)
             .WithMany(p => p.GroupRoles)
             .HasForeignKey(gp => gp.PermissionId);
+
+        builder.Entity<UserGroupRole>()
+            .HasOne(ugr => ugr.GroupRole)
+            .WithMany(gr => gr.Users)
+            .HasForeignKey(ugr => ugr.GroupRoleId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<Ban>()
             .HasOne(b => b.User)

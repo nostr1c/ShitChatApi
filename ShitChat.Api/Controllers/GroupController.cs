@@ -81,11 +81,31 @@ public class GroupController : ControllerBase
         if (!success || group == null)
             return BadRequest(ResponseHelper.Error<GroupDto>(message));
 
-        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("EditedRoom", groupGuid, group);
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("EditedGroup", groupGuid, group);
 
         return Ok(new GenericResponse<GroupDto>
         {
             Data = group,
+            Message = message,
+            Status = StatusCodes.Status200OK
+        });
+    }
+
+    /// <summary>
+    /// Delete specific group
+    /// </summary>
+    [Authorize(Policy = "CanManageServer")]
+    [HttpDelete("{groupGuid}")]
+    public async Task<ActionResult<GenericResponse<object>>> DeleteGroup(Guid groupGuid)
+    {
+        var (success, message) = await _groupService.DeleteGroupAsync(groupGuid);
+        if (!success)
+            return BadRequest(ResponseHelper.Error<object>(message));
+
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("DeletedGroup", groupGuid);
+
+        return Ok(new GenericResponse<object>
+        {
             Message = message,
             Status = StatusCodes.Status200OK
         });

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ShitChat.Infrastructure.Data;
@@ -11,9 +12,11 @@ using ShitChat.Infrastructure.Data;
 namespace ShitChat.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250930135151_cascadeGroup")]
+    partial class cascadeGroup
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -793,9 +796,9 @@ namespace ShitChat.Infrastructure.Migrations
             modelBuilder.Entity("ShitChat.Domain.Entities.UserGroupRole", b =>
                 {
                     b.HasOne("ShitChat.Domain.Entities.GroupRole", "GroupRole")
-                        .WithMany("Users")
+                        .WithMany()
                         .HasForeignKey("GroupRoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("ShitChat.Domain.Entities.User", "User")
@@ -825,8 +828,6 @@ namespace ShitChat.Infrastructure.Migrations
             modelBuilder.Entity("ShitChat.Domain.Entities.GroupRole", b =>
                 {
                     b.Navigation("Permissions");
-
-                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("ShitChat.Domain.Entities.Message", b =>

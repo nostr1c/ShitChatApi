@@ -14,4 +14,5 @@ public class GroupRole
     public Group Group { get; set; }
 
     public ICollection<GroupRolePermission> Permissions { get; set; }
+    public ICollection<UserGroupRole> Users { get; set; }
 }

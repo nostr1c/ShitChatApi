@@ -11,7 +11,6 @@ using ShitChat.Application.Groups.DTOs;
 using ShitChat.Application.Groups.Requests;
 using ShitChat.Application.Caching.Services;
 using ShitChat.Application.Uploads.Services;
-using System.Runtime.InteropServices;
 
 namespace ShitChat.Application.Groups.Services;
 
@@ -570,5 +569,16 @@ public class GroupService : IGroupService
         };
 
         return (true, "SuccessEditedGroup", groupDto);
+    }
+
+    public async Task<(bool, string)> DeleteGroupAsync(Guid groupId)
+    {
+        var group = await _dbContext.Groups.SingleOrDefaultAsync(g => g.Id == groupId);
+        if (group == null) return (false, "ErrorGroupNotFound");
+
+        _dbContext.Groups.Remove(group);
+        await _dbContext.SaveChangesAsync();
+
+        return (true, "SuccessDeletedGroup");
     }
 }
