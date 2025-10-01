@@ -3,83 +3,49 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using ShitChat.Api.Hubs;
 using ShitChat.Application.DTOs;
+using ShitChat.Application.Groups.Services;
 using ShitChat.Application.Invites.DTOs;
-using ShitChat.Application.Invites.Requests;
-using ShitChat.Application.Invites.Services;
 
 namespace ShitChat.Api.Controllers;
 
 [Authorize(AuthenticationSchemes = "Bearer")]
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/v1/invite")]
 public class InviteController : ControllerBase
 {
-    private readonly ILogger<InviteController> _logger;
-    private readonly IInviteService _inviteService;
+    private readonly IGroupService _groupService;
     private readonly IHubContext<ChatHub> _hubContext;
+    private readonly ILogger<InviteController> _logger;
 
-    public InviteController
-    (
-        ILogger<InviteController> logger,
-        IInviteService inviteService,
-        IHubContext<ChatHub> hubContext
-    )
+    public InviteController(
+        IGroupService groupService,
+        IHubContext<ChatHub> hubContext,
+        ILogger<InviteController> logger)
     {
-        _logger = logger;
-        _inviteService = inviteService;
+        _groupService = groupService;
         _hubContext = hubContext;
+        _logger = logger;
     }
 
-    [Authorize(Policy = "CanManageInvites")]
-    [HttpPost("{groupGuid}")]
-    public async Task<ActionResult<GenericResponse<InviteDto?>>> CreateInvite(Guid groupGuid, [FromBody] CreateInviteRequest request)
+    /// <summary>
+    /// Join a group using an invite code
+    /// </summary>
+    [HttpPost("{inviteCode}/join")]
+    public async Task<ActionResult<GenericResponse<JoinInviteDto?>>> JoinWithInvite(string inviteCode)
     {
-        var (success, message, inviteDto) = await _inviteService.CreateInviteAsync(groupGuid, request);
-
-        if (!success)
-            return BadRequest(ResponseHelper.Error<InviteDto?>(message));
-
-        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveInvite", inviteDto, groupGuid);
-
-        return Ok(new GenericResponse<InviteDto?>
-        {
-            Data = inviteDto,
-            Message = "SuccessCreatedInvite",
-            Status = StatusCodes.Status201Created
-        });
-    }
-
-    [HttpPost("join/{inviteString}")]
-    public async Task<ActionResult<GenericResponse<JoinInviteDto?>>> JoinWithInvite(string inviteString)
-    {
-        var (success, message, joinInviteDto) = await _inviteService.JoinWithInviteAsync(inviteString);
+        var (success, message, joinInviteDto) = await _groupService.JoinWithInviteAsync(inviteCode);
 
         if (!success || joinInviteDto is null)
             return BadRequest(ResponseHelper.Error<JoinInviteDto>(message));
 
         var groupGuid = joinInviteDto.Group.Id;
 
-        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveMember", groupGuid, joinInviteDto.Member);
+        await _hubContext.Clients.Group(groupGuid.ToString())
+            .SendAsync("ReceiveMember", groupGuid, joinInviteDto.Member);
 
         return Ok(new GenericResponse<JoinInviteDto>
         {
             Data = joinInviteDto,
-            Message = message
-        });
-    }
-
-    [Authorize(Policy = "GroupMember")]
-    [HttpGet("{groupGuid}")]
-    public async Task<ActionResult<GenericResponse<IEnumerable<InviteDto>>>> GetGroupInvites(Guid groupGuid)
-    {
-        var (success, message, groupInviteDto) = await _inviteService.GetGroupInvites(groupGuid);
-
-        if (!success)
-            return BadRequest(ResponseHelper.Error<IEnumerable<InviteDto>>(message));
-
-        return Ok(new GenericResponse<IEnumerable<InviteDto>>
-        {
-            Data = groupInviteDto,
             Message = message
         });
     }

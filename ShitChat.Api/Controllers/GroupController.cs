@@ -8,7 +8,6 @@ using ShitChat.Application.Groups.DTOs;
 using ShitChat.Application.Groups.Requests;
 using ShitChat.Application.Groups.Services;
 using ShitChat.Application.Users.DTOs;
-using ShitChat.Domain.Entities;
 
 namespace ShitChat.Api.Controllers;
 

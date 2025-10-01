@@ -1,5 +1,6 @@
 ﻿using ShitChat.Application.Groups.DTOs;
 using ShitChat.Application.Groups.Requests;
+using ShitChat.Application.Invites.DTOs;
 using ShitChat.Application.Users.DTOs;
 
 namespace ShitChat.Application.Groups.Services;
@@ -22,4 +23,5 @@ public interface IGroupService
     Task<(bool, string)> MarkAsReadAsync(Guid groupId, MarkAsReadRequest request);
     Task<(bool, string, GroupDto?)> EditGroupAsync(Guid groupId, EditGroupRequest request);
     Task<(bool, string)> DeleteGroupAsync(Guid groupId);
+    Task<(bool, string, JoinInviteDto?)> JoinWithInviteAsync(string inviteString);
 }

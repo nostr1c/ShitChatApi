@@ -61,9 +61,9 @@ public class InviteService : IInviteService
         _dbContext.Invites.Add(invite);
         await _dbContext.SaveChangesAsync();
 
-
         var inviteDto = new InviteDto
         {
+            Id = invite.Id,
             Creator = new UserDto
             {
                 Id = user.Id,
@@ -78,6 +78,18 @@ public class InviteService : IInviteService
 
 
         return (true, "SuccessCreatedInvite", inviteDto);
+    }
+
+    public async Task<(bool, string)> DeleteInviteAsync(Guid inviteId)
+    {
+        var invite = _dbContext.Invites.FirstOrDefault(x => x.Id == inviteId);
+        if (invite == null) return (false, "ErrorInviteNotFound");
+
+        _dbContext.Invites.Remove(invite);
+
+        await _dbContext.SaveChangesAsync();
+
+        return (true, "SuccessDeletedInvite");
     }
 
     public async Task<(bool, string, IEnumerable<InviteDto>?)> GetGroupInvites(Guid groupGuid)
@@ -98,6 +110,7 @@ public class InviteService : IInviteService
 
         var inviteDto = invites.Select(x => new InviteDto
         {
+            Id = x.Id,
             Creator = new UserDto
             {
                 Id = x.Creator.Id,
@@ -111,82 +124,6 @@ public class InviteService : IInviteService
         });
         
         return (true, "SuccessGotGroupInvites", inviteDto);
-    }
-
-    public async Task<(bool, string, JoinInviteDto?)> JoinWithInviteAsync(string inviteString)
-    {
-        var userId = _httpContextAccessor.GetUserId();
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
-
-        if (user == null)
-            return (false, "ErrorLoggedInUser", null);
-
-        var checks = await _dbContext.Invites
-            .AsNoTracking()
-            .Where(x => x.InviteString == inviteString)
-            .Select(i => new
-            {
-                GroupId = i.Group.Id,
-                IsBanned = i.Group.Bans.Any(b => b.UserId == user.Id),
-                isMember = i.Group.UserGroups.Any(ug => ug.UserId == user.Id),
-                i.ValidThrough
-            }).SingleOrDefaultAsync();
-
-        if (checks == null)
-            return (false, "ErrorInviteNotFound", null);
-
-        if (checks.ValidThrough < DateOnly.FromDateTime(DateTime.UtcNow))
-            return (false, "ErrorInviteExpired", null);
-
-        if (checks.isMember)
-            return (false, "ErrorAlreadyInGroup", null);
-
-        if (checks.IsBanned)
-            return (false, "ErrorBannedFromGroup", null);
-
-        var inviteDto = await _dbContext.Invites
-            .Where(x => x.InviteString == inviteString)
-            .Select(i => new JoinInviteDto
-            {
-                Group = new GroupDto
-                {
-                    Id = i.Group.Id,
-                    OwnerId = i.Group.OwnerId,
-                    Name = i.Group.Name,
-                    LastActivity = i.Group.LastActivity,
-                    LatestMessage = i.Group.Messages
-                        .OrderByDescending(m => m.CreatedAt)
-                        .Select(m => m.Content)
-                        .FirstOrDefault(),
-                },
-                Member = new GroupMemberDto
-                {
-                    User = new UserDto
-                    {
-                        Id = user.Id,
-                        Avatar = user.AvatarUri,
-                        CreatedAt = user.CreatedAt,
-                        Email = user.Email,
-                        Username = user.UserName
-                    }
-                }
-            })
-            .SingleOrDefaultAsync();
-
-        _dbContext.UserGroups.Add(new UserGroup
-        {
-            UserId = user.Id,
-            GroupId = inviteDto.Group.Id,
-            JoinedAt = DateTime.UtcNow,
-        });
-
-        await _dbContext.SaveChangesAsync();
-
-        var cacheKey = CacheKeys.GroupMembers(inviteDto.Group.Id);
-
-        await _cache.KeyDeleteAsync(cacheKey);
-
-        return (true, "SuccessJoinedGroup", inviteDto);
     }
 
     private string GenerateInviteString()
