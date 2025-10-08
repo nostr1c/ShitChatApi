@@ -359,4 +359,42 @@ public class GroupController : ControllerBase
             Status = StatusCodes.Status200OK
         });
     }
+
+
+    /// <summary>
+    /// Get group bans
+    /// </summary>
+    [Authorize(Policy = "GroupMember")]
+    [HttpGet("{groupGuid}/bans")]
+    public async Task<ActionResult<GenericResponse<IEnumerable<BanDto>>>> GetGroupBans(Guid groupGuid)
+    {
+        var (success, message, dto) = await _groupService.GetGroupBansAsync(groupGuid);
+        if (!success)
+            return BadRequest(ResponseHelper.Error<IEnumerable<BanDto>>(message));
+
+        return Ok(new GenericResponse<IEnumerable<BanDto>>
+        {
+            Message = message,
+            Status = StatusCodes.Status200OK,
+            Data = dto
+        });
+    }
+
+    /// <summary>
+    /// Delete specific ban in group
+    /// </summary>
+    [Authorize(Policy = "CanBan")]
+    [HttpDelete("{groupGuid}/bans/{banGuid}")]
+    public async Task<ActionResult<GenericResponse<object>>> DeleteGroupBan(Guid groupGuid, Guid banGuid)
+    {
+        var (success, message) = await _groupService.DeleteGroupBanAsync(groupGuid, banGuid);
+        if (!success)
+            return BadRequest(ResponseHelper.Error<object>(message));
+
+        return Ok(new GenericResponse<object>
+        {
+            Message = message,
+            Status = StatusCodes.Status200OK,
+        });
+    }
 }

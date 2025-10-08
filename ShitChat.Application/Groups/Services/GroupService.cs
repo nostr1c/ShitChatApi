@@ -658,4 +658,54 @@ public class GroupService : IGroupService
 
         return (true, "SuccessJoinedGroup", inviteDto);
     }
+
+    public async Task<(bool, string, IEnumerable<BanDto>?)> GetGroupBansAsync(Guid groupId)
+    {
+        var bansDto = await _dbContext.Bans
+            .Where(x => x.GroupId == groupId)
+            .Select(x => new BanDto
+            {
+                Id = x.Id,
+                BannedByUser = new UserDto
+                {
+                    Id = x.BannedByUser.Id,
+                    Avatar = x.BannedByUser.AvatarUri,
+                    Username = x.BannedByUser.UserName
+                },
+                UserDto = new UserDto
+                {
+                    Id = x.UserId,
+                    Avatar = x.User.AvatarUri,
+                    Username = x.User.UserName
+                },
+                CreatedAt = x.CreatedAt,
+                Reason = x.Reason,
+
+            })
+            .ToListAsync();
+
+        if (!bansDto.Any())
+        {
+            var groupExists = await _dbContext.Groups.AnyAsync(x => x.Id == groupId);
+            if (!groupExists)
+                return (false, "ErrorGroupNotFound", null);
+        }
+
+        return (true, "SuccessGotGroupBans", bansDto);
+    }
+
+    public async Task<(bool, string)> DeleteGroupBanAsync(Guid groupId, Guid banId)
+    {
+        var ban = await _dbContext.Bans
+            .Where(x => x.GroupId == groupId && x.Id == banId)
+            .SingleOrDefaultAsync();
+
+        if (ban == null)
+            return (false, "ErrorGroupOrBanNotFound");
+
+        _dbContext.Bans.Remove(ban);
+        await _dbContext.SaveChangesAsync();
+
+        return (true, "SuccessDeletedBan");
+    }
 }

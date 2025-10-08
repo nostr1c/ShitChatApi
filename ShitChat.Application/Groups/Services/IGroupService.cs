@@ -24,4 +24,6 @@ public interface IGroupService
     Task<(bool, string, GroupDto?)> EditGroupAsync(Guid groupId, EditGroupRequest request);
     Task<(bool, string)> DeleteGroupAsync(Guid groupId);
     Task<(bool, string, JoinInviteDto?)> JoinWithInviteAsync(string inviteString);
+    Task<(bool, string, IEnumerable<BanDto>?)> GetGroupBansAsync(Guid groupId);
+    Task<(bool, string)> DeleteGroupBanAsync(Guid groupId, Guid banId);
 }
