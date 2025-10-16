@@ -391,6 +391,8 @@ public class GroupController : ControllerBase
         if (!success)
             return BadRequest(ResponseHelper.Error<object>(message));
 
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("DeletedBan", groupGuid, banGuid);
+
         return Ok(new GenericResponse<object>
         {
             Message = message,

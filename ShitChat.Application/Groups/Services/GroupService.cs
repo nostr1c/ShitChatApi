@@ -670,13 +670,15 @@ public class GroupService : IGroupService
                 {
                     Id = x.BannedByUser.Id,
                     Avatar = x.BannedByUser.AvatarUri,
-                    Username = x.BannedByUser.UserName
+                    Username = x.BannedByUser.UserName,
+                    Email = x.BannedByUser.Email,
                 },
                 UserDto = new UserDto
                 {
                     Id = x.UserId,
                     Avatar = x.User.AvatarUri,
-                    Username = x.User.UserName
+                    Username = x.User.UserName,
+                    Email = x.User.Email
                 },
                 CreatedAt = x.CreatedAt,
                 Reason = x.Reason,
