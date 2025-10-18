@@ -344,17 +344,19 @@ public class GroupController : ControllerBase
     /// </summary>
     [Authorize(Policy = "CanBan")]
     [HttpPost("{groupGuid}/members/{userId}/ban")]
-    public async Task<ActionResult<GenericResponse<object>>> BanUserFromGroup(Guid groupGuid, string userId, [FromBody] BanUserRequest request)
+    public async Task<ActionResult<GenericResponse<BanDto>>> BanUserFromGroup(Guid groupGuid, string userId, [FromBody] BanUserRequest request)
     {
-        var (success, message) = await _groupService.BanUserFromGroupAsync(groupGuid, userId, request);
+        var (success, message, banDto) = await _groupService.BanUserFromGroupAsync(groupGuid, userId, request);
 
-        if (!success)
-            return BadRequest(ResponseHelper.Error<object>(message));
+        if (!success || banDto == null)
+            return BadRequest(ResponseHelper.Error<BanDto>(message));
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RemoveMember", groupGuid, userId);
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("UserBanned", groupGuid, banDto);
 
         return Ok(new GenericResponse<object>
         {
+            Data = banDto,
             Message = message,
             Status = StatusCodes.Status200OK
         });

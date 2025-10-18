@@ -140,21 +140,22 @@ public class GroupService : IGroupService
         return (true, "SuccessKickedUser");
     }
 
-    public async Task<(bool, string)> BanUserFromGroupAsync(Guid groupId, string userId, BanUserRequest request)
+    public async Task<(bool, string, BanDto?)> BanUserFromGroupAsync(Guid groupId, string userId, BanUserRequest request)
     {
         var userGroup = await _dbContext.UserGroups
+            .Include(x => x.User)
             .SingleOrDefaultAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
 
         if (userGroup == null)
-            return (false, "ErrorUserNotInGroup");
+            return (false, "ErrorUserNotInGroup", null);
 
-        // TODO: Cascade this later?
         var userRoles = await _dbContext.UserGroupRoles
             .Where(ugr => ugr.UserId == userId && ugr.GroupRole.GroupId == groupId)
             .ToListAsync();
-
         _dbContext.UserGroupRoles.RemoveRange(userRoles);
         _dbContext.UserGroups.Remove(userGroup);
+
+        var bannedByUserId = _httpContextAccessor.GetUserId();
 
         var ban = new Ban
         {
@@ -162,7 +163,7 @@ public class GroupService : IGroupService
             GroupId = groupId,
             CreatedAt = DateTime.UtcNow,
             Reason = request.Reason,
-            BannedByUserId = _httpContextAccessor.GetUserId()
+            BannedByUserId = bannedByUserId
 
         };
         _dbContext.Bans.Add(ban);
@@ -170,7 +171,31 @@ public class GroupService : IGroupService
         await _dbContext.SaveChangesAsync();
         await _cache.KeyDeleteAsync(CacheKeys.GroupMembers(groupId));
 
-        return (true, "SuccessBannedUser");
+        var banDto = await _dbContext.Bans
+            .Where(b => b.Id == ban.Id)
+            .Select(b => new BanDto
+            {
+                Id = ban.Id,
+                UserDto = new UserDto
+                {
+                    Id = b.User.Id,
+                    Email = b.User.Email,
+                    Avatar = b.User.AvatarUri,
+                    Username = b.User.UserName
+                },
+                BannedByUser = new UserDto
+                {
+                    Id = b.BannedByUser.Id,
+                    Email = b.BannedByUser.Email,
+                    Avatar = b.BannedByUser.AvatarUri,
+                    Username = b.BannedByUser.UserName
+                },
+                Reason = ban.Reason,
+                CreatedAt = b.CreatedAt
+            })
+            .SingleOrDefaultAsync();
+
+        return (true, "SuccessBannedUser", banDto);
     }
 
     public async Task<(bool, string, GroupDto?)> GetGroupByGuidAsync(Guid groupId)
