@@ -18,6 +18,8 @@ using ShitChat.Application.Groups.Requests;
 using ShitChat.Application.Groups.Services;
 using ShitChat.Application.Invites.Requests;
 using ShitChat.Application.Invites.Services;
+using ShitChat.Application.Translations.Requests;
+using ShitChat.Application.Translations.Services;
 using ShitChat.Application.Uploads.Services;
 using ShitChat.Application.Users.Requests;
 using ShitChat.Application.Users.Services;
@@ -161,6 +163,7 @@ public class Program
         builder.Services.AddScoped<IInviteService, InviteService>();
         builder.Services.AddSingleton<IPresenceService, PresenceService>();
         builder.Services.AddScoped<IUploadService, UploadService>();
+        builder.Services.AddScoped<ITranslationService, TranslationService>();
 
         // Validators
         builder.Services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
@@ -174,6 +177,8 @@ public class Program
         builder.Services.AddScoped<IValidator<MarkAsReadRequest>, MarkAsReadRequestValidator>();
         builder.Services.AddScoped<IValidator<BanUserRequest>, BanUserRequestValidator>();
         builder.Services.AddScoped<IValidator<EditGroupRequest>, EditGroupRequestValidator>();
+        builder.Services.AddScoped<IValidator<CreateTranslationRequest>, CreateTranslationRequestValidator>();
+        builder.Services.AddScoped<IValidator<UpdateTranslationRequest>, UpdateTranslationRequestValidator>();
 
         builder.Services.AddScoped<ValidationFilter>();
 

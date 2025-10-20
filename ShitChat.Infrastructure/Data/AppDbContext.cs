@@ -20,6 +20,7 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<GroupRolePermission> GroupRolePermissions { get; set; }
     public DbSet<UserGroup> UserGroups { get; set; }
     public DbSet<Ban> Bans { get; set; }
+    public DbSet<Translation> Translations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
