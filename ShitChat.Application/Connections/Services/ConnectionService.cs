@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShitChat.Domain.Entities;
 using ShitChat.Infrastructure.Data;
+using ShitChat.Shared.Enums;
 using ShitChat.Shared.Extensions;
 
 namespace ShitChat.Application.Connections.Services;
@@ -21,69 +22,57 @@ public class ConnectionService : IConnectionService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<(bool, string)> CreateConnectionAsync(string friendId)
+    public async Task<(bool, ConnectionActionResult)> CreateConnectionAsync(string friendId)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
-        var user = await _appDbContext.Users
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == userId);
-
-        if (user == null)
-            return (false, "ErrorLoggedInUser");
+        var userId = _httpContextAccessor.GetUserId();
 
         var friend = await _appDbContext.Users
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == friendId);
 
         if (friend == null)
-            return (false, "ErrorFriendNotFound");
+            return (false, ConnectionActionResult.ErrorFriendNotFound);
 
-        if (user.Id == friend.Id)
-            return (false, "ErrorCantAddYouself");
+        if (userId == friend.Id)
+            return (false, ConnectionActionResult.ErrorCantAddYouself);
 
         var connectionExists = await _appDbContext.Connections
-            .AnyAsync(c => c.UserId == user.Id && c.FriendId == friend.Id);
+            .AnyAsync(c => c.UserId == userId && c.FriendId == friend.Id);
 
         if (connectionExists)
-            return (false, "ErrorConnectionAlreadyExists");
+            return (false, ConnectionActionResult.ErrorConnectionAlreadyExists);
 
         var connection = new Connection
         {
-            UserId = user.Id,
+            UserId = userId,
             FriendId = friendId
         };
 
         await _appDbContext.Connections.AddAsync(connection);
         await _appDbContext.SaveChangesAsync();
 
-        return (true, "SuccessCreatingConnection");
+        return (true, ConnectionActionResult.SuccessCreatingConnection);
     }
 
-    public async Task<(bool, string)> AcceptConnectionAsync(string friendId)
+    public async Task<(bool, ConnectionActionResult)> AcceptConnectionAsync(string friendId)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
-        var user = await _appDbContext.Users
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == userId);
-
-        if (user == null)
-            return (false, "ErrorLoggedInUser");
+        var userId = _httpContextAccessor.GetUserId();
 
         var friend = await _appDbContext.Users
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == friendId);
 
         if (friend == null)
-            return (false, "ErrorFriendNotFound");
+            return (false, ConnectionActionResult.ErrorFriendNotFound);
 
         var connection = await _appDbContext.Connections
-            .FirstOrDefaultAsync(c => c.UserId == friendId && c.FriendId == user.Id);
+            .FirstOrDefaultAsync(c => c.UserId == friendId && c.FriendId == userId);
 
         if (connection == null)
-            return (false, "ErrorFriendRequestNotFound");
+            return (false, ConnectionActionResult.ErrorFriendRequestNotFound);
 
         if (connection.Accepted)
-            return (false, "ErrorFriendRequestAlreadyAccepted");
+            return (false, ConnectionActionResult.ErrorFriendRequestAlreadyAccepted);
 
         connection.Accepted = true;
 
@@ -91,18 +80,12 @@ public class ConnectionService : IConnectionService
 
         await _appDbContext.SaveChangesAsync();
 
-        return (true, "SuccessAcceptingConnection");
+        return (true, ConnectionActionResult.SuccessAcceptingConnection);
     }
 
-    public async Task<(bool, string)> DeleteConnectionAsync(string friendId)
+    public async Task<(bool, ConnectionActionResult)> DeleteConnectionAsync(string friendId)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
-        var user = await _appDbContext.Users
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == userId);
-
-        if (user == null)
-            return (false, "ErrorLoggedInUser");
+        var userId = _httpContextAccessor.GetUserId();
 
         var friend = await _appDbContext.Users
             .AsNoTracking()
@@ -114,11 +97,11 @@ public class ConnectionService : IConnectionService
                     c.UserId == friendId && c.FriendId == userId);
 
         if (connection == null)
-            return (false, "ErrorFriendRequestNotFound");
+            return (false, ConnectionActionResult.ErrorFriendRequestNotFound);
 
         _appDbContext.Connections.Remove(connection);
         await _appDbContext.SaveChangesAsync();
 
-        return (true, "SuccessRemovingConnection");
+        return (true, ConnectionActionResult.SuccessRemovingConnection);
     }
 }

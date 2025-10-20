@@ -6,6 +6,7 @@ using ShitChat.Application.Users.DTOs;
 using ShitChat.Application.Auth.DTOs;
 using ShitChat.Application.Auth.Requests;
 using ShitChat.Application.Auth.Services;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.ShitChat.Api.Controllers;
 
@@ -29,10 +30,10 @@ public class AuthController : ControllerBase
     [HttpPost("Register")]
     public async Task<ActionResult<GenericResponse<CreateUserDto>>> Register([FromBody] CreateUserRequest request)
     {
-        var user = await _authService.RegisterUserAsync(request);
+        var (success, message, userDto) = await _authService.RegisterUserAsync(request);
 
-        if (user == null)
-            return BadRequest(ResponseHelper.Error<CreateUserDto>("ErrorCreatingUser"));
+        if (success == false || userDto == null)
+            return BadRequest(ResponseHelper.Error<CreateUserDto>(message));
 
         var loginRequest = new LoginUserRequest
         {
@@ -40,26 +41,14 @@ public class AuthController : ControllerBase
             Email = request.Email,
         };
 
-        var (success, message, userDto) = await _authService.LoginUserAsync(loginRequest);
+        var (loginSuccess, loginMessage, loginUserDto) = await _authService.LoginUserAsync(loginRequest);
 
-        if (!success || userDto is null)
-            return BadRequest(ResponseHelper.Error<CreateUserDto>(message));
+        if (loginSuccess == false || loginUserDto is null)
+            return BadRequest(ResponseHelper.Error<CreateUserDto>(loginMessage));
 
-        _authService.SetTokensInsideCookie(userDto.Token, HttpContext);
+        _authService.SetTokensInsideCookie(loginUserDto.Token, HttpContext);
 
-        var createUserDto = new CreateUserDto
-        {
-            Id = user.Id,
-            Username = user.UserName,
-            Email = user.Email
-        };
-
-        return Ok(new GenericResponse<CreateUserDto>
-        {
-            Data = createUserDto,
-            Message = "SuccessCreatingUser",
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, userDto, StatusCodes.Status201Created));
     }
 
     /// <summary>
@@ -75,12 +64,7 @@ public class AuthController : ControllerBase
 
         _authService.SetTokensInsideCookie(userDto.Token, HttpContext);
 
-        return Ok(new GenericResponse<LoginUserDto>
-        {
-            Data = userDto,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, userDto));
     }
 
     /// <summary>
@@ -104,12 +88,7 @@ public class AuthController : ControllerBase
         });
 
 
-        return Ok(new GenericResponse<object?>
-        {
-            Data = null,
-            Message = "SuccessLoggedOut",
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(AuthActionResult.SuccessLoggedOut));
     }
 
     /// <summary>
@@ -121,7 +100,7 @@ public class AuthController : ControllerBase
         if (!HttpContext.Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
         {
             Response.Headers["X-Auth-Status"] = "SessionExpired";
-            return Unauthorized(ResponseHelper.Error<string>("ErrorRefreshTokenMissing"));
+            return Unauthorized(ResponseHelper.Error<string>(AuthActionResult.ErrorRefreshTokenMissing));
         }
 
         var (success, message, tokenDtoToReturn) = await _authService.RefreshToken(new TokenDto { AccessToken = null, RefreshToken = refreshToken });
@@ -134,12 +113,7 @@ public class AuthController : ControllerBase
 
         _authService.SetTokensInsideCookie(tokenDtoToReturn, HttpContext);
 
-        return Ok(new GenericResponse<object?>
-        {
-            Data = null,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, tokenDtoToReturn));
     }
 
     /// <summary>
@@ -152,18 +126,13 @@ public class AuthController : ControllerBase
         if (HttpContext.User.GetUserGuid() is null)
         {
             Response.Headers["X-Auth-Status"] = "SessionExpired";
-            return Unauthorized(ResponseHelper.Error<UserDto?>("ErrorLoggedInUser"));
+            return Unauthorized(ResponseHelper.Error<UserDto?>(AuthActionResult.ErrorLoggedInUser));
         }
 
         var userDto = await _authService.GetCurrentUserAsync();
         if (userDto is null)
-            return BadRequest(ResponseHelper.Error<UserDto?>("ErrorLoggedInUser"));
+            return BadRequest(ResponseHelper.Error<UserDto?>(AuthActionResult.ErrorLoggedInUser));
 
-        return Ok(new GenericResponse<UserDto>
-        {
-            Data = userDto,
-            Message = "SuccessGotCurrentUser",
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(AuthActionResult.SuccessGotCurrentUser, userDto));
     }
 }

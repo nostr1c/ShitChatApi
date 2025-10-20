@@ -41,12 +41,7 @@ public class GroupInviteController : ControllerBase
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveInvite", inviteDto, groupGuid);
 
-        return Ok(new GenericResponse<InviteDto?>
-        {
-            Data = inviteDto,
-            Message = "SuccessCreatedInvite",
-            Status = StatusCodes.Status201Created
-        });
+        return Ok(ResponseHelper.Success(message, inviteDto, StatusCodes.Status201Created));
     }
     [HttpGet]
     [Authorize(Policy = "GroupMember")]
@@ -57,11 +52,7 @@ public class GroupInviteController : ControllerBase
         if (!success)
             return BadRequest(ResponseHelper.Error<IEnumerable<InviteDto>>(message));
 
-        return Ok(new GenericResponse<IEnumerable<InviteDto>>
-        {
-            Data = groupInviteDto,
-            Message = message
-        });
+        return Ok(ResponseHelper.Success(message, groupInviteDto));
     }
 
     [Authorize(Policy = "CanManageInvites")]
@@ -75,10 +66,6 @@ public class GroupInviteController : ControllerBase
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("DeletedInvite", groupGuid, inviteGuid);
 
-        return Ok(new GenericResponse<object?>
-        {
-            Message = message,
-            Status = StatusCodes.Status201Created
-        });
+        return Ok(ResponseHelper.Success(message));
     }
 }

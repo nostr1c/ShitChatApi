@@ -1,10 +1,12 @@
-﻿namespace ShitChat.Application.Connections.Services;
+﻿using ShitChat.Shared.Enums;
+
+namespace ShitChat.Application.Connections.Services;
 
 public interface IConnectionService
 {
-    Task<(bool, string)> CreateConnectionAsync(string friendId);
+    Task<(bool, ConnectionActionResult)> CreateConnectionAsync(string friendId);
 
-    Task<(bool, string)> AcceptConnectionAsync(string friendId);
+    Task<(bool, ConnectionActionResult)> AcceptConnectionAsync(string friendId);
 
-    Task<(bool, string)> DeleteConnectionAsync(string friendId);
+    Task<(bool, ConnectionActionResult)> DeleteConnectionAsync(string friendId);
 }

@@ -1,4 +1,6 @@
-﻿namespace ShitChat.Application.DTOs;
+﻿using Microsoft.AspNetCore.Http;
+
+namespace ShitChat.Application.DTOs;
 
 public class GenericResponse<T>
 {
@@ -11,12 +13,42 @@ public class GenericResponse<T>
 
 public static class ResponseHelper
 {
-    public static GenericResponse<T> Error<T>(string message, Dictionary<string, List<string>>? errors = null, int status = 200)
+    private static string FormatMessage(object message)
+    {
+        return message switch
+        {
+            null => "UnknownError",
+            Enum e => e.ToString(),
+            string s => s,
+            _ => message.ToString() ?? "UnknownError"
+        };
+    }
+    public static GenericResponse<T> Error<T>(object message, Dictionary<string, List<string>>? errors = null, int status = StatusCodes.Status400BadRequest)
     {
         return new GenericResponse<T>
         {
-            Message = message,
+            Message = FormatMessage(message),
             Errors = errors ?? new Dictionary<string, List<string>>(),
+            Status = status
+        };
+    }
+
+    public static GenericResponse<T> Success<T>(object message, T data, int status = 200)
+    {
+        return new GenericResponse<T>
+        {
+            Message = FormatMessage(message),
+            Data = data,
+            Status = status
+        };
+    }
+
+    public static GenericResponse<object> Success(object message, int status = StatusCodes.Status200OK)
+    {
+        return new GenericResponse<object>
+        {
+            Message = FormatMessage(message),
+            Data = null,
             Status = status
         };
     }

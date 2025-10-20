@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using ShitChat.Application.Caching;
 using ShitChat.Application.Users.DTOs;
 using ShitChat.Domain.Entities;
 using ShitChat.Infrastructure.Data;
@@ -10,7 +9,7 @@ using System.Security.Cryptography;
 using ShitChat.Application.Invites.Requests;
 using ShitChat.Application.Invites.DTOs;
 using ShitChat.Application.Caching.Services;
-using ShitChat.Application.Groups.DTOs;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Invites.Services;
 
@@ -35,20 +34,17 @@ public class InviteService : IInviteService
         _cache = cache;
         _logger = logger;
     }
-    public async Task<(bool, string, InviteDto?)> CreateInviteAsync(Guid groupGuid, CreateInviteRequest request)
+    public async Task<(bool, InviteActionResult, InviteDto?)> CreateInviteAsync(Guid groupGuid, CreateInviteRequest request)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
+        var userId = _httpContextAccessor.GetUserId();
         var user = await _dbContext.Users
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == userId);
 
-        if (user == null)
-            return (false, "ErrorLoggedInUser", null);
-
         var groupExists = await _dbContext.Groups.AnyAsync(x => x.Id == groupGuid);
 
         if (!groupExists)
-            return (false, "ErrorGroupNotFound", null);
+            return (false, InviteActionResult.ErrorGroupNotFound, null);
 
         var invite = new Invite
         {
@@ -77,53 +73,45 @@ public class InviteService : IInviteService
         };
 
 
-        return (true, "SuccessCreatedInvite", inviteDto);
+        return (true, InviteActionResult.SuccessCreatedInvite, inviteDto);
     }
 
-    public async Task<(bool, string)> DeleteInviteAsync(Guid inviteId)
+    public async Task<(bool, InviteActionResult)> DeleteInviteAsync(Guid inviteId)
     {
         var invite = _dbContext.Invites.FirstOrDefault(x => x.Id == inviteId);
-        if (invite == null) return (false, "ErrorInviteNotFound");
+        if (invite == null)
+            return (false, InviteActionResult.ErrorInviteNotFound);
 
         _dbContext.Invites.Remove(invite);
 
         await _dbContext.SaveChangesAsync();
 
-        return (true, "SuccessDeletedInvite");
+        return (true, InviteActionResult.SuccessDeletedInvite);
     }
 
-    public async Task<(bool, string, IEnumerable<InviteDto>?)> GetGroupInvites(Guid groupGuid)
+    public async Task<(bool, InviteActionResult, IEnumerable<InviteDto>?)> GetGroupInvites(Guid groupGuid)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
-        var user = await _dbContext.Users
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == userId);
-
-        if (user == null)
-            return (false, "ErrorLoggedInUser", null);
+        var userId = _httpContextAccessor.GetUserId();
 
         var invites = await _dbContext.Invites
             .AsNoTracking()
-            .Include(x => x.Group)
-            .Include(x => x.Creator)
-            .Where(x => x.GroupId == groupGuid).ToListAsync();
-
-        var inviteDto = invites.Select(x => new InviteDto
-        {
-            Id = x.Id,
-            Creator = new UserDto
+            .Where(x => x.GroupId == groupGuid)
+            .Select(x => new InviteDto
             {
-                Id = x.Creator.Id,
-                Avatar = x.Creator.AvatarUri,
-                CreatedAt = x.Creator.CreatedAt,
-                Email = x.Creator.Email,
-                Username = x.Creator.UserName
-            },
-            InviteString = x.InviteString,
-            ValidThrough = x.ValidThrough,
-        });
+                Id = x.Id,
+                Creator = new UserDto
+                {
+                    Id = x.Creator.Id,
+                    Avatar = x.Creator.AvatarUri,
+                    CreatedAt = x.Creator.CreatedAt,
+                    Email = x.Creator.Email,
+                    Username = x.Creator.UserName
+                },
+                InviteString = x.InviteString,
+                ValidThrough = x.ValidThrough,
+            }).ToListAsync();
         
-        return (true, "SuccessGotGroupInvites", inviteDto);
+        return (true, InviteActionResult.SuccessGotGroupInvites, invites);
     }
 
     private string GenerateInviteString()

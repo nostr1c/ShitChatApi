@@ -4,12 +4,12 @@ using ShitChat.Shared.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 using Microsoft.AspNetCore.Http;
 using ShitChat.Application.Users.DTOs;
 using ShitChat.Application.Groups.DTOs;
 using ShitChat.Application.Connections.DTOs;
 using ShitChat.Application.Uploads.Services;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Users.Services;
 
@@ -34,12 +34,12 @@ public class UserService : IUserService
         _uploadService = uploadService;
     }
 
-    public async Task<(bool, string, UserDto?)> GetUserByGuidAsync(string userGuid)
+    public async Task<(bool, UserActionResult, UserDto?)> GetUserByGuidAsync(string userGuid)
     {
         var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userGuid);
 
         if (user == null)
-            return (false, "ErrorUserNotFound", null);
+            return (false, UserActionResult.ErrorUserNotFound, null);
 
         var userDto = new UserDto
         {
@@ -50,38 +50,39 @@ public class UserService : IUserService
             CreatedAt = user.CreatedAt
         };
 
-        return (true, "SuccessGotUser", userDto);
+        return (true, UserActionResult.SuccessGotUser, userDto);
     }
 
-    public async Task<(bool, string, string?)> UpdateAvatarAsync(IFormFile avatar)
+    public async Task<(bool, UserActionResult?, UploadActionResult?, string?)> UpdateAvatarAsync(IFormFile avatar)
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
+        var userId = _httpContextAccessor.GetUserId();
         var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
 
         if (user == null)
-            return (false, "ErrorUserNotFound", null);
+            return (false, UserActionResult.ErrorUserNotFound, null, null);
 
         var (success, message, imageName) = await _uploadService.UploadFileAsync(avatar, 400, 400);
         if (!success || imageName == null)
-            return (false, message, null);
+            return (false, null, message, null);
 
         user.AvatarUri = imageName;
         await _userManager.UpdateAsync(user);
 
-        return (true, "SuccessUpdatedAvatar", imageName);
+        return (true, UserActionResult.SuccessUpdatedAvatar, null, imageName);
     }
 
-    public async Task<(bool, string, List<ConnectionDto>?)> GetConnectionsAsync()
+    public async Task<(bool, UserActionResult, List<ConnectionDto>?)> GetConnectionsAsync()
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
+        var userId = _httpContextAccessor.GetUserId();
+        var userExists = await _dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == userId);
 
-        if (user == null)
-            return (false, "ErrorUserNotFound", null);
+        if (!userExists)
+            return (false, UserActionResult.ErrorUserNotFound, null);
 
         var connections = await _dbContext.Connections
-                .Include(x => x.user)
-                .Include(x => x.friend)
+                .AsNoTracking()
                 .Where(x => x.UserId == userId || x.FriendId == userId)
                 .Select(x => new ConnectionDto
                 {
@@ -106,16 +107,12 @@ public class UserService : IUserService
                 })
                 .ToListAsync();
 
-        return (true, "SuccessGotUserConnections", connections);
+        return (true, UserActionResult.SuccessGotUserConnections, connections);
     }
 
-    public async Task<(bool, string, List<GroupDto>?)> GetUserGroupsAsync()
+    public async Task<(bool, UserActionResult, List<GroupDto>?)> GetUserGroupsAsync()
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
-        var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
-
-        if (user == null)
-            return (false, "ErrorUserNotFound", null);
+        var userId = _httpContextAccessor.GetUserId();
 
         var groups = await _dbContext.Groups
             .AsNoTracking()
@@ -145,6 +142,6 @@ public class UserService : IUserService
             })
             .ToListAsync();
 
-        return (true, "SuccessGotUserGroups", groups);
+        return (true, UserActionResult.SuccessGotUserGroups, groups);
     }
 }

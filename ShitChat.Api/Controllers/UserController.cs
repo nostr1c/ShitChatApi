@@ -35,11 +35,7 @@ public class UserController : ControllerBase
         if (!success || userDto == null)
             return NotFound(ResponseHelper.Error<UserDto>(message: message, status: StatusCodes.Status404NotFound));
 
-        return Ok(new GenericResponse<UserDto>{
-            Data = userDto,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, userDto));
     }
 
     /// <summary>
@@ -48,17 +44,15 @@ public class UserController : ControllerBase
     [HttpPut("Avatar")]
     public async Task<ActionResult<GenericResponse<string?>>> UpdateAvatar(IFormFile avatar)
     {
-        var (success, message, imageName) = await _userService.UpdateAvatarAsync(avatar);
+        var (success, userServiceMessage, uploadServiceMessage, imageName) = await _userService.UpdateAvatarAsync(avatar);
 
-        if (!success || imageName == null)
-            return BadRequest(ResponseHelper.Error<string?>(message));
-
-        return Ok(new GenericResponse<string?>
+        if (!success)
         {
-            Data = imageName,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+            var errorMessage = uploadServiceMessage.ToString() ?? userServiceMessage.ToString() ?? "UnknownError";
+            return BadRequest(ResponseHelper.Error<IEnumerable<MessageDto>>(errorMessage));
+        }
+
+        return Ok(ResponseHelper.Success(userServiceMessage, imageName));
     }
 
     /// <summary>
@@ -91,12 +85,7 @@ public class UserController : ControllerBase
         if (!success || connections == null)
             return BadRequest(ResponseHelper.Error<List<ConnectionDto>>(message));
 
-        return Ok(new GenericResponse<List<ConnectionDto>>
-        {
-            Data = connections,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, connections));
     }
 
     /// <summary>
@@ -110,11 +99,6 @@ public class UserController : ControllerBase
         if (!success || groups == null)
             return BadRequest(ResponseHelper.Error<List<GroupDto>>(message));
 
-        return Ok(new GenericResponse<List<GroupDto>>
-        {
-            Data = groups,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, groups));
     }
 }

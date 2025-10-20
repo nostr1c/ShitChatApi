@@ -1,5 +1,4 @@
-﻿using FluentValidation;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using ShitChat.Api.Hubs;
@@ -42,12 +41,7 @@ public class GroupController : ControllerBase
         if (!success || group == null)
             return BadRequest(ResponseHelper.Error<GroupDto>(message));
 
-        return Ok(new GenericResponse<GroupDto>
-        {
-            Data = group,
-            Message = message,
-            Status = StatusCodes.Status201Created
-        });
+        return Ok(ResponseHelper.Success(message, group, StatusCodes.Status201Created));
     }
 
     /// <summary>
@@ -61,12 +55,7 @@ public class GroupController : ControllerBase
         if (!success || group == null)
             return BadRequest(ResponseHelper.Error<GroupDto>(message));
 
-        return Ok(new GenericResponse<GroupDto>
-        {
-            Data = group,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, group));
     }
 
     /// <summary>
@@ -82,12 +71,7 @@ public class GroupController : ControllerBase
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("EditedGroup", groupGuid, group);
 
-        return Ok(new GenericResponse<GroupDto>
-        {
-            Data = group,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, group));
     }
 
     /// <summary>
@@ -103,11 +87,7 @@ public class GroupController : ControllerBase
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("DeletedGroup", groupGuid);
 
-        return Ok(new GenericResponse<object>
-        {
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message));
     }
 
     /// <summary>
@@ -122,12 +102,7 @@ public class GroupController : ControllerBase
         if (!success || userDto == null)
             return BadRequest(ResponseHelper.Error<UserDto>(message));
 
-        return Ok(new GenericResponse<UserDto>
-        {
-            Data = userDto,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, userDto));
     }
 
     /// <summary>
@@ -144,11 +119,7 @@ public class GroupController : ControllerBase
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RemoveMember", groupGuid, userId);
 
-        return Ok(new GenericResponse<object>
-        {
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message));
     }
 
     /// <summary>
@@ -163,12 +134,7 @@ public class GroupController : ControllerBase
         if (!success)
             return BadRequest(ResponseHelper.Error<IEnumerable<GroupMemberDto>>(message));
 
-        return Ok(new GenericResponse<IEnumerable<GroupMemberDto>>
-        {
-            Data = groupMemberDto,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, groupMemberDto));
     }
 
     /// <summary>
@@ -183,12 +149,7 @@ public class GroupController : ControllerBase
         if (!success)
             return BadRequest(ResponseHelper.Error<IEnumerable<MessageDto>>(message));
 
-        return Ok(new GenericResponse<IEnumerable<MessageDto>>
-        {
-            Data = messages,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, messages));
     }
 
     /// <summary>
@@ -199,19 +160,17 @@ public class GroupController : ControllerBase
     [RequestSizeLimit(20_000_000)]
     public async Task<ActionResult<GenericResponse<MessageDto>>> SendMessage(Guid groupGuid, [FromForm] SendMessageRequest request)
     {
-        var (success, message, messages) = await _groupService.SendMessageAsync(groupGuid, request);
+        var (success, groupServiceMessage, uploadServiceMessage, messages) = await _groupService.SendMessageAsync(groupGuid, request);
 
         if (!success)
-            return BadRequest(ResponseHelper.Error<IEnumerable<MessageDto>>(message));
+        {
+            var errorMessage = uploadServiceMessage.ToString() ?? groupServiceMessage.ToString() ?? "UnknownError";
+            return BadRequest(ResponseHelper.Error<IEnumerable<MessageDto>>(errorMessage));
+        }
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveMessage", messages, groupGuid);
 
-        return Ok(new GenericResponse<MessageDto>
-        {
-            Data = messages,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(groupServiceMessage, messages));
     }
 
     /// <summary>
@@ -226,12 +185,7 @@ public class GroupController : ControllerBase
         if (!success)
             return BadRequest(ResponseHelper.Error<IEnumerable<GroupRoleDto>>(message));
 
-        return Ok(new GenericResponse<IEnumerable<GroupRoleDto>>
-        {
-            Data = roles,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, roles));
     }
 
     /// <summary>
@@ -248,12 +202,7 @@ public class GroupController : ControllerBase
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("UserAddedRole", dto.GroupId, dto.UserId, dto.RoleId);
 
-        return Ok(new GenericResponse<AddRoleToUserDto?>
-        {
-            Data = dto,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, dto));
     }
 
     /// <summary>
@@ -270,12 +219,7 @@ public class GroupController : ControllerBase
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("UserRemovedRole", dto.GroupId, dto.UserId, dto.RoleId);
 
-        return Ok(new GenericResponse<RemoveRoleFromUserDto?>
-        {
-            Data = dto,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, dto));
     }
 
     /// <summary>
@@ -292,12 +236,7 @@ public class GroupController : ControllerBase
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RoleCreated", groupGuid, dto);
 
-        return Ok(new GenericResponse<GroupRoleDto?>
-        {
-            Data = dto,
-            Message = message,
-            Status = StatusCodes.Status201Created
-        });
+        return Ok(ResponseHelper.Success(message, dto, StatusCodes.Status201Created));
     }
 
 
@@ -315,12 +254,7 @@ public class GroupController : ControllerBase
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RoleEdited", groupGuid, dto);
 
-        return Ok(new GenericResponse<GroupRoleDto>
-        {
-            Data = dto,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, dto));
     }
 
     [Authorize(Policy = "GroupMember")]
@@ -331,12 +265,7 @@ public class GroupController : ControllerBase
         if (!success)
             return BadRequest(ResponseHelper.Error<object>(message));
 
-        return Ok(new GenericResponse<object>
-        {
-            Data = null,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message));
     }
 
     /// <summary>
@@ -354,12 +283,7 @@ public class GroupController : ControllerBase
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("RemoveMember", groupGuid, userId);
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("UserBanned", groupGuid, banDto);
 
-        return Ok(new GenericResponse<object>
-        {
-            Data = banDto,
-            Message = message,
-            Status = StatusCodes.Status200OK
-        });
+        return Ok(ResponseHelper.Success(message, banDto));
     }
 
 
@@ -374,12 +298,7 @@ public class GroupController : ControllerBase
         if (!success)
             return BadRequest(ResponseHelper.Error<IEnumerable<BanDto>>(message));
 
-        return Ok(new GenericResponse<IEnumerable<BanDto>>
-        {
-            Message = message,
-            Status = StatusCodes.Status200OK,
-            Data = dto
-        });
+        return Ok(ResponseHelper.Success(message, dto));
     }
 
     /// <summary>
@@ -395,10 +314,6 @@ public class GroupController : ControllerBase
 
         await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("DeletedBan", groupGuid, banGuid);
 
-        return Ok(new GenericResponse<object>
-        {
-            Message = message,
-            Status = StatusCodes.Status200OK,
-        });
+        return Ok(ResponseHelper.Success(message));
     }
 }

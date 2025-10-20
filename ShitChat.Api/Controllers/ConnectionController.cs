@@ -34,12 +34,7 @@ public class ConnectionController : ControllerBase
         if (!success)
             return BadRequest(ResponseHelper.Error<object>(message));
 
-        return Ok(new GenericResponse<object>
-        {
-            Data = null,
-            Message = message,
-            Status = 200
-        });
+        return Ok(ResponseHelper.Success(message, StatusCodes.Status201Created));
     }
 
     /// <summary>
@@ -53,12 +48,7 @@ public class ConnectionController : ControllerBase
         if (!success)
             return BadRequest(ResponseHelper.Error<object>(message));
 
-        return Ok(new GenericResponse<object>
-        {
-            Data = null,
-            Message = message,
-            Status = 200
-        });
+        return Ok(ResponseHelper.Success(message));
     }
 
 
@@ -73,11 +63,6 @@ public class ConnectionController : ControllerBase
         if (!success)
             return BadRequest(ResponseHelper.Error<object>(message));
 
-        return Ok(new GenericResponse<object>
-        {
-            Data = null,
-            Message = message,
-            Status = 200
-        });
+        return Ok(ResponseHelper.Success(message));
     }
 }

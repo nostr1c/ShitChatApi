@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using ShitChat.Application.Users.DTOs;
 using ShitChat.Application.Auth.DTOs;
 using ShitChat.Application.Auth.Requests;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Auth.Services;
 
@@ -46,7 +47,7 @@ public class AuthService : IAuthService
         _logger = logger;
         _passwordHasher = passwordHasher;
     }
-    public async Task<User?> RegisterUserAsync(CreateUserRequest request)
+    public async Task<(bool, AuthActionResult, CreateUserDto?)> RegisterUserAsync(CreateUserRequest request)
     {
         var user = new User
         {
@@ -57,20 +58,27 @@ public class AuthService : IAuthService
         var result = await _userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
-            return null;
+            return (false, AuthActionResult.ErrorCreatingUser, null);
 
-        return user;
+        var userDto = new CreateUserDto
+        {
+            Id = user.Id,
+            Username = user.UserName,
+            Email = user.Email,
+        };
+
+        return (true, AuthActionResult.SuccessCreatingUser, userDto);
     }
 
-    public async Task<(bool, string, LoginUserDto?)> LoginUserAsync(LoginUserRequest request)
+    public async Task<(bool, AuthActionResult, LoginUserDto?)> LoginUserAsync(LoginUserRequest request)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
-            return (false, "ErrorInvalidEmailOrPassword", null);
+            return (false, AuthActionResult.ErrorInvalidEmailOrPassword, null);
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
         if (!result.Succeeded)
-            return (false, "ErrorInvalidEmailOrPassword", null);
+            return (false, AuthActionResult.ErrorInvalidEmailOrPassword, null);
 
         var token = await CreateToken(user);
 
@@ -80,7 +88,7 @@ public class AuthService : IAuthService
             Token = token,
         };
 
-        return (true, "SuccessLoggedIn", userDto);
+        return (true, AuthActionResult.SuccessLoggedIn, userDto);
     }
     public async Task<TokenDto> CreateToken(User user)
     {
@@ -126,17 +134,17 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<(bool, string, TokenDto?)> RefreshToken(TokenDto tokenDto)
+    public async Task<(bool, AuthActionResult, TokenDto?)> RefreshToken(TokenDto tokenDto)
     {
         if (string.IsNullOrEmpty(tokenDto.RefreshToken))
-            return (false, "ErrorRefreshTokenNull", null);
+            return (false, AuthActionResult.ErrorRefreshTokenNull, null);
 
         var parts = tokenDto.RefreshToken.Split(":");
         if (parts.Length != 2)
-            return (false, "ErrorInvalidRefreshTokenFormat", null);
+            return (false, AuthActionResult.ErrorInvalidRefreshTokenFormat, null);
 
         if (!Guid.TryParse(parts[0], out var tokenId))
-            return (false, "ErrorInvalidRefreshTokenId", null);
+            return (false, AuthActionResult.ErrorInvalidRefreshTokenId, null);
 
         var secret = parts[1];
 
@@ -145,17 +153,17 @@ public class AuthService : IAuthService
             .FirstOrDefaultAsync(rt => rt.Id == tokenId && rt.ExpiresAt > DateTime.UtcNow);
 
         if (dbToken == null)
-                return (false, "ErrorInvalidOrExpiredRefreshToken", null);
+                return (false, AuthActionResult.ErrorInvalidOrExpiredRefreshToken, null);
 
         var result = _passwordHasher.VerifyHashedPassword(dbToken.User, dbToken.TokenHash, secret);
         if (result != PasswordVerificationResult.Success)
-            return (false, "ErrorInvalidOrExpiredRefreshToken", null);
+            return (false, AuthActionResult.ErrorInvalidOrExpiredRefreshToken, null);
 
         _dbContext.RefreshTokens.Remove(dbToken);
         await _dbContext.SaveChangesAsync();
 
         var newTokenDto = await CreateToken(dbToken.User);
-        return (true, "SuccessRefreshedToken", newTokenDto);
+        return (true, AuthActionResult.SuccessRefreshedToken, newTokenDto);
     }
 
     public void SetTokensInsideCookie(TokenDto tokenDto, HttpContext context)
@@ -183,7 +191,7 @@ public class AuthService : IAuthService
 
     public async Task<UserDto?> GetCurrentUserAsync()
     {
-        var userId = _httpContextAccessor.HttpContext!.User.GetUserGuid();
+        var userId = _httpContextAccessor.GetUserId();
         var user = await _dbContext.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == userId);
         if (user is null)
             return null;

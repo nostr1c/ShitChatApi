@@ -11,6 +11,7 @@ using ShitChat.Application.Users.DTOs;
 using ShitChat.Domain.Entities;
 using ShitChat.Infrastructure.Data;
 using ShitChat.Shared.Extensions;
+using ShitChat.Shared.Enums;
 using System.Text.Json;
 
 namespace ShitChat.Application.Groups.Services;
@@ -39,7 +40,7 @@ public class GroupService : IGroupService
         _uploadService = uploadService;
     }
 
-    public async Task<(bool, string, GroupDto?)> CreateGroupAsync(CreateGroupRequest request)
+    public async Task<(bool, GroupActionResult, GroupDto?)> CreateGroupAsync(CreateGroupRequest request)
     {
         var userId = _httpContextAccessor.GetUserId();
 
@@ -72,24 +73,24 @@ public class GroupService : IGroupService
             OwnerId = userId
         };
 
-        return (true, "SuccessCreatedGroup", groupDto);
+        return (true, GroupActionResult.SuccessCreatedGroup, groupDto);
     }
     
-    public async Task<(bool, string, UserDto?)> AddUserToGroupAsync(Guid groupId, string userId)
+    public async Task<(bool, GroupActionResult, UserDto?)> AddUserToGroupAsync(Guid groupId, string userId)
     {
         var exists = await _dbContext.UserGroups
             .AsNoTracking()
             .AnyAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
 
         if (exists)
-            return (false, "ErrorUserAlreadyInGroup", null);
+            return (false, GroupActionResult.ErrorUserAlreadyInGroup, null);
 
         var groupExists = await _dbContext.Groups
             .AsNoTracking()
             .AnyAsync(g => g.Id == groupId);
 
         if (!groupExists)
-            return (false, "ErrorGroupNotFound", null);
+            return (false, GroupActionResult.ErrorGroupNotFound, null);
 
         var user = await _dbContext.Users
             .AsNoTracking()
@@ -103,7 +104,7 @@ public class GroupService : IGroupService
             }).SingleOrDefaultAsync();
 
         if (user == null)
-            return (false, "ErrorUserNotFound", null);
+            return (false, GroupActionResult.ErrorUserNotFound, null);
 
         var userGroup = new UserGroup
         {
@@ -115,16 +116,16 @@ public class GroupService : IGroupService
         _dbContext.UserGroups.Add(userGroup);
         await _dbContext.SaveChangesAsync();
 
-        return (true, "SuccessAddedUserToGroup", user);
+        return (true, GroupActionResult.SuccessCreatedGroup, user);
     }
 
-    public async Task<(bool, string)> KickUserFromGroupAsync(Guid groupId, string userId)
+    public async Task<(bool, GroupActionResult)> KickUserFromGroupAsync(Guid groupId, string userId)
     {
         var userGroup = await _dbContext.UserGroups
             .SingleOrDefaultAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
 
         if (userGroup == null)
-            return (false, "ErrorUserNotInGroup");
+            return (false, GroupActionResult.ErrorUserNotInGroup);
 
         // TODO: Cascade this later?
 
@@ -137,17 +138,17 @@ public class GroupService : IGroupService
         await _dbContext.SaveChangesAsync();
 
         await _cache.KeyDeleteAsync(CacheKeys.GroupMembers(groupId));
-        return (true, "SuccessKickedUser");
+        return (true, GroupActionResult.SuccessKickedUser);
     }
 
-    public async Task<(bool, string, BanDto?)> BanUserFromGroupAsync(Guid groupId, string userId, BanUserRequest request)
+    public async Task<(bool, GroupActionResult, BanDto?)> BanUserFromGroupAsync(Guid groupId, string userId, BanUserRequest request)
     {
         var userGroup = await _dbContext.UserGroups
             .Include(x => x.User)
             .SingleOrDefaultAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
 
         if (userGroup == null)
-            return (false, "ErrorUserNotInGroup", null);
+            return (false, GroupActionResult.ErrorUserNotInGroup, null);
 
         var userRoles = await _dbContext.UserGroupRoles
             .Where(ugr => ugr.UserId == userId && ugr.GroupRole.GroupId == groupId)
@@ -195,10 +196,10 @@ public class GroupService : IGroupService
             })
             .SingleOrDefaultAsync();
 
-        return (true, "SuccessBannedUser", banDto);
+        return (true, GroupActionResult.SuccessBannedUser, banDto);
     }
 
-    public async Task<(bool, string, GroupDto?)> GetGroupByGuidAsync(Guid groupId)
+    public async Task<(bool, GroupActionResult, GroupDto?)> GetGroupByGuidAsync(Guid groupId)
     {
         var groupDto = await _dbContext.Groups
             .AsNoTracking()
@@ -211,12 +212,12 @@ public class GroupService : IGroupService
             .FirstOrDefaultAsync(x => x.Id == groupId);
 
         if (groupDto == null)
-            return (false, "ErrorGroupNotFound", null);
+            return (false, GroupActionResult.ErrorGroupNotFound, null);
 
-        return (true, "SuccessGotGroup", groupDto);
+        return (true, GroupActionResult.SuccessGotGroup, groupDto);
     }
      
-    public async Task<(bool, string, IEnumerable<GroupMemberDto>?)> GetGroupMembersAsync(Guid groupId)
+    public async Task<(bool, GroupActionResult, IEnumerable<GroupMemberDto>?)> GetGroupMembersAsync(Guid groupId)
     {
         var cacheKey = CacheKeys.GroupMembers(groupId);
 
@@ -224,7 +225,7 @@ public class GroupService : IGroupService
         if (!string.IsNullOrEmpty(cached))
         {
             var cachedMembers = JsonSerializer.Deserialize<IEnumerable<GroupMemberDto>>(cached);
-            return (true, "SuccessGotGroupMembers", cachedMembers);
+            return (true, GroupActionResult.SuccessGotGroupMembers, cachedMembers);
         }
         
         var groupExists = await _dbContext.Groups
@@ -232,7 +233,7 @@ public class GroupService : IGroupService
             .AnyAsync(x => x.Id == groupId);
 
         if (!groupExists)
-            return (false, "ErrorGroupNotFound", null);
+            return (false, GroupActionResult.ErrorGroupNotFound, null);
 
         var members = await _dbContext.UserGroups
             .AsNoTracking()
@@ -256,10 +257,10 @@ public class GroupService : IGroupService
         var json = JsonSerializer.Serialize(members);
         await _cache.StringSetAsync(cacheKey, json, TimeSpan.FromMinutes(10));
 
-        return (true, "SuccessGotGroupMembers", members);
+        return (true, GroupActionResult.SuccessGotGroupMembers, members);
     }
 
-    public async Task<(bool, string, IEnumerable<MessageDto>?)> GetGroupMessagesAsync(Guid groupGuid, Guid? lastMessageId, int take)
+    public async Task<(bool, GroupActionResult, IEnumerable<MessageDto>?)> GetGroupMessagesAsync(Guid groupGuid, Guid? lastMessageId, int take)
     {
         var cacheKey = CacheKeys.GroupMessages(groupGuid);
 
@@ -272,7 +273,7 @@ public class GroupService : IGroupService
                 var cachedMessages = cached.Select(x => JsonSerializer.Deserialize<MessageDto>(x)!)
                     .Take(take)
                     .ToList();
-                return (true, "SuccessGotGroupMessages", cachedMessages);
+                return (true, GroupActionResult.SuccessGotGroupMessages, cachedMessages);
             }
         }
 
@@ -323,17 +324,17 @@ public class GroupService : IGroupService
             }
         }
 
-        return (true, "SuccessGotGroupMessages", messages);
+        return (true, GroupActionResult.SuccessGotGroupMessages, messages);
     }
 
-    public async Task<(bool, string, IEnumerable<GroupRoleDto>?)> GetGroupRolesAsync(Guid groupId)
+    public async Task<(bool, GroupActionResult, IEnumerable<GroupRoleDto>?)> GetGroupRolesAsync(Guid groupId)
     {
         var groupExists = await _dbContext.Groups
              .AsNoTracking()
              .AnyAsync(g => g.Id == groupId);
 
         if (!groupExists)
-            return (false, "ErrorGroupNotFound", null);
+            return (false, GroupActionResult.ErrorGroupNotFound, null);
 
         var roles = await _dbContext.GroupRoles
             .AsNoTracking()
@@ -349,10 +350,10 @@ public class GroupService : IGroupService
             })
             .ToListAsync();
 
-        return (true, "SuccessGotGroupRoles", roles);
+        return (true, GroupActionResult.SuccessGotGroupRoles, roles);
     }
 
-    public async Task<(bool, string, MessageDto?)> SendMessageAsync(Guid groupId, SendMessageRequest request)
+    public async Task<(bool, GroupActionResult?, UploadActionResult?, MessageDto?)> SendMessageAsync(Guid groupId, SendMessageRequest request)
     {
         var userId = _httpContextAccessor.GetUserId();
 
@@ -360,7 +361,7 @@ public class GroupService : IGroupService
             .SingleOrDefaultAsync(g => g.Id == groupId);
 
         if (group == null)
-            return (false, "ErrorGroupNotFound", null);
+            return (false, GroupActionResult.ErrorGroupNotFound, null, null);
 
         var message = new Message
         {
@@ -373,7 +374,7 @@ public class GroupService : IGroupService
         {
             var (success, uploadMessage, imageName) = await _uploadService.UploadFileAsync(request.Attachment);
             if (!success || imageName == null)
-                return (false, uploadMessage, null);
+                return (false, null, uploadMessage, null);
 
             message.Attachment = new MessageAttachment
             {
@@ -409,31 +410,31 @@ public class GroupService : IGroupService
         await _cache.ListTrimAsync(cacheKey, 0, 39);
         await _cache.KeyExpireAsync(cacheKey, TimeSpan.FromMinutes(5));
 
-        return (true, "SuccessSentMessage",  messageDto);
+        return (true, GroupActionResult.SuccessSentMessage, null, messageDto);
     }
 
-    public async Task<(bool, string, AddRoleToUserDto?)> AddRoleToUser(Guid groupId, string userId, Guid roleId)
+    public async Task<(bool, GroupActionResult, AddRoleToUserDto?)> AddRoleToUser(Guid groupId, string userId, Guid roleId)
     {
         var roleExists = await _dbContext.GroupRoles
             .AsNoTracking()
             .AnyAsync(gr => gr.Id == roleId && gr.GroupId == groupId );
 
         if (!roleExists)
-            return (false, "ErrorRoleNotFound", null);
+            return (false, GroupActionResult.ErrorRoleNotFound, null);
 
         var userExists = await _dbContext.Users
             .AsNoTracking()
             .AnyAsync(u => u.Id == userId);
 
         if (!userExists)
-            return (false, "ErrorUserNotFound", null);
+            return (false, GroupActionResult.ErrorUserNotFound, null);
 
         var alreadyHasRole = await _dbContext.UserGroupRoles
             .AsNoTracking()
             .AnyAsync(ugr => ugr.UserId == userId && ugr.GroupRoleId == roleId );
 
         if (alreadyHasRole)
-            return (false, "ErrroUserAlreadyHasRole", null);
+            return (false, GroupActionResult.ErrorUserAlreadyInGroup, null);
 
         var userGroupRole = new UserGroupRole
         {
@@ -453,23 +454,23 @@ public class GroupService : IGroupService
             RoleId = roleId
         };
 
-        return (true, "SuccessAddedRoleToUser", dto);
+        return (true, GroupActionResult.SuccessAddedRoleToUser, dto);
     }
 
-    public async Task<(bool, string, RemoveRoleFromUserDto?)> RemoveRoleFromUser(Guid groupId, string userId, Guid roleId)
+    public async Task<(bool, GroupActionResult, RemoveRoleFromUserDto?)> RemoveRoleFromUser(Guid groupId, string userId, Guid roleId)
     {
         var userExists = await _dbContext.Users
             .AsNoTracking()
             .AnyAsync(u => u.Id == userId);
 
         if (!userExists)
-            return (false, "ErrorUserNotFound", null);
+            return (false, GroupActionResult.ErrorUserNotFound, null);
 
         var userGroupRole = await _dbContext.UserGroupRoles
             .SingleOrDefaultAsync(ugr => ugr.UserId == userId && ugr.GroupRoleId == roleId);
 
         if (userGroupRole == null)
-            return (false, "ErrorUserDoesNotHaveRole", null);
+            return (false, GroupActionResult.ErrorUserDoesNotHaveRole, null);
 
         _dbContext.UserGroupRoles.Remove(userGroupRole);
         await _dbContext.SaveChangesAsync();
@@ -483,17 +484,17 @@ public class GroupService : IGroupService
             RoleId = roleId
         };
 
-        return (true, "SuccessRemovedRoleFromUser", dto);
+        return (true, GroupActionResult.SuccessRemovedRoleFromUser, dto);
     }
 
-    public async Task<(bool, string, GroupRoleDto?)> CreateRoleAsync(Guid groupId, CreateGroupRoleRequest request)
+    public async Task<(bool, GroupActionResult, GroupRoleDto?)> CreateRoleAsync(Guid groupId, CreateGroupRoleRequest request)
     {
         var groupExists = await _dbContext.Groups
             .AsNoTracking()
             .AnyAsync(g => g.Id == groupId);
 
         if (!groupExists)
-            return (false, "ErrorGroupNotFound", null);
+            return (false, GroupActionResult.ErrorGroupNotFound, null);
 
         var permissionEntities = await _dbContext.Permissions
             .Where(p => request.Permissions.Contains(p.Name))
@@ -522,17 +523,17 @@ public class GroupService : IGroupService
             Permissions = permissionEntities.Select(p => p.Name).ToList()
         };
 
-        return (true, "SuccessCreatedGroupRole", groupRoleDto);
+        return (true, GroupActionResult.SuccessCreatedGroupRole, groupRoleDto);
     }
 
-    public async Task<(bool, string, GroupRoleDto?)> EditRoleAsync(Guid roleId, EditGroupRoleRequest request)
+    public async Task<(bool, GroupActionResult, GroupRoleDto?)> EditRoleAsync(Guid roleId, EditGroupRoleRequest request)
     {
         var groupRole = await _dbContext.GroupRoles
             .Include(gr => gr.Permissions)
             .SingleOrDefaultAsync(gr => gr.Id == roleId);
 
         if (groupRole == null)
-            return (false, "ErrorRoleNotFound", null);
+            return (false, GroupActionResult.ErrorRoleNotFound, null);
 
         groupRole.Name = request.Name;
         groupRole.Color = request.Color;
@@ -557,10 +558,10 @@ public class GroupService : IGroupService
             Permissions = permissionEntities.Select(p => p.Name).ToList()
         };
 
-        return (true, "SuccessEditedGroupRole", groupRoleDto);
+        return (true, GroupActionResult.SuccessEditedGroupRole, groupRoleDto);
     }
 
-    public async Task<(bool, string)> MarkAsReadAsync(Guid groupId, MarkAsReadRequest request)
+    public async Task<(bool, GroupActionResult)> MarkAsReadAsync(Guid groupId, MarkAsReadRequest request)
     {
         var userId = _httpContextAccessor.GetUserId();
 
@@ -568,20 +569,20 @@ public class GroupService : IGroupService
             .SingleOrDefaultAsync(ug => ug.GroupId == groupId && ug.UserId == userId);
 
         if (userGroup == null)
-            return (false, "ErrorUserNotInGroup");
+            return (false, GroupActionResult.ErrorUserNotInGroup);
 
         userGroup.LastReadMessageId = request.LastMessageId;
 
         await _dbContext.SaveChangesAsync();
 
-        return (true, "SuccessMarkedAsRead");
+        return (true, GroupActionResult.SuccessMarkedAsRead);
     }
 
-    public async Task<(bool, string, GroupDto?)> EditGroupAsync(Guid groupId, EditGroupRequest request)
+    public async Task<(bool, GroupActionResult, GroupDto?)> EditGroupAsync(Guid groupId, EditGroupRequest request)
     {
         var group = _dbContext.Groups.SingleOrDefault(g => g.Id == groupId);
         if (group == null)
-            return (false, "ErrorGroupNotFound", null);
+            return (false, GroupActionResult.ErrorGroupNotFound, null);
 
         group.Name = request.Name;
 
@@ -594,27 +595,27 @@ public class GroupService : IGroupService
             OwnerId = group.OwnerId
         };
 
-        return (true, "SuccessEditedGroup", groupDto);
+        return (true, GroupActionResult.SuccessEditedGroup, groupDto);
     }
 
-    public async Task<(bool, string)> DeleteGroupAsync(Guid groupId)
+    public async Task<(bool, GroupActionResult)> DeleteGroupAsync(Guid groupId)
     {
         var group = await _dbContext.Groups.SingleOrDefaultAsync(g => g.Id == groupId);
-        if (group == null) return (false, "ErrorGroupNotFound");
+        if (group == null) return (false, GroupActionResult.ErrorGroupNotFound);
 
         _dbContext.Groups.Remove(group);
         await _dbContext.SaveChangesAsync();
 
-        return (true, "SuccessDeletedGroup");
+        return (true, GroupActionResult.SuccessDeletedGroup);
     }
 
-    public async Task<(bool, string, JoinInviteDto?)> JoinWithInviteAsync(string inviteString)
+    public async Task<(bool, GroupActionResult, JoinInviteDto?)> JoinWithInviteAsync(string inviteString)
     {
         var userId = _httpContextAccessor.GetUserId();
         var user = await _dbContext.Users.SingleOrDefaultAsync(x => x.Id == userId);
 
         if (user == null)
-            return (false, "ErrorLoggedInUser", null);
+            return (false, GroupActionResult.ErrorUserNotFound, null);
 
         var checks = await _dbContext.Invites
             .AsNoTracking()
@@ -628,16 +629,16 @@ public class GroupService : IGroupService
             }).SingleOrDefaultAsync();
 
         if (checks == null)
-            return (false, "ErrorInviteNotFound", null);
+            return (false, GroupActionResult.ErrorInviteNotFound, null);
 
         if (checks.ValidThrough < DateOnly.FromDateTime(DateTime.UtcNow))
-            return (false, "ErrorInviteExpired", null);
+            return (false, GroupActionResult.ErrorInviteExpired, null);
 
         if (checks.isMember)
-            return (false, "ErrorAlreadyInGroup", null);
+            return (false, GroupActionResult.ErrorAlreadyInGroup, null);
 
         if (checks.IsBanned)
-            return (false, "ErrorBannedFromGroup", null);
+            return (false, GroupActionResult.ErrorBannedFromGroup, null);
 
         var inviteDto = await _dbContext.Invites
             .Where(x => x.InviteString == inviteString)
@@ -681,10 +682,10 @@ public class GroupService : IGroupService
 
         await _cache.KeyDeleteAsync(cacheKey);
 
-        return (true, "SuccessJoinedGroup", inviteDto);
+        return (true, GroupActionResult.SuccessJoinedGroup, inviteDto);
     }
 
-    public async Task<(bool, string, IEnumerable<BanDto>?)> GetGroupBansAsync(Guid groupId)
+    public async Task<(bool, GroupActionResult, IEnumerable<BanDto>?)> GetGroupBansAsync(Guid groupId)
     {
         var bansDto = await _dbContext.Bans
             .Where(x => x.GroupId == groupId)
@@ -715,24 +716,24 @@ public class GroupService : IGroupService
         {
             var groupExists = await _dbContext.Groups.AnyAsync(x => x.Id == groupId);
             if (!groupExists)
-                return (false, "ErrorGroupNotFound", null);
+                return (false, GroupActionResult.ErrorGroupNotFound, null);
         }
 
-        return (true, "SuccessGotGroupBans", bansDto);
+        return (true, GroupActionResult.SuccessGotGroupBans, bansDto);
     }
 
-    public async Task<(bool, string)> DeleteGroupBanAsync(Guid groupId, Guid banId)
+    public async Task<(bool, GroupActionResult)> DeleteGroupBanAsync(Guid groupId, Guid banId)
     {
         var ban = await _dbContext.Bans
             .Where(x => x.GroupId == groupId && x.Id == banId)
             .SingleOrDefaultAsync();
 
         if (ban == null)
-            return (false, "ErrorGroupOrBanNotFound");
+            return (false, GroupActionResult.ErrorGroupOrBanNotFound);
 
         _dbContext.Bans.Remove(ban);
         await _dbContext.SaveChangesAsync();
 
-        return (true, "SuccessDeletedBan");
+        return (true, GroupActionResult.SuccessDeletedBan);
     }
 }

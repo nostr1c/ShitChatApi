@@ -40,13 +40,8 @@ public class InviteController : ControllerBase
 
         var groupGuid = joinInviteDto.Group.Id;
 
-        await _hubContext.Clients.Group(groupGuid.ToString())
-            .SendAsync("ReceiveMember", groupGuid, joinInviteDto.Member);
+        await _hubContext.Clients.Group(groupGuid.ToString()).SendAsync("ReceiveMember", groupGuid, joinInviteDto.Member);
 
-        return Ok(new GenericResponse<JoinInviteDto>
-        {
-            Data = joinInviteDto,
-            Message = message
-        });
+        return Ok(ResponseHelper.Success(message, joinInviteDto));
     }
 }

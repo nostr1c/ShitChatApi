@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using ShitChat.Shared.Enums;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Webp;
@@ -19,16 +20,16 @@ public class UploadService : IUploadService
         }
     }
 
-    public async Task<(bool, string, string?)> UploadFileAsync(IFormFile file, int? width = null, int? height = null)
+    public async Task<(bool, UploadActionResult, string?)> UploadFileAsync(IFormFile file, int? width = null, int? height = null)
     {
         if (file == null || file.Length == 0)
-            return (false, "ErrorInvalidFile", null);
+            return (false, UploadActionResult.ErrorInvalidFile, null);
 
         string[] allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
         var fileExtension = Path.GetExtension(file.FileName).ToLower();
         if (!allowedExtensions.Contains(fileExtension))
-            return (false, "ErrorNotValidFileFormat", null);
+            return (false, UploadActionResult.ErrorInvalidFileFormat, null);
 
         string imageId = Guid.NewGuid().ToString();
         string imageName = fileExtension == ".gif" ? $"{imageId}.gif" : $"{imageId}.webp";
@@ -61,6 +62,6 @@ public class UploadService : IUploadService
             }
 
 
-        return (true, "SuccessFileUploaded", imageName);
+        return (true, UploadActionResult.SuccessFileUploaded, imageName);
     }
 }
