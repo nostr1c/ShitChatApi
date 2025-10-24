@@ -209,7 +209,9 @@ public class Program
                         "http://filipsiri.se",
                         "https://filipsiri.se",
                         "http://localhost:3000",
-                        "https://localui.test"
+                        "http://localhost:3100",
+                        "http://admin.filipsiri.se",
+                        "https://admin.filipsiri.se"
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
