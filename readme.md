@@ -1,15 +1,15 @@
-# ShitShat Backend
+# ShitChat Backend
 
-ShitShat is a messaging platform that allows users to create groups, send messages, and manage connections with others. 
+ShitChat is a messaging platform that allows users to create groups, send messages, handle roles, invites and bans.
 
 ## Features
 
 - **User Authentication:** Register and login with JWT-based authentication.
-- **Groups:** Create groups, manage group members, and send messages within groups.
-- **Connections:** Send, accept, and delete connection requests between users.
-- **Messages:** Send and receive messages in groups with rich user information (username, avatar).
+- **Groups:** Create groups, edit and delete groups.
+- **Connections:** Send, accept, and delete connection requests between users. (Only backend support for now)
 - **Invites:** Create and manage invites.
-- **Group roles:** Create and manage group roles.
+- **Group roles:** Create and manage group roles with different permissions.
+-  **Send messages:** Send realtime messages within a group.
 
 ## Technologies Used
 
@@ -44,6 +44,9 @@ docker-compose up --build
 ```
 
 **App is now running at port 8080**
+
+## API Documentation
+Can be found at http://localhost:8080/scalar/v1
 
 ## ERD
 ![Alt text](https://i.imgur.com/kb5QGbK.jpeg)
