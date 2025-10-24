@@ -1,6 +1,7 @@
 ﻿using ShitChat.Domain.Entities;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Auth.Requests;
 
@@ -21,28 +22,28 @@ public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
 
         RuleFor(x => x.Username)
             .NotEmpty()
-                .WithMessage("ErrorUsernameCannotBeEmpty")
+                .WithMessage(AuthActionResult.ErrorUsernameCannotBeEmpty.ToString())
             .MustAsync(async (username, cancellation) =>
             {
                 var user = await _userManager.FindByNameAsync(username);
                 return user == null;
-            }).WithMessage("ErrorUsernameAlreadyExists");
+            }).WithMessage(AuthActionResult.ErrorUsernameAlreadyExists.ToString());
 
         RuleFor(x => x.Email)
             .NotEmpty()
-                .WithMessage("ErrorEmailCannotBeEmpty")
+                .WithMessage(AuthActionResult.ErrorEmailCannotBeEmpty.ToString())
             .EmailAddress()
-                .WithMessage("ErrorEmailNotValid")
+                .WithMessage(AuthActionResult.ErrorEmailNotValid.ToString())
             .MustAsync(async (email, cancellation) =>
             {
                 var user = await _userManager.FindByEmailAsync(email);
                 return user == null;
-            }).WithMessage("ErrorEmailAlreadyExists");
+            }).WithMessage(AuthActionResult.ErrorEmailAlreadyExists.ToString());
 
         RuleFor(x => x.Password)
             .NotEmpty()
-                .WithMessage("ErrorPasswordCannotBeEmpty")
+                .WithMessage(AuthActionResult.ErrorPasswordCannotBeEmpty.ToString())
             .MinimumLength(6)
-                .WithMessage("ErrorPasswordMinLength");
+                .WithMessage(AuthActionResult.ErrorPasswordMinLength.ToString());
     }
 }

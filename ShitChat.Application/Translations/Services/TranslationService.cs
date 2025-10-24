@@ -24,7 +24,9 @@ public class TranslationService : ITranslationService
                 Id = x.Id,
                 Name = x.Name,
                 Value = x.Value,
-            }).ToListAsync();
+            })
+            .OrderBy(x => x.Name)
+            .ToListAsync();
 
         return (TranslationActionResult.SuccessGotTranslations, translations);
     }

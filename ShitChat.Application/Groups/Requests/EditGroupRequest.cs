@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ShitChat.Shared.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,8 +20,8 @@ public class EditGroupRequestValidator : AbstractValidator<EditGroupRequest>
         RuleFor(x => x.Name)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
-                .WithMessage("ErrorGroupNameCannotBeEmpty")
+                .WithMessage(GroupActionResult.ErrorGroupNameCannotBeEmpty.ToString())
             .MinimumLength(2)
-                .WithMessage("ErrorGroupNameMinLength");
+                .WithMessage(GroupActionResult.ErrorGroupNameMinLength.ToString());
     }
 }

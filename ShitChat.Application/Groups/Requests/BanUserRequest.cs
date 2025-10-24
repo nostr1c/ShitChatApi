@@ -1,5 +1,6 @@
 ﻿
 using FluentValidation;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Groups.Requests;
 
@@ -14,6 +15,6 @@ public class BanUserRequestValidator : AbstractValidator<BanUserRequest>
     {
         RuleFor(x => x.Reason)
             .MaximumLength(500)
-                .WithMessage("ErrorBanReasonMaxLength");
+                .WithMessage(GroupActionResult.ErrorBanReasonMaxLength.ToString());
     }
 }

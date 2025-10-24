@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Groups.Requests;
 
@@ -15,6 +16,6 @@ public class SendMessageRequestValidator : AbstractValidator<SendMessageRequest>
     {
         RuleFor(x => x)
             .Must(x => !string.IsNullOrWhiteSpace(x.Content) || x.Attachment != null)
-            .WithMessage("ErrorMessageCannotBeEmpty");
+            .WithMessage(GroupActionResult.ErrorMessageCannotBeEmpty.ToString());
     }
 }

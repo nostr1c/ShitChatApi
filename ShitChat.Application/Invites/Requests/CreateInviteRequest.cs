@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Invites.Requests;
 
@@ -13,8 +14,8 @@ public class CreateInviteRequestValidator : AbstractValidator<CreateInviteReques
     {
         RuleFor(x => x.ValidThrough)
             .NotEmpty()
-            .WithMessage("ErrorValidThroughCannotBeEmpty")
+            .WithMessage(InviteActionResult.ErrorValidThroughCannotBeEmpty.ToString())
             .Must(date => date >= DateOnly.FromDateTime(DateTime.UtcNow))
-            .WithMessage("ErrorValidThroughMustBeAFutureDate");
+            .WithMessage(InviteActionResult.ErrorValidThroughMustBeAFutureDate.ToString());
     }
 }

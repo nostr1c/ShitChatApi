@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Auth.Requests;
 
@@ -17,10 +18,10 @@ public class RequestLoginValidator : AbstractValidator<LoginUserRequest>
     {
         RuleFor(x => x.Email)
             .NotEmpty()
-                .WithMessage("ErrorEmailCannotBeEmpty");
+                .WithMessage(AuthActionResult.ErrorEmailCannotBeEmpty.ToString());
 
         RuleFor(x => x.Password)
             .NotEmpty()
-                .WithMessage("ErrorPasswordCannotBeEmpty");
+                .WithMessage(AuthActionResult.ErrorPasswordCannotBeEmpty.ToString());
     }
 }

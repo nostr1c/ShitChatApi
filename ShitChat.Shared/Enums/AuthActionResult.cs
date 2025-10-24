@@ -15,4 +15,11 @@ public enum AuthActionResult
     ErrorInvalidOrExpiredRefreshToken,
     ErrorRefreshTokenMissing,
     ErrorLoggedInUser,
+    ErrorUsernameCannotBeEmpty,
+    ErrorUsernameAlreadyExists,
+    ErrorEmailCannotBeEmpty,
+    ErrorEmailNotValid,
+    ErrorEmailAlreadyExists,
+    ErrorPasswordCannotBeEmpty,
+    ErrorPasswordMinLength
 }

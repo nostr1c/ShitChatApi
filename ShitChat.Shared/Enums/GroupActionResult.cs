@@ -33,4 +33,11 @@ public enum GroupActionResult
     ErrorAlreadyInGroup,
     ErrorBannedFromGroup,
     ErrorGroupOrBanNotFound,
+    ErrorBanReasonMaxLength,
+    ErrorGroupNameCannotBeEmpty,
+    ErrorGroupNameMinLength,
+    ErrorGroupRoleNameCannotBeEmpty,
+    ErrorGroupRoleColorCannotBeEmpty,
+    ErrorLastMessageIdCannotBeEmpty,
+    ErrorMessageCannotBeEmpty
 }

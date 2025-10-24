@@ -6,5 +6,6 @@ public enum UserActionResult
     SuccessGotUser,
     SuccessUpdatedAvatar,
     SuccessGotUserConnections,
-    SuccessGotUserGroups
+    SuccessGotUserGroups,
+    ErrorAvatarCannotBeEmpty
 }

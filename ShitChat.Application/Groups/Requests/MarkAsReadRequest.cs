@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Groups.Requests;
 
@@ -11,6 +12,6 @@ public class MarkAsReadRequestValidator : AbstractValidator<MarkAsReadRequest>
 {
     public MarkAsReadRequestValidator()
     {
-        RuleFor(x => x.LastMessageId).NotEmpty().WithMessage("ErrorLastMessageIdCannotBeEmpty");
+        RuleFor(x => x.LastMessageId).NotEmpty().WithMessage(GroupActionResult.ErrorLastMessageIdCannotBeEmpty.ToString());
     }
 }   

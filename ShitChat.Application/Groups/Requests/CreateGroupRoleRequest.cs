@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ShitChat.Shared.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace ShitChat.Application.Groups.Requests;
@@ -16,9 +17,9 @@ public class CreateGroupRoleRequestValidator : AbstractValidator<CreateGroupRole
     {
         RuleFor(x => x.Name)
             .NotEmpty()
-            .WithMessage("ErrorGroupRoleNameCannotBeEmpty");
+            .WithMessage(GroupActionResult.ErrorGroupRoleNameCannotBeEmpty.ToString());
         RuleFor(x => x.Color)
             .NotEmpty()
-            .WithMessage("ErrorGroupRoleColorCannotBeEmpty");
+            .WithMessage(GroupActionResult.ErrorGroupRoleColorCannotBeEmpty.ToString());
     }
 }

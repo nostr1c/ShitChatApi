@@ -7,7 +7,7 @@ using ShitChat.Application.Translations.Services;
 
 namespace ShitChat.Api.Controllers;
 
-[Authorize(AuthenticationSchemes = "Bearer")]
+//[Authorize(AuthenticationSchemes = "Bearer")]
 [ApiController]
 [Route("api/v1/[controller]")]
 public class TranslationController : ControllerBase

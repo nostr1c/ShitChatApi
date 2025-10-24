@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Users.Requests;
 
@@ -12,7 +13,7 @@ public class UpdateAvatarRequestValidator : AbstractValidator<UpdateAvatarReques
     public UpdateAvatarRequestValidator()
     {
         RuleFor(x => x.AvatarUri)
-            .NotEmpty().WithMessage("ErrorAvatarCannotBeEmpty");
+            .NotEmpty().WithMessage(UserActionResult.ErrorAvatarCannotBeEmpty.ToString());
             //.Matches("^(https?:\\/\\/)([a-zA-Z0-9.-]+)(:[0-9]+)?(\\/[^\\s]*)*\\.(jpg|gif|png)$\r\n")
             //    .WithMessage("Not a valid image url.");
     }

@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using ShitChat.Shared.Enums;
 
 namespace ShitChat.Application.Groups.Requests;
 
@@ -14,8 +15,8 @@ public class CreateGroupRequestValidator : AbstractValidator<CreateGroupRequest>
         RuleFor(x => x.Name)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
-                .WithMessage("ErrorGroupNameCannotBeEmpty")
+                .WithMessage(GroupActionResult.ErrorGroupNameCannotBeEmpty.ToString())
             .MinimumLength(2)
-                .WithMessage("ErrorGroupNameMinLength");
+                .WithMessage(GroupActionResult.ErrorGroupNameMinLength.ToString());
     }
 }

@@ -6,4 +6,6 @@ public enum InviteActionResult
     SuccessGotGroupInvites,
     ErrorGroupNotFound,
     ErrorInviteNotFound,
+    ErrorValidThroughCannotBeEmpty,
+    ErrorValidThroughMustBeAFutureDate
 }
