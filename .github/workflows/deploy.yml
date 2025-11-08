@@ -43,7 +43,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "compose.yaml"
-          target: "/opt/shitchatapi/compose.yaml"
+          target: "/opt/shitchatapi/"
 
       - name: Deploy backend via SSH
         uses: appleboy/ssh-action@v0.1.7
