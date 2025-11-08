@@ -44,7 +44,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "compose.yaml"
           target: "/opt/shitchatapi/"
-          overwrite: true
+          overwrite: true 
 
       - name: Deploy backend via SSH
         uses: appleboy/ssh-action@v0.1.7
