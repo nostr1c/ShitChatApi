@@ -1,10 +1,20 @@
-﻿using ShitChat.Domain.Entities;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using ShitChat.Domain.Entities;
 
 namespace ShitChat.Infrastructure.Data;
 
-public class AppDbContext : IdentityDbContext<User>
+public class AppDbContext : IdentityDbContext<
+    User,
+    AppRole,
+    string,
+    IdentityUserClaim<string>,
+    AppUserRole,
+    IdentityUserLogin<string>,
+    IdentityRoleClaim<string>,
+    IdentityUserToken<string>
+    >
 {
     public AppDbContext(DbContextOptions<AppDbContext> options): base(options) {}
 
@@ -160,6 +170,22 @@ public class AppDbContext : IdentityDbContext<User>
             .WithMany()
             .HasForeignKey(b => b.BannedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // app role
+        builder.Entity<AppUserRole>(b =>
+        {
+            b.HasKey(ur => new { ur.UserId, ur.RoleId });
+
+            b.HasOne(ur => ur.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ur => ur.UserId)
+                .IsRequired();
+
+            b.HasOne(ur => ur.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ur => ur.RoleId)
+                .IsRequired();
+        });
 
 
         // Seeding permanents

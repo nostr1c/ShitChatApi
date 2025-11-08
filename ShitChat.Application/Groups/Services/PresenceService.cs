@@ -28,6 +28,7 @@ public class PresenceService : IPresenceService
 
         // Add user to group (ONLY IF FIRST CONNECTION)
         var userConnections = await _cache.SetMembersAsync(userConnectionsKey);
+
         if (userConnections.Length == 1)
         {
             await _cache.SetAddAsync(groupUsersKey, userId);
@@ -65,7 +66,7 @@ public class PresenceService : IPresenceService
         return await _cache.SetMembersAsync(groupUsersKey);
     }
 
-    public async Task<string[]> GetUserConnections(string groupId, string userId)
+    public async Task<string[]> GetUserConnections(string userId)
     {
         var userConnectionsKey = CacheKeys.UserConnections(userId);
         return await _cache.SetMembersAsync(userConnectionsKey);

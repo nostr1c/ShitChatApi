@@ -38,7 +38,7 @@ public class AuthController : ControllerBase
         var loginRequest = new LoginUserRequest
         {
             Password = request.Password,
-            Email = request.Email,
+            EmailOrUsername = request.Email,
         };
 
         var (loginSuccess, loginMessage, loginUserDto) = await _authService.LoginUserAsync(loginRequest);

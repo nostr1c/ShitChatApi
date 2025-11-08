@@ -1,15 +1,18 @@
-﻿using ShitChat.Infrastructure.Data;
-using ShitChat.Domain.Entities;
-using ShitChat.Shared.Extensions;
+﻿using Azure;
+using Elastic.Clients.Elasticsearch;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SixLabors.ImageSharp;
-using Microsoft.AspNetCore.Http;
-using ShitChat.Application.Users.DTOs;
-using ShitChat.Application.Groups.DTOs;
 using ShitChat.Application.Connections.DTOs;
+using ShitChat.Application.Groups.DTOs;
+using ShitChat.Application.Roles.DTOs;
 using ShitChat.Application.Uploads.Services;
+using ShitChat.Application.Users.DTOs;
+using ShitChat.Domain.Entities;
+using ShitChat.Infrastructure.Data;
 using ShitChat.Shared.Enums;
+using ShitChat.Shared.Extensions;
+using SixLabors.ImageSharp;
 
 namespace ShitChat.Application.Users.Services;
 
@@ -19,19 +22,22 @@ public class UserService : IUserService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly UserManager<User> _userManager;
     private readonly IUploadService _uploadService;
+    private readonly ElasticsearchClient _elastic;
 
     public UserService
     (
         AppDbContext dbContext,
         IHttpContextAccessor httpContextAccessor,
         UserManager<User> userManager,
-        IUploadService uploadService
+        IUploadService uploadService,
+        ElasticsearchClient elastic
     )
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
         _userManager = userManager;
         _uploadService = uploadService;
+        _elastic = elastic;
     }
 
     public async Task<(bool, UserActionResult, UserDto?)> GetUserByGuidAsync(string userGuid)
@@ -68,10 +74,22 @@ public class UserService : IUserService
         user.AvatarUri = imageName;
         await _userManager.UpdateAsync(user);
 
+
+        var userDto = new UserDto
+        {
+            Id = user.Id,
+            Username = user.UserName,
+            Email = user.Email,
+            CreatedAt = user.CreatedAt,
+            Avatar = user.AvatarUri
+        };
+
+        await _elastic.IndexAsync(userDto);
+
         return (true, UserActionResult.SuccessUpdatedAvatar, null, imageName);
     }
 
-    public async Task<(bool, UserActionResult, List<ConnectionDto>?)> GetConnectionsAsync()
+    public async Task<(bool, UserActionResult, ConnectionsDto?)> GetConnectionsAsync()
     {
         var userId = _httpContextAccessor.GetUserId();
         var userExists = await _dbContext.Users
@@ -81,33 +99,61 @@ public class UserService : IUserService
         if (!userExists)
             return (false, UserActionResult.ErrorUserNotFound, null);
 
-        var connections = await _dbContext.Connections
-                .AsNoTracking()
-                .Where(x => x.UserId == userId || x.FriendId == userId)
+        var allConnections = await _dbContext.Connections
+            .AsNoTracking()
+            .Where(x => x.UserId == userId || x.FriendId == userId)
+            .Select(x => new
+            {
+                x.id,
+                x.Accepted,
+                x.CreatedAt,
+                IsRequester = x.UserId == userId,
+                Friend = new UserDto
+                {
+                    Id = x.UserId == userId ? x.FriendId : x.UserId,
+                    Username = x.UserId == userId ? x.friend.UserName : x.user.UserName,
+                    Email = x.UserId == userId ? x.friend.Email : x.user.Email,
+                    Avatar = x.UserId == userId ? x.friend.AvatarUri : x.user.AvatarUri,
+                    CreatedAt = x.UserId == userId ? x.friend.CreatedAt : x.user.CreatedAt
+                }
+            })
+            .ToListAsync();
+
+        var result = new ConnectionsDto
+        {
+            SentRequests = allConnections
+                .Where(x => !x.Accepted && x.IsRequester)
                 .Select(x => new ConnectionDto
                 {
                     Id = x.id,
                     Accepted = x.Accepted,
                     CreatedAt = x.CreatedAt,
-                    User = x.UserId == userId
-                        ? new UserDto
-                        {
-                            Id = x.friend.Id,
-                            Username = x.friend.UserName,
-                            Email = x.friend.Email,
-                            Avatar = x.friend.AvatarUri
-                        }
-                        : new UserDto
-                        {
-                            Id = x.user.Id,
-                            Username = x.user.UserName,
-                            Email = x.user.Email,
-                            Avatar = x.user.AvatarUri
-                        }
+                    IsRequester = x.IsRequester,
+                    User = x.Friend
+                }),
+            ReceivedRequests = allConnections
+                .Where(x => !x.Accepted && !x.IsRequester)
+                .Select(x => new ConnectionDto
+                {
+                    Id = x.id,
+                    Accepted = x.Accepted,
+                    CreatedAt = x.CreatedAt,
+                    IsRequester = x.IsRequester,
+                    User = x.Friend
+                }),
+            Accepted = allConnections
+                .Where(x => x.Accepted)
+                .Select(x => new ConnectionDto
+                {
+                    Id = x.id,
+                    Accepted = x.Accepted,
+                    CreatedAt = x.CreatedAt,
+                    IsRequester = x.IsRequester,
+                    User = x.Friend
                 })
-                .ToListAsync();
+        };
 
-        return (true, UserActionResult.SuccessGotUserConnections, connections);
+        return (true, UserActionResult.SuccessGotUserConnections, result);
     }
 
     public async Task<(bool, UserActionResult, List<GroupDto>?)> GetUserGroupsAsync()
@@ -143,5 +189,91 @@ public class UserService : IUserService
             .ToListAsync();
 
         return (true, UserActionResult.SuccessGotUserGroups, groups);
+    }
+
+    public async Task<(bool, string, IEnumerable<UserWithRoles>)> GetUsersWithRolesAsync()
+    {
+        var usersWithRoles = await _dbContext.Users
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .Where(u => u.UserRoles.Any())
+            .Select(u => new UserWithRoles
+            {
+                User = new UserDto
+                {
+                    Id = u.Id,
+                    Username = u.UserName,
+                    Email = u.Email,
+                    Avatar = u.AvatarUri,
+                    CreatedAt = u.CreatedAt
+                },
+                Roles = u.UserRoles
+                    .Select(ur => new RoleDto
+                    {
+                        Id = ur.RoleId,
+                        Name = ur.Role.Name
+                    }).ToList()
+            })
+            .AsNoTracking()
+            .ToListAsync();
+
+
+        return (true, "SuccessGotUsersWithRoles", usersWithRoles);
+    }
+
+    public async Task<(bool, string?)> IndexAllUsersAsync()
+    {
+        var users = await _dbContext.Users
+            .AsNoTracking()
+            .Select(x => new UserDto
+            {
+                Id = x.Id,
+                Username = x.UserName,
+                Email = x.Email,
+                CreatedAt = x.CreatedAt,
+                Avatar = x.AvatarUri
+            })
+            .ToListAsync();
+
+        if (users == null || users.Count == 0)
+        {
+            return (false, "No users found");
+        }
+
+        var deleteResponse = await _elastic.Indices.DeleteAsync("users");
+        if (!deleteResponse.IsValidResponse)
+        {
+            return (false, deleteResponse.ElasticsearchServerError?.Error?.Reason ?? "Unknown Elasticsearch error");
+        }
+
+        var bulkResponse = await _elastic.BulkAsync(b => b
+            .Index("users")
+            .IndexMany(users, (descriptor, user) => descriptor.Id(user.Id))
+        );
+
+        if (!bulkResponse.IsValidResponse)
+        {
+            return (false, bulkResponse.ElasticsearchServerError?.Error?.Reason ?? "Unknown Elasticsearch error");
+        }
+
+
+        return (true, $"Successfully indexed {users.Count} users ");
+    }
+
+    public async Task<(bool, string?, IReadOnlyCollection<UserDto>?)> SearchUsersAsync(string query)
+    {
+        var result = await _elastic.SearchAsync<UserDto>(s => s
+            .Query(q => q
+                .MatchPhrasePrefix(m => m
+                    .Field(f => f.Username)
+                    .Query(query)
+                )
+            )
+        );
+
+        if (!result.IsValidResponse)
+            return (false, result.ElasticsearchServerError?.Error?.Reason, null);
+
+        return (true, "SuccessGotUsers", result.Documents);
     }
 }

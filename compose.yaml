@@ -14,6 +14,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - ELASTIC_URL=http://elasticsearch:9200
     ports:
       - 8080:8080
     volumes:
@@ -22,6 +23,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - elasticsearch
     networks:
       - webproxy
 
@@ -68,14 +70,18 @@ services:
     networks:
       - webproxy
 
-  redisinsight:
-    image: redis/redisinsight:latest
-    container_name: redisinsight
-    # ports:
-    #   - 5540:5540
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: elasticsearch
     restart: unless-stopped
-    depends_on:
-      - redis
+    ports:
+      - 9200:9200
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
     networks:
       - webproxy
 
@@ -84,7 +90,8 @@ volumes:
   pgdata:
   image-uploads:
   redis-data:
+  es-data:
 
 networks:
   webproxy:
-    external: true
+    driver: bridge
