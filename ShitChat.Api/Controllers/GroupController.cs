@@ -153,7 +153,7 @@ public class GroupController : ControllerBase
     }
 
     /// <summary>
-    /// Send group message 
+    /// Send group message
     /// </summary>
     [Authorize(Policy = "GroupMember")]
     [HttpPost("{groupGuid}/messages")]
