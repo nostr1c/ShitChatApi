@@ -17,7 +17,7 @@ public enum AuthActionResult
     ErrorLoggedInUser,
     ErrorUsernameCannotBeEmpty,
     ErrorUsernameAlreadyExists,
-    ErrorEmailCannotBeEmpty,
+    ErrorEmailOrUsernameCannotBeEmpty,
     ErrorEmailNotValid,
     ErrorEmailAlreadyExists,
     ErrorPasswordCannotBeEmpty,

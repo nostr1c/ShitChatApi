@@ -31,7 +31,7 @@ public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
 
         RuleFor(x => x.Email)
             .NotEmpty()
-                .WithMessage(AuthActionResult.ErrorEmailCannotBeEmpty.ToString())
+                .WithMessage(AuthActionResult.ErrorEmailOrUsernameCannotBeEmpty.ToString())
             .EmailAddress()
                 .WithMessage(AuthActionResult.ErrorEmailNotValid.ToString())
             .MustAsync(async (email, cancellation) =>

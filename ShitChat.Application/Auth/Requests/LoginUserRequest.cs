@@ -17,7 +17,7 @@ public class RequestLoginValidator : AbstractValidator<LoginUserRequest>
     {
         RuleFor(x => x.EmailOrUsername)
             .NotEmpty()
-                .WithMessage(AuthActionResult.ErrorEmailCannotBeEmpty.ToString());
+                .WithMessage(AuthActionResult.ErrorEmailOrUsernameCannotBeEmpty.ToString());
 
         RuleFor(x => x.Password)
             .NotEmpty()
