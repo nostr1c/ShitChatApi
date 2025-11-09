@@ -35,6 +35,8 @@ jobs:
           tags: ghcr.io/${{ github.repository_owner }}/api:latest
           target: final
           platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Copy compose to VPS
         uses: appleboy/scp-action@v0.1.7
@@ -56,5 +58,5 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             cd /opt/shitchatapi || exit 1
             docker compose pull api
-            docker compose up -d 
+            docker compose up -d --no-deps api
             docker image prune -a -f --filter "until=12h"
