@@ -218,13 +218,12 @@ public static class ServiceExtensions
                 policy =>
                 {
                     policy.WithOrigins(
-                        "http://filipsiri.se",
-                        "https://filipsiri.se",
                         "http://localhost:3000",
                         "http://localhost:3001",
                         "http://localhost:3100",
-                        "http://admin.filipsiri.se",
-                        "https://admin.filipsiri.se"
+                        "https://filipsiri.se",
+                        "https://admin.filipsiri.se",
+                        "https://shitchat.filipsiri.se"
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
