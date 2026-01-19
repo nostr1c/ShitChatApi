@@ -240,11 +240,16 @@ public class UserService : IUserService
             return (false, "No users found");
         }
 
-        var deleteResponse = await _elastic.Indices.DeleteAsync("users");
-        if (!deleteResponse.IsValidResponse)
+        var indiceResponse = await _elastic.Indices.ExistsAsync("users");
+        if (indiceResponse.Exists)
         {
-            return (false, deleteResponse.ElasticsearchServerError?.Error?.Reason ?? "Unknown Elasticsearch error");
+            var deleteResponse = await _elastic.Indices.DeleteAsync("users");
+            if (!deleteResponse.IsValidResponse)
+            {
+                return (false, deleteResponse.ElasticsearchServerError?.Error?.Reason ?? "Unknown Elasticsearch error");
+            }
         }
+
 
         var bulkResponse = await _elastic.BulkAsync(b => b
             .Index("users")
