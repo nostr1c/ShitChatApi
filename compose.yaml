@@ -1,9 +1,9 @@
 services:
   api:
-    # build:
-    #   context: .
-    #   target: final
-    image: ghcr.io/${GITHUB_OWNER}/api:latest
+    build:
+      context: .
+      target: final
+    # image: ghcr.io/${GITHUB_OWNER}/api:latest
     container_name: api
     restart: always
     environment:
@@ -14,9 +14,12 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
       - ELASTIC_URL=http://elasticsearch:9200
     ports:
       - 8080:8080
+      - 5005:5005
     volumes:
       - data-protection-keys:/Keys
       - image-uploads:/Uploads
@@ -24,8 +27,8 @@ services:
       - postgres
       - redis
       - elasticsearch
-    networks:
-      - webproxy
+    # networks:
+    #   - webproxy
 
   postgres:
     image: postgres:15-alpine
@@ -38,8 +41,8 @@ services:
     #   - 5432:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks:
-      - webproxy
+    # networks:
+    #   - webproxy
 
   nginx:
     image: 'jc21/nginx-proxy-manager:latest'
@@ -51,8 +54,8 @@ services:
     volumes:
       - ./data:/data
       - ./letsencrypt:/etc/letsencrypt
-    networks:
-      - webproxy
+    # networks:
+    #   - webproxy
 
   redis:
     image: redis:7
@@ -67,8 +70,8 @@ services:
       "--requirepass", "${REDIS_PASSWORD}"
     ]
     restart: unless-stopped
-    networks:
-      - webproxy
+    # networks:
+    #   - webproxy
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
@@ -82,8 +85,8 @@ services:
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     volumes:
       - es-data:/usr/share/elasticsearch/data
-    networks:
-      - webproxy
+    # networks:
+    #   - webproxy
 
 volumes:
   data-protection-keys:
@@ -92,6 +95,6 @@ volumes:
   redis-data:
   es-data:
 
-networks:
-  webproxy:
-    driver: bridge
+# networks:
+#   webproxy:
+#     driver: bridge
