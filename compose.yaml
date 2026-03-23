@@ -44,16 +44,16 @@ services:
     # networks:
     #   - webproxy
 
-  nginx:
-    image: 'jc21/nginx-proxy-manager:latest'
-    restart: unless-stopped
-    ports:
-      - 443:443
-      - 81:81
-      - 80:80
-    volumes:
-      - ./data:/data
-      - ./letsencrypt:/etc/letsencrypt
+  # nginx:
+  #   image: 'jc21/nginx-proxy-manager:latest'
+  #   restart: unless-stopped
+  #   ports:
+  #     - 443:443
+  #     - 81:81
+  #     - 80:80
+  #   volumes:
+  #     - ./data:/data
+  #     - ./letsencrypt:/etc/letsencrypt
     # networks:
     #   - webproxy
 
