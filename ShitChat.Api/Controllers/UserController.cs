@@ -1,8 +1,6 @@
-﻿using Elastic.Clients.Elasticsearch;
+﻿//using Elastic.Clients.Elasticsearch;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ShitChat.Application.Connections.DTOs;
 using ShitChat.Application.DTOs;
 using ShitChat.Application.Groups.DTOs;
@@ -20,16 +18,16 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly string _imageStoragePath = "/Uploads";
-    private readonly ElasticsearchClient _elastic;
+    //private readonly ElasticsearchClient _elastic;
 
     public UserController
     (
-        IUserService userService,
-        ElasticsearchClient elastic
+        IUserService userService
+        //ElasticsearchClient elastic
     )
     {
         _userService = userService;
-        _elastic = elastic;
+        //_elastic = elastic;
     }
 
     /// <summary>
@@ -122,26 +120,26 @@ public class UserController : ControllerBase
         return Ok(ResponseHelper.Success(message, usersWithRoles));
     }
 
-    [AllowAnonymous]
-    [HttpPost("index-all")]
-    public async Task<ActionResult<GenericResponse<string>>> IndexAllUsers()
-    {
-        var (success, message) = await _userService.IndexAllUsersAsync();
+    //[AllowAnonymous]
+    //[HttpPost("index-all")]
+    //public async Task<ActionResult<GenericResponse<string>>> IndexAllUsers()
+    //{
+    //    var (success, message) = await _userService.IndexAllUsersAsync();
 
-        if (!success)
-            return BadRequest(ResponseHelper.Error<string>(message));
+    //    if (!success)
+    //        return BadRequest(ResponseHelper.Error<string>(message));
 
-        return Ok(ResponseHelper.Success(message, message));
-    }
+    //    return Ok(ResponseHelper.Success(message, message));
+    //}
 
-    [AllowAnonymous]
-    [HttpGet("search")]
-    public async Task<IActionResult> SearchUsers([FromQuery] string query)
-    {
-        var (success, message, result) = await _userService.SearchUsersAsync(query);
-        if (!success || result == null)
-            return BadRequest(ResponseHelper.Error<IReadOnlyCollection<User>>(message));
+    //[AllowAnonymous]
+    //[HttpGet("search")]
+    //public async Task<IActionResult> SearchUsers([FromQuery] string query)
+    //{
+    //    var (success, message, result) = await _userService.SearchUsersAsync(query);
+    //    if (!success || result == null)
+    //        return BadRequest(ResponseHelper.Error<IReadOnlyCollection<User>>(message));
 
-        return Ok(ResponseHelper.Success(message, result));
-    }
+    //    return Ok(ResponseHelper.Success(message, result));
+    //}
 }

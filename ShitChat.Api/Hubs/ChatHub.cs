@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using ShitChat.Shared.Extensions;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using ShitChat.Application.Groups.Services;
-using Castle.Components.DictionaryAdapter;
-using ShitChat.Application.Caching;
+using ShitChat.Shared.Extensions;
 
 namespace ShitChat.Api.Hubs;
 
@@ -13,7 +11,12 @@ public class ChatHub : Hub
     private readonly ILogger<ChatHub> _logger;
     private readonly IPresenceService _presenceService;
 
-    public ChatHub(ILogger<ChatHub> logger, IPresenceService presenceService)
+
+    public ChatHub
+    (
+        ILogger<ChatHub> logger,
+        IPresenceService presenceService
+    )
     {
         _logger = logger;
         _presenceService = presenceService;
@@ -74,4 +77,5 @@ public class ChatHub : Hub
 
         await base.OnDisconnectedAsync(exception);
     }
+
 }

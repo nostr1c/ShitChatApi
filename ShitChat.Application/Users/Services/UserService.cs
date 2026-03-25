@@ -1,5 +1,5 @@
 ﻿using Azure;
-using Elastic.Clients.Elasticsearch;
+//using Elastic.Clients.Elasticsearch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -22,22 +22,22 @@ public class UserService : IUserService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly UserManager<User> _userManager;
     private readonly IUploadService _uploadService;
-    private readonly ElasticsearchClient _elastic;
+    //private readonly ElasticsearchClient _elastic;
 
     public UserService
     (
         AppDbContext dbContext,
         IHttpContextAccessor httpContextAccessor,
         UserManager<User> userManager,
-        IUploadService uploadService,
-        ElasticsearchClient elastic
+        IUploadService uploadService
+        //ElasticsearchClient elastic
     )
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
         _userManager = userManager;
         _uploadService = uploadService;
-        _elastic = elastic;
+        //_elastic = elastic;
     }
 
     public async Task<(bool, UserActionResult, UserDto?)> GetUserByGuidAsync(string userGuid)
@@ -75,16 +75,16 @@ public class UserService : IUserService
         await _userManager.UpdateAsync(user);
 
 
-        var userDto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.UserName,
-            Email = user.Email,
-            CreatedAt = user.CreatedAt,
-            Avatar = user.AvatarUri
-        };
+        //var userDto = new UserDto
+        //{
+        //    Id = user.Id,
+        //    Username = user.UserName,
+        //    Email = user.Email,
+        //    CreatedAt = user.CreatedAt,
+        //    Avatar = user.AvatarUri
+        //};
 
-        await _elastic.IndexAsync(userDto);
+        //await _elastic.IndexAsync(userDto);
 
         return (true, UserActionResult.SuccessUpdatedAvatar, null, imageName);
     }
@@ -221,64 +221,64 @@ public class UserService : IUserService
         return (true, "SuccessGotUsersWithRoles", usersWithRoles);
     }
 
-    public async Task<(bool, string?)> IndexAllUsersAsync()
-    {
-        var users = await _dbContext.Users
-            .AsNoTracking()
-            .Select(x => new UserDto
-            {
-                Id = x.Id,
-                Username = x.UserName,
-                Email = x.Email,
-                CreatedAt = x.CreatedAt,
-                Avatar = x.AvatarUri
-            })
-            .ToListAsync();
+    //public async Task<(bool, string?)> IndexAllUsersAsync()
+    //{
+    //    var users = await _dbContext.Users
+    //        .AsNoTracking()
+    //        .Select(x => new UserDto
+    //        {
+    //            Id = x.Id,
+    //            Username = x.UserName,
+    //            Email = x.Email,
+    //            CreatedAt = x.CreatedAt,
+    //            Avatar = x.AvatarUri
+    //        })
+    //        .ToListAsync();
 
-        if (users == null || users.Count == 0)
-        {
-            return (false, "No users found");
-        }
+    //    if (users == null || users.Count == 0)
+    //    {
+    //        return (false, "No users found");
+    //    }
 
-        var indiceResponse = await _elastic.Indices.ExistsAsync("users");
-        if (indiceResponse.Exists)
-        {
-            var deleteResponse = await _elastic.Indices.DeleteAsync("users");
-            if (!deleteResponse.IsValidResponse)
-            {
-                return (false, deleteResponse.ElasticsearchServerError?.Error?.Reason ?? "Unknown Elasticsearch error");
-            }
-        }
-
-
-        var bulkResponse = await _elastic.BulkAsync(b => b
-            .Index("users")
-            .IndexMany(users, (descriptor, user) => descriptor.Id(user.Id))
-        );
-
-        if (!bulkResponse.IsValidResponse)
-        {
-            return (false, bulkResponse.ElasticsearchServerError?.Error?.Reason ?? "Unknown Elasticsearch error");
-        }
+    //    var indiceResponse = await _elastic.Indices.ExistsAsync("users");
+    //    if (indiceResponse.Exists)
+    //    {
+    //        var deleteResponse = await _elastic.Indices.DeleteAsync("users");
+    //        if (!deleteResponse.IsValidResponse)
+    //        {
+    //            return (false, deleteResponse.ElasticsearchServerError?.Error?.Reason ?? "Unknown Elasticsearch error");
+    //        }
+    //    }
 
 
-        return (true, $"Successfully indexed {users.Count} users ");
-    }
+    //    var bulkResponse = await _elastic.BulkAsync(b => b
+    //        .Index("users")
+    //        .IndexMany(users, (descriptor, user) => descriptor.Id(user.Id))
+    //    );
 
-    public async Task<(bool, string?, IReadOnlyCollection<UserDto>?)> SearchUsersAsync(string query)
-    {
-        var result = await _elastic.SearchAsync<UserDto>(s => s
-            .Query(q => q
-                .MatchPhrasePrefix(m => m
-                    .Field(f => f.Username)
-                    .Query(query)
-                )
-            )
-        );
+    //    if (!bulkResponse.IsValidResponse)
+    //    {
+    //        return (false, bulkResponse.ElasticsearchServerError?.Error?.Reason ?? "Unknown Elasticsearch error");
+    //    }
 
-        if (!result.IsValidResponse)
-            return (false, result.ElasticsearchServerError?.Error?.Reason, null);
 
-        return (true, "SuccessGotUsers", result.Documents);
-    }
+    //    return (true, $"Successfully indexed {users.Count} users ");
+    //}
+
+    //public async Task<(bool, string?, IReadOnlyCollection<UserDto>?)> SearchUsersAsync(string query)
+    //{
+    //    var result = await _elastic.SearchAsync<UserDto>(s => s
+    //        .Query(q => q
+    //            .MatchPhrasePrefix(m => m
+    //                .Field(f => f.Username)
+    //                .Query(query)
+    //            )
+    //        )
+    //    );
+
+    //    if (!result.IsValidResponse)
+    //        return (false, result.ElasticsearchServerError?.Error?.Reason, null);
+
+    //    return (true, "SuccessGotUsers", result.Documents);
+    //}
 }

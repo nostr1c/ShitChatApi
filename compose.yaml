@@ -16,17 +16,17 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - DOTNET_RUNNING_IN_CONTAINER=true
       - DOTNET_USE_POLLING_FILE_WATCHER=1
-      - ELASTIC_URL=http://elasticsearch:9200
+      # - ELASTIC_URL=http://elasticsearch:9200
     ports:
       - 8080:8080
-      - 5005:5005
+      # - 5005:5005
     volumes:
       - data-protection-keys:/Keys
       - image-uploads:/Uploads
     depends_on:
       - postgres
       - redis
-      - elasticsearch
+      # - elasticsearch
     # networks:
     #   - webproxy
 
@@ -73,23 +73,23 @@ services:
     # networks:
     #   - webproxy
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
-    container_name: elasticsearch
-    restart: unless-stopped
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+  #   container_name: elasticsearch
+  #   restart: unless-stopped
     # ports:
     # - 9200:9200
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms256m -Xmx256m
-    volumes:
-      - es-data:/usr/share/elasticsearch/data
+    # environment:
+    #   - discovery.type=single-node
+    #   - xpack.security.enabled=false
+    #   - ES_JAVA_OPTS=-Xms256m -Xmx256m
+    # volumes:
+    #   - es-data:/usr/share/elasticsearch/data
     # With docker swarm
-    deploy:
-      resources:
-        limits:
-          memory: 256M
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 256M
     # networks:
     #   - webproxy
 
@@ -98,7 +98,7 @@ volumes:
   pgdata:
   image-uploads:
   redis-data:
-  es-data:
+  # es-data:
 
 # networks:
 #   webproxy:

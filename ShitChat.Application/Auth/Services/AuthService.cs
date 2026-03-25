@@ -15,7 +15,7 @@ using ShitChat.Application.Users.DTOs;
 using ShitChat.Application.Auth.DTOs;
 using ShitChat.Application.Auth.Requests;
 using ShitChat.Shared.Enums;
-using Elastic.Clients.Elasticsearch;
+//using Elastic.Clients.Elasticsearch;
 
 namespace ShitChat.Application.Auth.Services;
 
@@ -28,7 +28,7 @@ public class AuthService : IAuthService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<AuthService> _logger;
     private readonly IPasswordHasher<User> _passwordHasher;
-    private readonly ElasticsearchClient _elastic;
+    //private readonly ElasticsearchClient _elastic;
 
     public AuthService
     (
@@ -38,8 +38,8 @@ public class AuthService : IAuthService
         AppDbContext dbContext,
         IHttpContextAccessor httpContextAccessor,
         ILogger<AuthService> logger,
-        IPasswordHasher<User> passwordHasher,
-        ElasticsearchClient elastic
+        IPasswordHasher<User> passwordHasher
+        //ElasticsearchClient elastic
     )
     {
         _userManager = userManager;
@@ -49,7 +49,7 @@ public class AuthService : IAuthService
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
         _passwordHasher = passwordHasher;
-        _elastic = elastic;
+        //_elastic = elastic;
     }
     public async Task<(bool, AuthActionResult, CreateUserDto?)> RegisterUserAsync(CreateUserRequest request)
     {
@@ -71,16 +71,16 @@ public class AuthService : IAuthService
             Email = user.Email,
         };
 
-        var userDto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.UserName,
-            Email = user.Email,
-            CreatedAt = user.CreatedAt,
-            Avatar = user.AvatarUri
-        };
+        //var userDto = new UserDto
+        //{
+        //    Id = user.Id,
+        //    Username = user.UserName,
+        //    Email = user.Email,
+        //    CreatedAt = user.CreatedAt,
+        //    Avatar = user.AvatarUri
+        //};
 
-        await _elastic.IndexAsync(userDto);
+        //await _elastic.IndexAsync(userDto);
 
         return (true, AuthActionResult.SuccessCreatingUser, createUserDto);
     }

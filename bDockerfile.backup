@@ -1,0 +1,38 @@
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
+
+COPY . /source
+WORKDIR /source
+
+ARG TARGETARCH
+
+# RUN dotnet restore ShitChat.sln --verbosity minimal && \
+#     cd ShitChat.Api && \
+#     dotnet publish -a ${TARGETARCH/amd64/x64} --use-current-runtime --self-contained false -o /app
+
+
+# DONTPUSH DEVMODE CHANGE BACK!!!!!!!!!!!!!!!!
+RUN dotnet restore ShitChat.sln --verbosity minimal && \
+
+    cd ShitChat.Api && \
+    dotnet publish -c Debug -a ${TARGETARCH/amd64/x64} --use-current-runtime --self-contained false -o /app
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS final
+
+WORKDIR /app
+
+RUN apk add --no-cache icu-libs
+
+# DONTPUSH DEVMODE CHANGE BACK!!!!!!!!!!!!!!!!
+RUN apk add --no-cache icu-libs curl bash unzip
+
+COPY --from=build /app .
+
+
+# DONTPUSH Start Dev
+RUN curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg
+
+EXPOSE 5005
+# End Dev 
+
+
+ENTRYPOINT ["dotnet", "ShitChat.Api.dll"]

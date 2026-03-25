@@ -19,7 +19,7 @@ public class Program
             .AddAppServices()
             .AddValidators()
             .AddControllersAndFilter()
-            .AddElasticSearch(config)
+            //.AddElasticSearch(config)
             .AddCorsPolicy()
             .AddOpenApiDocs();
 

@@ -1,4 +1,4 @@
-﻿using Elastic.Clients.Elasticsearch;
+﻿//using Elastic.Clients.Elasticsearch;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -243,16 +243,16 @@ public static class ServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddElasticSearch(this IServiceCollection services, IConfiguration config)
-    {
-        var elasticUrl = config["ELASTIC_URL"] ?? "http://localhost:9200";
-        var settings = new ElasticsearchClientSettings(new Uri(elasticUrl))
-            .DefaultIndex("users");
+    //public static IServiceCollection AddElasticSearch(this IServiceCollection services, IConfiguration config)
+    //{
+    //    var elasticUrl = config["ELASTIC_URL"] ?? "http://localhost:9200";
+    //    var settings = new ElasticsearchClientSettings(new Uri(elasticUrl))
+    //        .DefaultIndex("users");
 
-        var client = new ElasticsearchClient(settings);
+    //    var client = new ElasticsearchClient(settings);
 
-        services.AddSingleton(client);
+    //    services.AddSingleton(client);
 
-        return services;
-    }
+    //    return services;
+    //}
 }
