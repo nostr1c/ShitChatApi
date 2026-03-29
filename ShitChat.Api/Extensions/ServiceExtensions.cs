@@ -221,9 +221,7 @@ public static class ServiceExtensions
                         "http://localhost:3000",
                         "http://localhost:3001",
                         "http://localhost:3100",
-                        "https://filipsiri.se",
-                        "https://admin.filipsiri.se",
-                        "https://shitchat.filipsiri.se"
+                        "https://chat.filipsiri.se"
                     )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
