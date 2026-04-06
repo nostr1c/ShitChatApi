@@ -16,8 +16,8 @@ public static class WebAppExtension
         {
             app.MapOpenApi();
             app.MapScalarApiReference();
-            app.UseDeveloperExceptionPage();
         }
+        app.UseDeveloperExceptionPage();
         
         app.UseMiddleware<ExceptionMiddleware>();
 
