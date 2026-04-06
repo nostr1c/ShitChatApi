@@ -16,7 +16,10 @@ public static class WebAppExtension
         {
             app.MapOpenApi();
             app.MapScalarApiReference();
+            app.UseDeveloperExceptionPage();
         }
+        
+        app.UseMiddleware<ExceptionMiddleware>();
 
         using (var scope = app.Services.CreateScope())
         {
@@ -27,7 +30,6 @@ public static class WebAppExtension
         app.UseCors("AllowFrontend");
         app.UseAuthentication();
         app.UseAuthorization();
-        app.UseMiddleware<ExceptionMiddleware>();
 
         app.MapHub<ChatHub>("/chatHub").RequireAuthorization(new AuthorizeAttribute
         {
